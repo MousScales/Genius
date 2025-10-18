@@ -1,7 +1,8 @@
 // Firebase initialization module
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, where, getDocs, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+// Load Firebase SDKs dynamically to avoid module conflicts
+let firebaseApp, firebaseAuth, firebaseDb, googleProvider;
+let createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged;
+let collection, addDoc, query, where, getDocs, doc, setDoc, getDoc;
 
 // Firebase configuration
 const firebaseConfig = {
@@ -14,25 +15,58 @@ const firebaseConfig = {
     measurementId: "G-3SEG2XJQMP"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase when the module loads
+(async function initFirebase() {
+    try {
+        console.log('Loading Firebase modules...');
+        
+        // Import Firebase modules
+        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+        const { getAuth, createUserWithEmailAndPassword: createUser, signInWithEmailAndPassword: signInEmail, signInWithPopup: signInPopup, GoogleAuthProvider: GoogleProvider, signOut: signOutFunc, onAuthStateChanged: onAuthState } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+        const { getFirestore, collection: collectionFunc, addDoc: addDocFunc, query: queryFunc, where: whereFunc, getDocs: getDocsFunc, doc: docFunc, setDoc: setDocFunc, getDoc: getDocFunc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
-console.log('Firebase initialized');
-console.log('Auth object created:', auth);
+        // Initialize Firebase
+        firebaseApp = initializeApp(firebaseConfig);
+        firebaseAuth = getAuth(firebaseApp);
+        firebaseDb = getFirestore(firebaseApp);
+        googleProvider = new GoogleProvider();
 
-// Create Google Auth Provider instance
-const googleProvider = new GoogleAuthProvider();
+        // Assign functions
+        createUserWithEmailAndPassword = createUser;
+        signInWithEmailAndPassword = signInEmail;
+        signInWithPopup = signInPopup;
+        GoogleAuthProvider = GoogleProvider;
+        signOut = signOutFunc;
+        onAuthStateChanged = onAuthState;
+        
+        collection = collectionFunc;
+        addDoc = addDocFunc;
+        query = queryFunc;
+        where = whereFunc;
+        getDocs = getDocsFunc;
+        doc = docFunc;
+        setDoc = setDocFunc;
+        getDoc = getDocFunc;
 
-// Export everything individually to ensure proper module resolution
-export const firebaseApp = app;
-export const firebaseAuth = auth;
-export const firebaseDb = db;
-export const googleAuthProvider = googleProvider;
+        console.log('Firebase initialized successfully');
+        console.log('Auth object created:', firebaseAuth);
+        
+        // Set global variables for immediate access
+        window.firebaseAuth = firebaseAuth;
+        window.firebaseDb = firebaseDb;
+        window.googleProvider = googleProvider;
+        
+    } catch (error) {
+        console.error('Error initializing Firebase:', error);
+    }
+})();
 
-// Re-export Firebase functions
+// Export everything
 export { 
+    firebaseApp, 
+    firebaseAuth as auth, 
+    firebaseDb as db, 
+    googleProvider,
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
     signInWithPopup,
@@ -48,7 +82,4 @@ export {
     setDoc,
     getDoc
 };
-
-// Also export with the expected names for backward compatibility
-export { auth, db, googleProvider };
 

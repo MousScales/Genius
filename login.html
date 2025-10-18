@@ -55,37 +55,48 @@
     </div>
 
     <script type="module">
-        // Try to import with fallback for different export names
+        // Wait for Firebase to initialize
         let auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, googleProvider;
         
-        try {
-            const firebaseModule = await import('./firebase-init.js');
-            console.log('Firebase module loaded:', firebaseModule);
-            
-            // Try different possible export names
-            auth = firebaseModule.auth || firebaseModule.firebaseAuth;
-            createUserWithEmailAndPassword = firebaseModule.createUserWithEmailAndPassword;
-            signInWithEmailAndPassword = firebaseModule.signInWithEmailAndPassword;
-            signInWithPopup = firebaseModule.signInWithPopup;
-            googleProvider = firebaseModule.googleProvider || firebaseModule.googleAuthProvider;
-            
-            console.log('Login page loaded');
-            console.log('Auth object:', auth);
-            console.log('Google provider:', googleProvider);
-            
-            if (!auth) {
-                throw new Error('Auth object not found in Firebase module');
+        async function initLogin() {
+            try {
+                console.log('Loading Firebase module...');
+                const firebaseModule = await import('./firebase-init.js');
+                console.log('Firebase module loaded:', firebaseModule);
+                
+                // Wait a bit for Firebase to initialize
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Try different possible export names
+                auth = firebaseModule.auth || firebaseModule.firebaseAuth || window.firebaseAuth;
+                createUserWithEmailAndPassword = firebaseModule.createUserWithEmailAndPassword;
+                signInWithEmailAndPassword = firebaseModule.signInWithEmailAndPassword;
+                signInWithPopup = firebaseModule.signInWithPopup;
+                googleProvider = firebaseModule.googleProvider || firebaseModule.googleAuthProvider || window.googleProvider;
+                
+                console.log('Login page loaded');
+                console.log('Auth object:', auth);
+                console.log('Google provider:', googleProvider);
+                
+                if (!auth) {
+                    throw new Error('Auth object not found in Firebase module');
+                }
+                
+                // Initialize the login functionality
+                initializeLogin();
+                
+            } catch (error) {
+                console.error('Error loading Firebase module:', error);
+                alert('Failed to load Firebase. Please refresh the page.');
             }
-        } catch (error) {
-            console.error('Error loading Firebase module:', error);
-            alert('Failed to load Firebase. Please refresh the page.');
         }
-
-        // Check if user is already logged in
-        const currentUser = localStorage.getItem('currentUser');
-        if (currentUser) {
-            window.location.href = 'dashboard.html';
-        }
+        
+        function initializeLogin() {
+            // Check if user is already logged in
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                window.location.href = 'dashboard.html';
+            }
 
         // Login button
         document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -231,6 +242,10 @@
                 `;
             }
         });
+        }
+        
+        // Initialize the login page
+        initLogin();
     </script>
 </body>
 </html>
