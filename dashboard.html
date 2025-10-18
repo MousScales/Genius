@@ -96,43 +96,9 @@
         // Initialize Firebase
         initFirebase();
         
-        // Wait for Firebase services to be available before initializing dashboard
-        async function waitForFirebaseServices() {
-            let attempts = 0;
-            const maxAttempts = 150; // Increased from 100 to 150 (15 seconds total)
-            
-            console.log('Waiting for Firebase services...');
-            
-            while ((!window.userService || !window.classService || !window.logout) && attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-                
-                // Log progress every 2 seconds
-                if (attempts % 20 === 0) {
-                    console.log(`Still waiting for Firebase services... (${attempts/10}s)`);
-                    console.log('Services status:', {
-                        userService: !!window.userService,
-                        classService: !!window.classService,
-                        logout: !!window.logout
-                    });
-                }
-            }
-            
-            if (!window.userService || !window.classService || !window.logout) {
-                console.error('Firebase services not available after waiting', {
-                    userService: !!window.userService,
-                    classService: !!window.classService,
-                    logout: !!window.logout,
-                    attempts: attempts
-                });
-                
-                // Try to initialize dashboard anyway with limited functionality
-                console.log('Initializing dashboard with limited functionality...');
-                initializeDashboard();
-                return;
-            }
-            
-            console.log('Firebase services are ready, initializing dashboard...');
+        // Initialize dashboard immediately - no waiting
+        function initializeDashboardImmediately() {
+            console.log('Initializing dashboard immediately...');
             initializeDashboard();
         }
         
@@ -2189,9 +2155,9 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
         // Close the initializeDashboard function
         }
         
-        // Start waiting for Firebase services when DOM is loaded
+        // Initialize dashboard immediately when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            waitForFirebaseServices();
+            initializeDashboardImmediately();
         });
     </script>
     
