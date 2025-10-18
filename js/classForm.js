@@ -343,7 +343,7 @@ function formatTimeInput(input) {
 }
 
 // Setup live preview functionality
-export function setupLivePreview() {
+function setupLivePreview() {
     console.log('Setting up live preview...');
     
     // Get all input elements
@@ -794,4 +794,4 @@ window.createClass = createClass;
 window.cancelClassCreation = cancelClassCreation;
 
 // ES6 Module Exports
-export { addClass, createClass, cancelClassCreation, createClassForm };
+export { addClass, createClass, cancelClassCreation, createClassForm, setupLivePreview };
