@@ -9,7 +9,7 @@ function getCurrentUser() {
 let uploadedImageUrl = null;
 
 // Class creation functions
-export function addClass() {
+function addClass() {
     console.log('Add Class clicked - function called!');
     
     // Reset uploaded image
@@ -48,7 +48,7 @@ export function addClass() {
 }
 
 // Create class form HTML
-export function createClassForm() {
+function createClassForm() {
     const formContainer = document.createElement('div');
     formContainer.className = 'class-form-container';
     formContainer.innerHTML = `
@@ -333,7 +333,7 @@ function formatTimeInput(input) {
 }
 
 // Setup live preview functionality
-export function setupLivePreview() {
+function setupLivePreview() {
     console.log('Setting up live preview...');
     
     // Get all input elements
@@ -498,7 +498,7 @@ function handleImageUpload(event) {
 }
 
 // Update preview
-export function updatePreview() {
+function updatePreview() {
     console.log('Updating preview...');
     
     // Get form values
@@ -610,7 +610,7 @@ export function updatePreview() {
 }
 
 // Create class
-export async function createClass(event) {
+async function createClass(event) {
     console.log('Create Class button clicked!');
     
     if (event) {
@@ -741,7 +741,7 @@ export async function createClass(event) {
 }
 
 // Cancel class creation
-export function cancelClassCreation() {
+function cancelClassCreation() {
     const formContainer = document.querySelector('.class-form-container');
     if (formContainer) {
         formContainer.remove();
