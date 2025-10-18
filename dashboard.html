@@ -102,6 +102,37 @@
             </div>
             <div class="settings-body">
                 <div class="settings-section">
+                    <h3>Subscription</h3>
+                    <p class="settings-description">Manage your Genius subscription and billing.</p>
+                    <div class="subscription-info">
+                        <div class="subscription-status">
+                            <span class="status-label">Current Plan:</span>
+                            <span class="status-value" id="currentPlan">Free Plan</span>
+                        </div>
+                        <button id="manageSubscriptionBtn" class="settings-action-btn" disabled>
+                            <span>💳</span> Manage Subscription
+                            <span class="coming-soon-badge">Coming Soon</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Academic Information</h3>
+                    <p class="settings-description">Update your school and major information.</p>
+                    <div class="input-group">
+                        <label for="schoolName" class="settings-label">School/University</label>
+                        <input type="text" id="schoolName" placeholder="Enter your school name" class="settings-input">
+                    </div>
+                    <div class="input-group">
+                        <label for="majorField" class="settings-label">Major/Field of Study</label>
+                        <input type="text" id="majorField" placeholder="Enter your major" class="settings-input">
+                    </div>
+                    <button id="saveAcademicInfoBtn" class="settings-action-btn">
+                        <span>🎓</span> Save Academic Info
+                    </button>
+                </div>
+
+                <div class="settings-section">
                     <h3>OpenAI API Key</h3>
                     <p class="settings-description">Add your OpenAI API key to use the Chat with Genius feature.</p>
                     <div class="input-group">
@@ -365,12 +396,17 @@
             const modal = document.getElementById('settingsModal');
             modal.style.display = 'flex';
             
-            // Load current API key
+            // Load current user data
             const currentUserData = localStorage.getItem('currentUser');
             if (currentUserData) {
                 const currentUser = JSON.parse(currentUserData);
                 document.getElementById('openaiApiKey').value = currentUser.openaiApiKey || '';
+                document.getElementById('schoolName').value = currentUser.school || '';
+                document.getElementById('majorField').value = currentUser.major || '';
             }
+            
+            // Load academic info from profile if available
+            loadAcademicInfo();
             
             // Trigger smooth transition
             setTimeout(() => {
@@ -386,6 +422,26 @@
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
+        }
+
+        // Load academic information from profile
+        async function loadAcademicInfo() {
+            try {
+                const currentUserData = localStorage.getItem('currentUser');
+                if (!currentUserData) return;
+
+                const currentUser = JSON.parse(currentUserData);
+                const db = window.firebase.firestore();
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    document.getElementById('schoolName').value = userData.school || '';
+                    document.getElementById('majorField').value = userData.major || '';
+                }
+            } catch (error) {
+                console.error('Error loading academic info:', error);
+            }
         }
 
         // Settings modal event listeners
@@ -410,6 +466,53 @@
             } else {
                 input.type = 'password';
                 button.textContent = '👁️';
+            }
+        });
+
+        // Manage subscription button (coming soon)
+        document.getElementById('manageSubscriptionBtn').addEventListener('click', () => {
+            alert('Subscription management is coming soon! Stay tuned for updates.');
+        });
+
+        // Save academic information
+        document.getElementById('saveAcademicInfoBtn').addEventListener('click', async () => {
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const majorField = document.getElementById('majorField').value.trim();
+            
+            if (!schoolName && !majorField) {
+                alert('Please enter at least your school or major information.');
+                return;
+            }
+
+            try {
+                const currentUserData = localStorage.getItem('currentUser');
+                if (!currentUserData) {
+                    alert('User not found. Please log in again.');
+                    return;
+                }
+
+                const currentUser = JSON.parse(currentUserData);
+                const db = window.firebase.firestore();
+                
+                // Update Firebase profile
+                await db.collection('users').doc(currentUser.uid).set({
+                    school: schoolName,
+                    major: majorField,
+                    updatedAt: new Date()
+                }, { merge: true });
+
+                // Update localStorage
+                currentUser.school = schoolName;
+                currentUser.major = majorField;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                // Update profile display
+                loadProfileInfo();
+
+                alert('Academic information saved successfully!');
+            } catch (error) {
+                console.error('Error saving academic info:', error);
+                alert('Failed to save academic information. Please try again.');
             }
         });
 
