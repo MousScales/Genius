@@ -54,8 +54,18 @@ async function initFirebaseServices() {
     console.log('Firebase services initialized in firebase-service.js');
 }
 
-// Initialize Firebase services
-initFirebaseServices();
+// Initialize Firebase services after config is loaded
+async function waitForConfigAndInit() {
+    // Wait for config to be loaded
+    while (!window.FIREBASE_API_KEY) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    console.log('Config loaded, initializing Firebase services...');
+    await initFirebaseServices();
+}
+
+// Start the initialization process
+waitForConfigAndInit();
 // Auth functions will be accessed through window.firebase.auth()
 
 // User Profile Service
@@ -422,6 +432,13 @@ const studyGuideService = new StudyGuideService();
 class ChatService {
     async getGeniusChats(userId) {
         try {
+            console.log('Getting genius chats for user:', userId);
+            console.log('db object:', db);
+            
+            if (!db) {
+                throw new Error('Firebase database not initialized');
+            }
+            
             const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
             const snapshot = await chatsRef.get();
             return snapshot.docs.map(doc => ({
