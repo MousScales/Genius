@@ -172,6 +172,10 @@
                     }, 100);
                 } else {
                     console.log('No user authenticated, redirecting to login');
+                    // Clear any remaining user data
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('userData');
+                    // Redirect to login
                     window.location.href = 'login.html';
                 }
             });
@@ -179,9 +183,16 @@
 
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            // First check if user is logged in
+            const savedUser = localStorage.getItem('currentUser');
+            if (!savedUser) {
+                console.log('No user found in localStorage, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
             initDashboard().then(() => {
                 // Check if user is already in localStorage
-                const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
                     try {
                         currentUser = JSON.parse(savedUser);
@@ -192,6 +203,9 @@
                         }, 100);
                     } catch (error) {
                         console.error('Error parsing saved user:', error);
+                        // If there's an error parsing user data, redirect to login
+                        window.location.href = 'login.html';
+                        return;
                     }
                 }
                 
@@ -312,11 +326,34 @@
         // Logout button
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
+                console.log('Logging out user...');
+                
+                // Sign out from Firebase
                 await signOut(auth);
+                
+                // Clear all user data from localStorage
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('userData');
+                localStorage.removeItem('genius_chats');
+                
+                // Clear any user-specific data
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('classes_') || key.includes('profile_') || key.includes('genius_'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                
+                console.log('User logged out successfully, redirecting to login...');
+                
+                // Redirect to login page
                 window.location.href = 'login.html';
             } catch (error) {
                 console.error('Logout error:', error);
+                // Even if there's an error, still redirect to login
+                window.location.href = 'login.html';
             }
         });
 

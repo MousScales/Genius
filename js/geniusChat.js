@@ -244,15 +244,33 @@ class GeniusChat {
     }
 
     startNewChat() {
-        this.currentChatId = null;
+        // Create a new chat ID
+        this.currentChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Create new chat object with empty messages array
+        const newChat = {
+            id: this.currentChatId,
+            title: 'New Chat',
+            messages: [],
+            createdAt: new Date().toISOString()
+        };
+        
+        // Add to chats array
+        this.chats.push(newChat);
+        
+        // Clear current session data
         this.uploadedFiles = [];
         this.uploadedFileIds = [];
         this.assistantId = null;
         this.threadId = null;
+        
+        // Clear UI and update
         this.clearMessages();
         this.updateSidebar();
         this.updateFileDisplay();
         document.getElementById('chatInput').focus();
+        
+        console.log('Started new chat with ID:', this.currentChatId);
     }
 
     clearMessages() {
@@ -446,6 +464,11 @@ class GeniusChat {
             const currentChat = this.chats.find(chat => chat.id === this.currentChatId);
             if (currentChat) {
                 currentChat.messages.push({ role, content, timestamp: new Date().toISOString() });
+                
+                // Update chat title if this is the first user message
+                if (role === 'user' && currentChat.title === 'New Chat') {
+                    currentChat.title = content.length > 50 ? content.substring(0, 50) + '...' : content;
+                }
             }
         }
     }
@@ -541,7 +564,7 @@ Your capabilities include:
 
 Always be friendly, supportive, and educational in your responses. If you don't know something, admit it and suggest how the student might find the answer.`
                     },
-                    ...(this.currentChatId ? this.chats.find(chat => chat.id === this.currentChatId)?.messages.slice(-10) || [] : []),
+                    ...this.getCurrentChatMessages(),
                     {
                         role: 'user',
                         content: message
@@ -596,7 +619,7 @@ Your capabilities include:
 
 Always be friendly, supportive, and educational in your responses. Use emojis, headers, bullet points, and line breaks to make your responses engaging and easy to read. Format your responses like ChatGPT with proper markdown formatting. If you don't know something, admit it and suggest how the student might find the answer.`
                     },
-                    ...(this.currentChatId ? this.chats.find(chat => chat.id === this.currentChatId)?.messages.slice(-10) || [] : []),
+                    ...this.getCurrentChatMessages(),
                     {
                         role: 'user',
                         content: message
@@ -805,7 +828,7 @@ IMPORTANT:
 - Remember the conversation context and previous messages in this chat
 - If the user refers to something from earlier in the conversation, use that context to provide better answers`
                         },
-                        ...(this.currentChatId ? this.chats.find(chat => chat.id === this.currentChatId)?.messages.slice(-10) || [] : []),
+                        ...this.getCurrentChatMessages(),
                         {
                             role: 'user',
                             content: enhancedMessage
@@ -906,6 +929,76 @@ IMPORTANT:
 
         // Start typing
         typeWriter();
+    }
+
+    getCurrentChatMessages() {
+        if (!this.currentChatId) {
+            return [];
+        }
+        
+        const currentChat = this.chats.find(chat => chat.id === this.currentChatId);
+        if (!currentChat || !currentChat.messages) {
+            return [];
+        }
+        
+        // Return the last 10 messages to maintain context without overwhelming the API
+        return currentChat.messages.slice(-10);
+    }
+
+    displayMessage(role, content, attachedFiles = []) {
+        const messagesContainer = document.getElementById('chatMessages');
+        
+        // Remove welcome message if it exists
+        const welcome = messagesContainer.querySelector('.genius-chat-welcome');
+        if (welcome) {
+            welcome.remove();
+        }
+
+        if (role === 'user') {
+            // Add file attachments as floating div above message if files are attached
+            if (attachedFiles && attachedFiles.length > 0) {
+                const attachmentsDiv = document.createElement('div');
+                attachmentsDiv.className = 'genius-message-attachments-floating';
+                attachmentsDiv.innerHTML = `
+                    <div class="genius-message-attachments-list">
+                        ${attachedFiles.map(file => `
+                            <div class="genius-message-attachment-item">
+                                <span class="genius-message-attachment-icon">${this.getFileIcon(file.type)}</span>
+                                <span class="genius-message-attachment-name">${file.name}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                messagesContainer.appendChild(attachmentsDiv);
+            }
+            
+            // User messages in chat bubble (without file attachments inside)
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'genius-chat-message user';
+            messageDiv.innerHTML = `
+                <div class="genius-message-content">
+                    <div class="genius-message-text">${this.formatMessage(content)}</div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+        } else {
+            // AI responses as plain text without chat bubble
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'genius-ai-response';
+            messageDiv.innerHTML = `
+                <div class="genius-ai-content">
+                    <div class="genius-ai-text">${this.formatMessage(content)}</div>
+                    <div class="genius-ai-actions">
+                        <button class="genius-ai-action" onclick="navigator.clipboard.writeText('${content.replace(/'/g, "\\'")}')" title="Copy">
+                            📋
+                        </button>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     formatMessage(content) {
@@ -1025,12 +1118,13 @@ IMPORTANT:
         this.currentChatId = chatId;
         this.clearMessages();
 
-        // Add messages to the chat
+        // Add messages to the chat (without adding to the messages array again)
         chat.messages.forEach(msg => {
-            this.addMessage(msg.role, msg.content);
+            this.displayMessage(msg.role, msg.content);
         });
 
         this.updateSidebar();
+        console.log('Loaded chat:', chatId, 'with', chat.messages.length, 'messages');
     }
 
     deleteChat(chatId) {
