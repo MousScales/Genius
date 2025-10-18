@@ -615,3 +615,14 @@ console.log('Firebase services initialized:', {
     studyGuideService, 
     chatService 
 });
+
+// ES6 Module Exports
+export { 
+    userService, 
+    classService, 
+    authService, 
+    documentService, 
+    folderService, 
+    studyGuideService, 
+    chatService 
+};

@@ -81,26 +81,39 @@
     </div>
 
 
-    <script>
-        // Wait for Firebase to be available
-        let auth, signOut;
+    <script type="module">
+        import { auth, signOut, onAuthStateChanged } from './firebase-init.js';
+        import { addClass } from './js/classForm.js';
+        import { showClassView, closeClassView } from './js/classView.js';
         
-        async function initFirebase() {
-            while (!window.firebase) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+        // Preload document editor to ensure it's available
+        import './js/documentEditor.js';
+
+        console.log('Dashboard loaded');
+
+        let currentUser = null;
+
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User authenticated:', user.uid);
+                currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                };
+                
+                // Save to localStorage for compatibility
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Initialize dashboard
+                initializeDashboard();
+            } else {
+                console.log('No user authenticated, redirecting to login');
+                window.location.href = 'login.html';
             }
-            auth = window.firebase.auth();
-            signOut = () => window.firebase.auth().signOut();
-        }
-        
-        // Initialize Firebase
-        initFirebase();
-        
-        // Initialize dashboard immediately - no waiting
-        function initializeDashboardImmediately() {
-            console.log('Initializing dashboard immediately...');
-            initializeDashboard();
-        }
+        });
         
         // Initialize dashboard after Firebase services are ready
         function initializeDashboard() {
@@ -172,18 +185,17 @@
             }
             
             // Try to load from Firebase in background (non-blocking)
-            if (window.userService) {
-                try {
-                    const firebaseProfile = await window.userService.getProfile(currentUser.uid);
-                    if (firebaseProfile && firebaseProfile.name) {
-                        profile = firebaseProfile;
-                        console.log('Loaded profile from Firebase:', profile);
-                        // Update localStorage cache
-                        localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profile));
-                    }
-                } catch (error) {
-                    console.log('Firebase not ready yet, using localStorage profile');
+            try {
+                const { userService } = await import('./firebase-service.js');
+                const firebaseProfile = await userService.getProfile(currentUser.uid);
+                if (firebaseProfile && firebaseProfile.name) {
+                    profile = firebaseProfile;
+                    console.log('Loaded profile from Firebase:', profile);
+                    // Update localStorage cache
+                    localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profile));
                 }
+            } catch (error) {
+                console.log('Firebase not ready yet, using localStorage profile');
             }
             
             // Update profile button
@@ -260,7 +272,9 @@
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 console.log('Logout button clicked');
-                await window.logout();
+                await signOut(auth);
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
             } catch (error) {
                 console.error('Logout error:', error);
                 alert('Error during logout. Please try again.');
@@ -282,18 +296,17 @@
             }
             
             // Try to load from Firebase in background (non-blocking)
-            if (window.classService) {
-                try {
-                    const firebaseClasses = await window.classService.getClasses(currentUser.uid);
-                    if (firebaseClasses.length > 0) {
-                        classes = firebaseClasses;
-                        console.log('Loaded classes from Firebase:', classes);
-                        // Update localStorage cache
-                        localStorage.setItem(`classes_${currentUser.uid}`, JSON.stringify(classes));
-                    }
-                } catch (error) {
-                    console.log('Firebase not ready yet, using localStorage classes');
+            try {
+                const { classService } = await import('./firebase-service.js');
+                const firebaseClasses = await classService.getClasses(currentUser.uid);
+                if (firebaseClasses.length > 0) {
+                    classes = firebaseClasses;
+                    console.log('Loaded classes from Firebase:', classes);
+                    // Update localStorage cache
+                    localStorage.setItem(`classes_${currentUser.uid}`, JSON.stringify(classes));
                 }
+            } catch (error) {
+                console.log('Firebase not ready yet, using localStorage classes');
             }
             
             const classesGrid = document.getElementById('classesGrid');
@@ -2120,15 +2133,7 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 }
                 this.updateDisplay();
             }
-        }
-        
-        // Close the initializeDashboard function
-        }
-        
-        // Initialize dashboard immediately when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeDashboardImmediately();
-        });
+        } // End of initializeDashboard function
     </script>
     
     <!-- Import Configuration -->
@@ -2137,11 +2142,8 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     <!-- Import Math.js for scientific calculations -->
     <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
     
-    <!-- Load Firebase Service first -->
-    <script src="js/firebase-service.js?v=6"></script>
-    
-    <!-- Load Genius Chat -->
-    <script src="js/geniusChat.js?v=8"></script>
+    <!-- Import Genius Chat Module -->
+    <script type="module" src="js/geniusChat.js"></script>
     
 </body>
 </html>

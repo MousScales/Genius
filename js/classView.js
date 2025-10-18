@@ -1,5 +1,15 @@
-// Import Firebase services
-import { documentService, folderService, studyGuideService } from './firebase-service.js';
+// Import Firebase services dynamically to avoid timing issues
+let documentService, folderService, studyGuideService;
+
+async function getFirebaseServices() {
+    if (!documentService) {
+        const services = await import('./firebase-service.js');
+        documentService = services.documentService;
+        folderService = services.folderService;
+        studyGuideService = services.studyGuideService;
+    }
+    return { documentService, folderService, studyGuideService };
+}
 
 // Class view module
 export function showClassView(classData) {
@@ -536,6 +546,7 @@ function readFileAsDataURL(file) {
 
 async function loadDocuments(classData, viewMode = 'list') {
     try {
+        const { documentService } = await getFirebaseServices();
         const documents = await documentService.getDocuments(classData.userId, classData.id);
         const folders = await getFolders(classData);
     
@@ -1592,6 +1603,7 @@ async function createNewFolder(classData) {
 
 async function getFolders(classData) {
     try {
+        const { folderService } = await getFirebaseServices();
         return await folderService.getFolders(classData.userId, classData.id);
     } catch (error) {
         console.error('Error getting folders:', error);
@@ -1602,6 +1614,7 @@ async function getFolders(classData) {
 async function saveFolders(classData, folders) {
     try {
         // Save to Firebase
+        const { folderService } = await getFirebaseServices();
         await folderService.saveFolders(classData.userId, classData.id, folders);
         console.log('Folders saved to Firebase');
     } catch (error) {
@@ -1618,6 +1631,7 @@ async function moveDocumentToFolder(documentId, folderId, classData) {
     
     try {
     // Update document's folder reference
+        const { documentService } = await getFirebaseServices();
         await documentService.updateDocument(classData.userId, classData.id, documentId, {
             folderId: folderId || null
         });
@@ -2220,6 +2234,7 @@ async function showStudyGuideNamingDialog(classData, format, folderId) {
 
 async function createStudyGuide(classData, format, folderId, customName = null, flashcardCount = null) {
     try {
+        const { documentService } = await getFirebaseServices();
         const documents = await documentService.getDocuments(classData.userId, classData.id);
     
     // Filter documents based on folder selection
@@ -2288,6 +2303,7 @@ async function createBasicStudyGuide(classData, sourceDocuments, customName = nu
         };
         
         // Save to Firebase
+        const { studyGuideService } = await getFirebaseServices();
         await studyGuideService.saveStudyGuide(classData.userId, classData.id, studyGuide);
         
         // Reload study guides
@@ -2322,6 +2338,7 @@ async function createFlashcardSet(classData, sourceDocuments, customName = null,
         };
         
         // Save to Firebase
+        const { studyGuideService } = await getFirebaseServices();
         await studyGuideService.saveStudyGuide(classData.userId, classData.id, flashcardSet);
         
         // Reload study guides
@@ -2818,6 +2835,7 @@ async function generateFlashcardContent(documents, flashcardCount = 25) {
 
 async function loadStudyGuides(classData, viewMode = 'list') {
     try {
+        const { studyGuideService } = await getFirebaseServices();
         const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
     
     const studyGuidesList = document.getElementById('studyGuidesList');
@@ -3009,6 +3027,7 @@ function setupStudyGuideEventListeners(classData) {
 
 async function openStudyGuideViewer(guideId, classData) {
     try {
+        const { studyGuideService } = await getFirebaseServices();
         const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
     const guide = studyGuides.find(g => g.id === guideId);
     
@@ -4203,7 +4222,17 @@ function downloadStudyGuide(guide) {
     URL.revokeObjectURL(url);
 }
 
-function deleteStudyGuide(guideId, classData) {
+async function deleteStudyGuide(guideId, classData) {
+    try {
+        // Delete from Firebase
+        const { studyGuideService } = await getFirebaseServices();
+        await studyGuideService.deleteStudyGuide(classData.userId, classData.id, guideId);
+        console.log('Study guide deleted from Firebase');
+    } catch (error) {
+        console.error('Error deleting study guide from Firebase:', error);
+    }
+    
+    // Also delete from localStorage as backup
     const storageKey = `class_${classData.userId}_${classData.name}_study_guides`;
     let studyGuides = JSON.parse(localStorage.getItem(storageKey) || '[]');
     
