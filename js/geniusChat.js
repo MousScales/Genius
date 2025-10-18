@@ -959,87 +959,35 @@ IMPORTANT:
 
     async loadSavedChats() {
         try {
-            // Try Firebase first using global service
-            let chatService;
-            if (window.chatService) {
-                chatService = window.chatService;
-            } else {
-                // Fallback to localStorage only
-                const savedChats = localStorage.getItem('genius_chats');
-                if (savedChats) {
-                    this.chats = JSON.parse(savedChats);
-                    this.updateSidebar();
-                }
-                return;
-            }
+            console.log('Loading saved chats from localStorage only...');
             
-            // Wait a bit for Firebase to be ready
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            const chats = await chatService.getGeniusChats(this.currentUser.uid);
-            
-            if (chats.length > 0) {
-                console.log('Loaded genius chats from Firebase:', chats.length);
-                this.chats = chats;
-                this.updateSidebar();
-                return;
-            }
-            
-            // Fallback to localStorage
+            // Use localStorage only - skip Firebase for now
             const savedChats = localStorage.getItem('genius_chats');
             if (savedChats) {
                 this.chats = JSON.parse(savedChats);
-                
-                // Migrate to Firebase if service is available
-                if (this.chats.length > 0 && chatService) {
-                    console.log('Migrating genius chats from localStorage to Firebase...');
-                    for (const chat of this.chats) {
-                        if (chat.id && chat.messages && chat.messages.length > 0) {
-                            await chatService.saveGeniusChat(this.currentUser.uid, chat);
-                        }
-                    }
-                    console.log('Genius chats migrated to Firebase');
-                }
-                
+                console.log('Loaded genius chats from localStorage:', this.chats.length);
+                this.updateSidebar();
+            } else {
+                console.log('No saved chats found in localStorage');
+                this.chats = [];
                 this.updateSidebar();
             }
         } catch (error) {
-            console.error('Error loading genius chats:', error);
-            // Fallback to localStorage
-            const savedChats = localStorage.getItem('genius_chats');
-            if (savedChats) {
-                this.chats = JSON.parse(savedChats);
-                this.updateSidebar();
-            }
+            console.error('Error loading genius chats from localStorage:', error);
+            this.chats = [];
+            this.updateSidebar();
         }
     }
 
     async saveCurrentChat() {
         try {
-            // Save to Firebase if service is available
-            if (window.chatService) {
-                const chatService = window.chatService;
-                
-                // Save each chat individually
-                for (const chat of this.chats) {
-                    if (chat.id && chat.messages && chat.messages.length > 0) {
-                        // Check if chat already exists in Firebase by trying to update it first
-                        try {
-                            await chatService.updateGeniusChat(this.currentUser.uid, chat.id, chat);
-                        } catch (error) {
-                            // If update fails, it might not exist, so create it
-                            await chatService.saveGeniusChat(this.currentUser.uid, chat);
-                        }
-                    }
-                }
-                console.log('Genius chats saved to Firebase');
-            }
+            console.log('Saving chats to localStorage only...');
+            // Save to localStorage only - skip Firebase for now
+            localStorage.setItem('genius_chats', JSON.stringify(this.chats));
+            console.log('Genius chats saved to localStorage');
         } catch (error) {
-            console.error('Error saving genius chats to Firebase:', error);
+            console.error('Error saving genius chats to localStorage:', error);
         }
-        
-        // Also save to localStorage as backup
-        localStorage.setItem('genius_chats', JSON.stringify(this.chats));
     }
 
     updateSidebar() {
