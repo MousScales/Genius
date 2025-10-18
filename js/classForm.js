@@ -453,7 +453,7 @@ function compressImage(file, maxWidth = 800, quality = 0.8) {
 }
 
 // Handle image upload
-export function handleImageUpload(event) {
+function handleImageUpload(event) {
     const file = event.target.files[0];
     if (file) {
         // Check file size first
