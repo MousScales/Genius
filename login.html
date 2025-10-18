@@ -55,7 +55,7 @@
     </div>
 
     <script type="module">
-        import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from './firebase-init.js';
+        import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, googleProvider } from './firebase-init.js';
 
         console.log('Login page loaded');
 
@@ -166,8 +166,7 @@
             
             try {
                 console.log('Attempting Google sign-in...');
-                const provider = new GoogleAuthProvider();
-                const result = await signInWithPopup(auth, provider);
+                const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
                 
                 console.log('Google sign-in successful:', user.uid);

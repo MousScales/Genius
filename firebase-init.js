@@ -21,6 +21,9 @@ const db = getFirestore(app);
 
 console.log('Firebase initialized');
 
+// Create Google Auth Provider instance
+const googleProvider = new GoogleAuthProvider();
+
 // Export everything
 export { 
     app, 
@@ -30,6 +33,7 @@ export {
     signInWithEmailAndPassword,
     signInWithPopup,
     GoogleAuthProvider,
+    googleProvider,
     signOut, 
     onAuthStateChanged,
     collection,
