@@ -10,7 +10,15 @@
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
-    <script defer src="/_vercel/insights/script.js"></script>
+    <script>
+        // Only load Vercel Analytics on Vercel deployment
+        if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com')) {
+            const script = document.createElement('script');
+            script.src = '/_vercel/insights/script.js';
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+    </script>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
