@@ -164,44 +164,26 @@
         async function loadProfileInfo() {
             let profile = {};
             
-            // Try to load from Firebase first
-            try {
-                const userService = window.userService;
-                profile = await userService.getProfile(currentUser.uid);
-                console.log('Loaded profile from Firebase:', profile);
-                
-                // If no profile in Firebase, try to migrate from localStorage
-                if (!profile || !profile.name) {
-                    console.log('No profile in Firebase, checking localStorage...');
-                    const localProfile = JSON.parse(localStorage.getItem(`profile_${currentUser.uid}`) || '{}');
-                    
-                    if (localProfile && localProfile.name) {
-                        console.log('Found profile in localStorage, migrating to Firebase...');
-                        // Fix field name mismatch: college -> collegeName
-                        const fixedProfile = {
-                            name: localProfile.name,
-                            collegeName: localProfile.collegeName || localProfile.college,
-                            major: localProfile.major,
-                            level: localProfile.level,
-                            year: localProfile.year
-                        };
-                        // Migrate to Firebase
-                        await userService.saveProfile(currentUser.uid, fixedProfile);
-                        profile = fixedProfile;
-                        console.log('Profile migrated successfully!');
+            // Try to load from localStorage first (instant)
+            const localProfile = JSON.parse(localStorage.getItem(`profile_${currentUser.uid}`) || '{}');
+            if (localProfile && localProfile.name) {
+                profile = localProfile;
+                console.log('Loaded profile from localStorage:', profile);
+            }
+            
+            // Try to load from Firebase in background (non-blocking)
+            if (window.userService) {
+                try {
+                    const firebaseProfile = await window.userService.getProfile(currentUser.uid);
+                    if (firebaseProfile && firebaseProfile.name) {
+                        profile = firebaseProfile;
+                        console.log('Loaded profile from Firebase:', profile);
+                        // Update localStorage cache
+                        localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profile));
                     }
+                } catch (error) {
+                    console.log('Firebase not ready yet, using localStorage profile');
                 }
-                
-                // API key is now handled globally, no need to store per user
-                
-                // Update localStorage cache
-                if (profile) {
-                    localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profile));
-                }
-            } catch (error) {
-                console.error('Error loading profile from Firebase:', error);
-                alert('Error loading profile from Firebase. Please refresh the page.');
-                return;
             }
             
             // Update profile button
@@ -290,40 +272,28 @@
         async function loadClasses() {
             let classes = [];
             
-            // Try to load from Firebase first
-            try {
-                const classService = window.classService;
-                classes = await classService.getClasses(currentUser.uid);
-                console.log('Loaded classes from Firebase:', classes);
-                
-                // If no classes in Firebase, try to migrate from localStorage
-                if (classes.length === 0) {
-                    const localClasses = JSON.parse(localStorage.getItem(`classes_${currentUser.uid}`) || '[]');
-                    // Also check old format
-                    const oldLocalClasses = JSON.parse(localStorage.getItem('classes') || '[]');
-                    const classesToMigrate = localClasses.length > 0 ? localClasses : oldLocalClasses;
-                    
-                    if (classesToMigrate.length > 0) {
-                        console.log('Migrating classes to Firebase...');
-                        for (const classData of classesToMigrate) {
-                            try {
-                                await classService.addClass(currentUser.uid, classData);
-                            } catch (err) {
-                                console.log('Error migrating class:', err);
-                            }
-                        }
-                        // Reload from Firebase after migration
-                        classes = await classService.getClasses(currentUser.uid);
-                        console.log('Classes migrated successfully!');
+            // Try to load from localStorage first (instant)
+            const localClasses = JSON.parse(localStorage.getItem(`classes_${currentUser.uid}`) || '[]');
+            const oldLocalClasses = JSON.parse(localStorage.getItem('classes') || '[]');
+            classes = localClasses.length > 0 ? localClasses : oldLocalClasses;
+            
+            if (classes.length > 0) {
+                console.log('Loaded classes from localStorage:', classes);
+            }
+            
+            // Try to load from Firebase in background (non-blocking)
+            if (window.classService) {
+                try {
+                    const firebaseClasses = await window.classService.getClasses(currentUser.uid);
+                    if (firebaseClasses.length > 0) {
+                        classes = firebaseClasses;
+                        console.log('Loaded classes from Firebase:', classes);
+                        // Update localStorage cache
+                        localStorage.setItem(`classes_${currentUser.uid}`, JSON.stringify(classes));
                     }
+                } catch (error) {
+                    console.log('Firebase not ready yet, using localStorage classes');
                 }
-                
-                // Update localStorage cache with user-specific key
-                localStorage.setItem(`classes_${currentUser.uid}`, JSON.stringify(classes));
-            } catch (error) {
-                console.error('Error loading classes from Firebase:', error);
-                alert('Error loading classes from Firebase. Please refresh the page.');
-                return;
             }
             
             const classesGrid = document.getElementById('classesGrid');
