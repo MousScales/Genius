@@ -23,6 +23,11 @@
                     <span class="nav-icon">🏠</span>
                     <span class="nav-text">Dashboard</span>
                 </a>
+                <a href="#" class="nav-item" id="chatWithGenius">
+                    <span class="nav-icon genius-icon"></span>
+                    <span class="nav-text">Chat with Genius</span>
+                    <span class="nav-shortcut">⌘/</span>
+                </a>
                 <a href="#" class="nav-item" id="calculatorNav">
                     <span class="nav-icon">🧮</span>
                     <span class="nav-text">Calculator</span>
@@ -188,12 +193,15 @@
                 attempts++;
             }
             
+            if (!window.userService) {
+                console.error('UserService not available after waiting');
+                alert('Firebase services are not available. Please refresh the page.');
+                return;
+            }
+            
             // Try to load from Firebase first
             try {
                 const userService = window.userService;
-                if (!userService) {
-                    throw new Error('UserService not available after waiting');
-                }
                 profile = await userService.getProfile(currentUser.uid);
                 console.log('Loaded profile from Firebase:', profile);
                 
@@ -226,9 +234,9 @@
                     localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profile));
                 }
             } catch (error) {
-                console.log('Error loading profile, using localStorage fallback:', error);
-                // Fall back to localStorage
-                profile = JSON.parse(localStorage.getItem(`profile_${currentUser.uid}`) || '{}');
+                console.error('Error loading profile from Firebase:', error);
+                alert('Error loading profile from Firebase. Please refresh the page.');
+                return;
             }
             
             // Update profile button
@@ -412,12 +420,15 @@
                 attempts++;
             }
             
+            if (!window.classService) {
+                console.error('ClassService not available after waiting');
+                alert('Firebase services are not available. Please refresh the page.');
+                return;
+            }
+            
             // Try to load from Firebase first
             try {
                 const classService = window.classService;
-                if (!classService) {
-                    throw new Error('ClassService not available after waiting');
-                }
                 classes = await classService.getClasses(currentUser.uid);
                 console.log('Loaded classes from Firebase:', classes);
                 
@@ -446,9 +457,9 @@
                 // Update localStorage cache with user-specific key
                 localStorage.setItem(`classes_${currentUser.uid}`, JSON.stringify(classes));
             } catch (error) {
-                console.log('Loading from localStorage fallback:', error);
-                // Fall back to localStorage (user-specific first, then old format)
-                classes = JSON.parse(localStorage.getItem(`classes_${currentUser.uid}`) || localStorage.getItem('classes') || '[]');
+                console.error('Error loading classes from Firebase:', error);
+                alert('Error loading classes from Firebase. Please refresh the page.');
+                return;
             }
             
             const classesGrid = document.getElementById('classesGrid');
@@ -561,6 +572,11 @@
                 attempts++;
             }
             
+            if (!window.documentService || !window.studyGuideService) {
+                console.error('Document or StudyGuide services not available after waiting');
+                return;
+            }
+            
             for (const classData of classes) {
                 try {
                     // Import services
@@ -637,6 +653,17 @@
             loadClasses();
         });
 
+        // Chat with Genius functionality
+        document.getElementById('chatWithGenius').addEventListener('click', (e) => {
+            e.preventDefault();
+            // Open the Genius Chat interface
+            if (window.geniusChat) {
+                window.geniusChat.openChat();
+            } else {
+                console.error('Genius Chat not initialized');
+                alert('Chat feature is loading. Please try again in a moment.');
+            }
+        });
 
         // Calculator functionality
         document.getElementById('calculatorNav').addEventListener('click', (e) => {
@@ -2282,6 +2309,9 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     
     <!-- Load Firebase Service first -->
     <script src="js/firebase-service.js?v=6"></script>
+    
+    <!-- Load Genius Chat -->
+    <script src="js/geniusChat.js?v=8"></script>
     
 </body>
 </html>
