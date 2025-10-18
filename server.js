@@ -25,6 +25,10 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // Routes
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
