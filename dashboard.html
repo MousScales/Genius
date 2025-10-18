@@ -191,7 +191,10 @@
             
             // Try to load from Firebase first
             try {
-                const { userService } = await import('./firebase-service.js');
+                const userService = window.userService;
+                if (!userService) {
+                    throw new Error('UserService not available');
+                }
                 profile = await userService.getProfile(currentUser.uid);
                 console.log('Loaded profile from Firebase:', profile);
                 
@@ -384,7 +387,7 @@
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
                     // Also save to Firebase profile
-                    const { userService } = await import('./firebase-service.js');
+                    const userService = window.userService;
                     await userService.saveProfile(currentUser.uid, { openaiApiKey: apiKey });
                     
                     console.log('API key saved successfully');
@@ -405,7 +408,10 @@
             
             // Try to load from Firebase first
             try {
-                const { classService } = await import('./firebase-service.js');
+                const classService = window.classService;
+                if (!classService) {
+                    throw new Error('ClassService not available');
+                }
                 classes = await classService.getClasses(currentUser.uid);
                 console.log('Loaded classes from Firebase:', classes);
                 
@@ -545,7 +551,8 @@
             for (const classData of classes) {
                 try {
                     // Import services
-                    const { documentService, studyGuideService } = await import('./firebase-service.js');
+                    const documentService = window.documentService;
+                    const studyGuideService = window.studyGuideService;
                     
                     // Load documents count
                     const documents = await documentService.getDocuments(classData.userId, classData.id);
@@ -2291,8 +2298,8 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     <!-- Load Firebase Service first -->
     <script src="js/firebase-service.js?v=6"></script>
     
-    <!-- Load Genius Chat Module -->
-    <script type="module" src="js/geniusChat.js?v=6"></script>
+    <!-- Load Genius Chat -->
+    <script src="js/geniusChat.js?v=7"></script>
 </body>
 </html>
 

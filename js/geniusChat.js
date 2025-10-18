@@ -1,5 +1,5 @@
 // Genius Chat Interface - ChatGPT-style chat with Genius branding
-export class GeniusChat {
+class GeniusChat {
     constructor() {
         this.isOpen = false;
         this.currentChatId = null;
@@ -1301,5 +1301,5 @@ IMPORTANT:
 // Create global instance
 window.geniusChat = new GeniusChat();
 
-// Export for use in other files
-export default window.geniusChat;
+// Make it globally available
+window.GeniusChat = GeniusChat;
