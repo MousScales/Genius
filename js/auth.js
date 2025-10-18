@@ -1,13 +1,20 @@
-// Authentication module
-import { authService } from './firebase-service.js';
+// Authentication module using global Firebase SDK
+
+// Wait for Firebase to be available
+async function waitForFirebase() {
+    while (!window.firebase) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+}
 
 // Global variables
 let currentUser = null;
 
 // Initialize authentication
-export function initializeAuth() {
+export async function initializeAuth() {
+    await waitForFirebase();
     // Check if user is already logged in
-    authService.onAuthStateChanged((user) => {
+    window.firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
             window.dispatchEvent(new CustomEvent('userAuthenticated', { detail: { user } }));
@@ -29,7 +36,8 @@ export async function handleLogin() {
     }
 
     try {
-        await authService.signIn(email, password);
+        await waitForFirebase();
+        await window.firebase.auth().signInWithEmailAndPassword(email, password);
         // Auth state change will handle showing main app
     } catch (error) {
         alert('Login failed: ' + error.message);
@@ -56,7 +64,8 @@ export async function handleSignup() {
 
     try {
         console.log('Attempting to sign up...');
-        await authService.signUp(email, password);
+        await waitForFirebase();
+        await window.firebase.auth().createUserWithEmailAndPassword(email, password);
         console.log('Signup successful, showing onboarding');
         // Show onboarding instead of main app
         window.dispatchEvent(new CustomEvent('showOnboarding'));
@@ -75,7 +84,8 @@ export function handleGuestLogin() {
 // Handle logout
 export async function handleLogout() {
     try {
-        await authService.signOut();
+        await waitForFirebase();
+        await window.firebase.auth().signOut();
         // Auth state change will handle showing login page
     } catch (error) {
         alert('Logout failed: ' + error.message);
