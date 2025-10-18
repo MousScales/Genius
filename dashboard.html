@@ -58,9 +58,6 @@
                             <p id="dropdownMajor">Major</p>
                         </div>
                         <div class="profile-divider"></div>
-                        <button id="settingsBtn" class="dropdown-item">
-                            <span>⚙️</span> Settings
-                        </button>
                         <button id="logoutBtn" class="dropdown-item">
                             <span>🚪</span> Logout
                         </button>
@@ -83,34 +80,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="settings-modal">
-        <div class="settings-modal-content">
-            <div class="settings-header">
-                <h2>Settings</h2>
-                <button id="closeSettingsBtn" class="close-settings-btn">×</button>
-            </div>
-            <div class="settings-body">
-                <div class="settings-section">
-                    <h3>OpenAI API Key</h3>
-                    <p class="settings-description">Add your OpenAI API key to use the Chat with Genius feature.</p>
-                    <div class="input-group">
-                        <input type="password" id="openaiApiKey" placeholder="Enter your OpenAI API key" class="settings-input">
-                        <button id="toggleApiKey" class="toggle-visibility-btn" title="Toggle visibility">👁️</button>
-                    </div>
-                    <p class="settings-help">
-                        <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">
-                            Get your API key from OpenAI Platform
-                        </a>
-                    </p>
-                </div>
-            </div>
-            <div class="settings-footer">
-                <button id="saveSettingsBtn" class="save-settings-btn">Save Settings</button>
-                <button id="cancelSettingsBtn" class="cancel-settings-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         // Wait for Firebase to be available
@@ -316,10 +285,6 @@
             profileDropdown.classList.remove('show');
         });
 
-        // Settings button
-        document.getElementById('settingsBtn').addEventListener('click', () => {
-            openSettingsModal();
-        });
 
         // Logout button
         document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -332,90 +297,6 @@
             }
         });
 
-        // Settings modal functionality
-        function openSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            modal.style.display = 'flex';
-            
-            // Load current API key
-            const currentUserData = localStorage.getItem('currentUser');
-            if (currentUserData) {
-                const currentUser = JSON.parse(currentUserData);
-                document.getElementById('openaiApiKey').value = currentUser.openaiApiKey || '';
-            }
-            
-            // Trigger smooth transition
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
-        }
-
-        function closeSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            modal.classList.remove('show');
-            
-            // Wait for transition to complete before hiding
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-
-        // Settings modal event listeners
-        document.getElementById('closeSettingsBtn').addEventListener('click', closeSettingsModal);
-        document.getElementById('cancelSettingsBtn').addEventListener('click', closeSettingsModal);
-        
-        // Close modal when clicking outside
-        document.getElementById('settingsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'settingsModal') {
-                closeSettingsModal();
-            }
-        });
-
-        // Toggle API key visibility
-        document.getElementById('toggleApiKey').addEventListener('click', () => {
-            const input = document.getElementById('openaiApiKey');
-            const button = document.getElementById('toggleApiKey');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                button.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                button.textContent = '👁️';
-            }
-        });
-
-        // Save settings
-        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-            const apiKey = document.getElementById('openaiApiKey').value.trim();
-            
-            if (!apiKey) {
-                alert('Please enter your OpenAI API key.');
-                return;
-            }
-
-            try {
-                const currentUserData = localStorage.getItem('currentUser');
-                if (currentUserData) {
-                    const currentUser = JSON.parse(currentUserData);
-                    currentUser.openaiApiKey = apiKey;
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    // Also save to Firebase profile
-                    const userService = window.userService;
-                    await userService.saveProfile(currentUser.uid, { openaiApiKey: apiKey });
-                    
-                    console.log('API key saved successfully');
-                    closeSettingsModal();
-                    
-                    // Show success message
-                    alert('Settings saved successfully! You can now use Chat with Genius.');
-                }
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                alert('Error saving settings. Please try again.');
-            }
-        });
 
         // Load and display classes
         async function loadClasses() {
