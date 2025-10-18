@@ -792,3 +792,6 @@ export function cancelClassCreation() {
 window.addClass = addClass;
 window.createClass = createClass;
 window.cancelClassCreation = cancelClassCreation;
+
+// ES6 Module Exports
+export { addClass, createClass, cancelClassCreation };
