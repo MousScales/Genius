@@ -2288,8 +2288,11 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     <!-- Import Math.js for scientific calculations -->
     <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
     
-    <!-- Load Simple Genius Chat -->
-    <script src="js/geniusChat-simple.js?v=1"></script>
+    <!-- Load Firebase Service first -->
+    <script type="module" src="js/firebase-service.js?v=5"></script>
+    
+    <!-- Load Genius Chat Module -->
+    <script type="module" src="js/geniusChat.js?v=5"></script>
 </body>
 </html>
 

@@ -503,11 +503,19 @@ export const chatService = {
     }
 };
 
+// Set global variables for easy access
+window.classService = classService;
+window.authService = authService;
+window.documentService = documentService;
+window.folderService = folderService;
+window.studyGuideService = studyGuideService;
+window.chatService = chatService;
+
 console.log('Firebase services initialized:', { 
     classService, 
     authService, 
     documentService, 
     folderService, 
-    studyGuideService,
-    chatService
+    studyGuideService, 
+    chatService 
 });

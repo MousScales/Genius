@@ -710,9 +710,26 @@ Always be friendly, supportive, and educational in your responses. Use emojis, h
         const apiKey = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
         
         try {
-            // Import the CSharpFlashcardService to use the same file reading method
-            const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-            const flashcardService = new CSharpFlashcardService();
+            // Use global CSharpFlashcardService if available, otherwise create a simple version
+            let flashcardService;
+            if (window.CSharpFlashcardService) {
+                flashcardService = new window.CSharpFlashcardService();
+            } else {
+                // Simple fallback for file processing
+                flashcardService = {
+                    generateFlashcardsWithAssistants: async (file, count, showThinking = true) => {
+                        // Simple text extraction fallback
+                        if (file.type.startsWith('text/')) {
+                            const text = await file.text();
+                            return [{
+                                question: `What is the main content of ${file.name}?`,
+                                answer: text.substring(0, 200) + '...'
+                            }];
+                        }
+                        return [];
+                    }
+                };
+            }
             
             // Set the API key for the flashcard service
             flashcardService.azureConfig = {
@@ -942,8 +959,20 @@ IMPORTANT:
 
     async loadSavedChats() {
         try {
-            // Try Firebase first
-            const { chatService } = await import('./firebase-service.js');
+            // Try Firebase first using global service
+            let chatService;
+            if (window.chatService) {
+                chatService = window.chatService;
+            } else {
+                // Fallback to localStorage only
+                const savedChats = localStorage.getItem('genius_chats');
+                if (savedChats) {
+                    this.chats = JSON.parse(savedChats);
+                    this.updateSidebar();
+                }
+                return;
+            }
+            
             const chats = await chatService.getGeniusChats(this.currentUser.uid);
             
             if (chats.length > 0) {
@@ -958,8 +987,8 @@ IMPORTANT:
             if (savedChats) {
                 this.chats = JSON.parse(savedChats);
                 
-                // Migrate to Firebase
-                if (this.chats.length > 0) {
+                // Migrate to Firebase if service is available
+                if (this.chats.length > 0 && chatService) {
                     console.log('Migrating genius chats from localStorage to Firebase...');
                     for (const chat of this.chats) {
                         if (chat.id && chat.messages && chat.messages.length > 0) {
@@ -984,22 +1013,24 @@ IMPORTANT:
 
     async saveCurrentChat() {
         try {
-            // Save to Firebase
-            const { chatService } = await import('./firebase-service.js');
-            
-            // Save each chat individually
-            for (const chat of this.chats) {
-                if (chat.id && chat.messages && chat.messages.length > 0) {
-                    // Check if chat already exists in Firebase by trying to update it first
-                    try {
-                        await chatService.updateGeniusChat(this.currentUser.uid, chat.id, chat);
-                    } catch (error) {
-                        // If update fails, it might not exist, so create it
-                        await chatService.saveGeniusChat(this.currentUser.uid, chat);
+            // Save to Firebase if service is available
+            if (window.chatService) {
+                const chatService = window.chatService;
+                
+                // Save each chat individually
+                for (const chat of this.chats) {
+                    if (chat.id && chat.messages && chat.messages.length > 0) {
+                        // Check if chat already exists in Firebase by trying to update it first
+                        try {
+                            await chatService.updateGeniusChat(this.currentUser.uid, chat.id, chat);
+                        } catch (error) {
+                            // If update fails, it might not exist, so create it
+                            await chatService.saveGeniusChat(this.currentUser.uid, chat);
+                        }
                     }
                 }
+                console.log('Genius chats saved to Firebase');
             }
-            console.log('Genius chats saved to Firebase');
         } catch (error) {
             console.error('Error saving genius chats to Firebase:', error);
         }
