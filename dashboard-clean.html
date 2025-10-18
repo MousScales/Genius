@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+<body>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Configuration -->
+    <script src="js/config.js"></script>
+    
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header-bar">
+            <div class="header-left">
+                <h1 class="logo">Genius</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info" id="userInfo">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <!-- Profile Section -->
+            <div class="profile-section">
+                <h2>Profile Information</h2>
+                <div class="profile-info" id="profileInfo">
+                    <div class="loading">Loading profile...</div>
+                </div>
+            </div>
+
+            <!-- Classes Section -->
+            <div class="classes-section">
+                <div class="section-header">
+                    <h2>Your Classes</h2>
+                    <button class="add-class-btn" id="addClassBtn">+ Add Class</button>
+                </div>
+                <div class="classes-grid" id="classesGrid">
+                    <div class="loading">Loading classes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase services
+        import { auth, onAuthStateChanged, signOut } from './firebase-config.js';
+        import { userService, classService, logout } from './js/firebase-services.js';
+        
+        console.log('🚀 Dashboard starting...');
+        
+        let currentUser = null;
+        
+        // Check authentication state
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log('✅ User authenticated:', user.uid);
+                currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                };
+                
+                // Save to localStorage for compatibility
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Initialize dashboard
+                await initializeDashboard();
+            } else {
+                console.log('❌ No user authenticated, redirecting to login');
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Initialize dashboard
+        async function initializeDashboard() {
+            console.log('🎯 Initializing dashboard...');
+            
+            // Load profile info
+            await loadProfileInfo();
+            
+            // Load classes
+            await loadClasses();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            console.log('✅ Dashboard initialized successfully');
+        }
+        
+        // Load profile information
+        async function loadProfileInfo() {
+            try {
+                console.log('📖 Loading profile info...');
+                
+                // Try to load from Firebase
+                const profile = await userService.getProfile(currentUser.uid);
+                
+                if (profile) {
+                    console.log('✅ Profile loaded from Firebase:', profile);
+                    displayProfile(profile);
+                } else {
+                    console.log('⚠️ No profile found, creating default');
+                    const defaultProfile = {
+                        name: currentUser.displayName || 'User',
+                        email: currentUser.email,
+                        createdAt: new Date().toISOString()
+                    };
+                    await userService.saveProfile(currentUser.uid, defaultProfile);
+                    displayProfile(defaultProfile);
+                }
+            } catch (error) {
+                console.error('❌ Error loading profile:', error);
+                displayProfile({
+                    name: currentUser.displayName || 'User',
+                    email: currentUser.email,
+                    error: 'Failed to load profile'
+                });
+            }
+        }
+        
+        // Display profile information
+        function displayProfile(profile) {
+            const profileInfo = document.getElementById('profileInfo');
+            profileInfo.innerHTML = `
+                <div class="profile-card">
+                    <h3>${profile.name || 'User'}</h3>
+                    <p><strong>Email:</strong> ${profile.email || 'N/A'}</p>
+                    <p><strong>User ID:</strong> ${currentUser.uid}</p>
+                    <p><strong>Created:</strong> ${profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Unknown'}</p>
+                    ${profile.error ? `<p class="error">${profile.error}</p>` : ''}
+                </div>
+            `;
+        }
+        
+        // Load classes
+        async function loadClasses() {
+            try {
+                console.log('📚 Loading classes...');
+                
+                // Try to load from Firebase
+                const classes = await classService.getClasses(currentUser.uid);
+                
+                console.log('✅ Classes loaded from Firebase:', classes.length);
+                displayClasses(classes);
+                
+            } catch (error) {
+                console.error('❌ Error loading classes:', error);
+                displayClasses([]);
+            }
+        }
+        
+        // Display classes
+        function displayClasses(classes) {
+            const classesGrid = document.getElementById('classesGrid');
+            
+            if (classes.length === 0) {
+                classesGrid.innerHTML = `
+                    <div class="no-classes">
+                        <h3>No classes yet</h3>
+                        <p>Click "Add Class" to create your first class</p>
+                    </div>
+                `;
+            } else {
+                classesGrid.innerHTML = classes.map(classData => `
+                    <div class="class-card" data-class-id="${classData.id}">
+                        <h3>${classData.name || 'Untitled Class'}</h3>
+                        <p><strong>Instructor:</strong> ${classData.instructor || 'N/A'}</p>
+                        <p><strong>Level:</strong> ${classData.level || 'N/A'}</p>
+                        <p><strong>Term:</strong> ${classData.term || 'N/A'}</p>
+                        <div class="class-actions">
+                            <button class="btn btn-primary" onclick="viewClass('${classData.id}')">View</button>
+                            <button class="btn btn-danger" onclick="deleteClass('${classData.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                try {
+                    console.log('🚪 Logout button clicked');
+                    await logout();
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('❌ Logout error:', error);
+                    alert('Error during logout. Please try again.');
+                }
+            });
+            
+            // Add class button
+            document.getElementById('addClassBtn').addEventListener('click', () => {
+                console.log('➕ Add class button clicked');
+                // For now, just show an alert
+                alert('Add class functionality will be implemented next!');
+            });
+        }
+        
+        // Global functions for class actions
+        window.viewClass = function(classId) {
+            console.log('👁️ Viewing class:', classId);
+            alert(`Viewing class: ${classId}`);
+        };
+        
+        window.deleteClass = async function(classId) {
+            if (confirm('Are you sure you want to delete this class?')) {
+                try {
+                    console.log('🗑️ Deleting class:', classId);
+                    const success = await classService.deleteClass(currentUser.uid, classId);
+                    if (success) {
+                        console.log('✅ Class deleted successfully');
+                        await loadClasses(); // Reload classes
+                    } else {
+                        alert('Failed to delete class');
+                    }
+                } catch (error) {
+                    console.error('❌ Error deleting class:', error);
+                    alert('Error deleting class');
+                }
+            }
+        };
+    </script>
+</body>
+</html>

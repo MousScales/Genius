@@ -1,29 +1,68 @@
-// Import Firebase using CDN
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+// Firebase Configuration and Initialization
+// This file handles all Firebase setup and exports clean services
 
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
-  authDomain: "genius-b5656.firebaseapp.com",
-  projectId: "genius-b5656",
-  storageBucket: "genius-b5656.firebasestorage.app",
-  messagingSenderId: "567988128391",
-  appId: "1:567988128391:web:8a48294d736ec4013f8622",
-  measurementId: "G-3SEG2XJQMP"
+    apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+    authDomain: "genius-b5656.firebaseapp.com",
+    projectId: "genius-b5656",
+    storageBucket: "genius-b5656.firebasestorage.app",
+    messagingSenderId: "567988128391",
+    appId: "1:567988128391:web:8a48294d736ec4013f8622",
+    measurementId: "G-3SEG2XJQMP"
 };
 
+// Wait for Firebase to load
+function waitForFirebase() {
+    return new Promise((resolve) => {
+        if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+            resolve();
+        } else {
+            const checkFirebase = setInterval(() => {
+                if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+                    clearInterval(checkFirebase);
+                    resolve();
+                }
+            }, 100);
+        }
+    });
+}
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
+let firebaseApp, firebaseAuth, firebaseDb, googleProvider;
 
-console.log('Firebase initialized successfully');
+async function initFirebase() {
+    try {
+        console.log('🔥 Initializing Firebase...');
+        await waitForFirebase();
+        
+        // Initialize Firebase
+        firebaseApp = window.firebase.initializeApp(firebaseConfig);
+        firebaseAuth = window.firebase.auth();
+        firebaseDb = window.firebase.firestore();
+        googleProvider = new window.firebase.auth.GoogleAuthProvider();
 
-// Export Firebase services
-export { app, analytics, db, auth, storage };
+        console.log('✅ Firebase initialized successfully');
+        
+        // Set global variables for compatibility
+        window.firebaseAuth = firebaseAuth;
+        window.firebaseDb = firebaseDb;
+        window.googleProvider = googleProvider;
+        
+        return { firebaseApp, firebaseAuth, firebaseDb, googleProvider };
+    } catch (error) {
+        console.error('❌ Error initializing Firebase:', error);
+        throw error;
+    }
+}
+
+// Initialize Firebase immediately
+initFirebase();
+
+// Export everything
+export { 
+    firebaseApp, 
+    firebaseAuth as auth, 
+    firebaseDb as db, 
+    googleProvider 
+};
