@@ -52,6 +52,22 @@ async function initFirebaseServices() {
     where = (ref, field, op, value) => ref.where(field, op, value);
     
     console.log('Firebase services initialized in firebase-service.js');
+    
+    // Set global variables after Firebase is ready
+    window.userService = userService;
+    window.classService = classService;
+    window.authService = authService;
+    window.documentService = documentService;
+    window.folderService = folderService;
+    window.studyGuideService = studyGuideService;
+    window.chatService = chatService;
+    
+    console.log('Global services set:', {
+        userService: !!window.userService,
+        classService: !!window.classService,
+        authService: !!window.authService,
+        logout: !!window.logout
+    });
 }
 
 // Initialize Firebase services after config is loaded
@@ -544,13 +560,7 @@ const chatService = {
     }
 };
 
-// Set global variables for easy access
-window.classService = classService;
-window.authService = authService;
-window.documentService = documentService;
-window.folderService = folderService;
-window.studyGuideService = studyGuideService;
-window.chatService = chatService;
+// Global variables are now set inside initFirebaseServices() after Firebase is ready
 
 // Global logout function
 window.logout = async function() {
