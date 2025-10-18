@@ -48,7 +48,7 @@ initFirebaseServices();
 // Auth functions will be accessed through window.firebase.auth()
 
 // User Profile Service
-export class UserService {
+class UserService {
     // Save user profile data
     async saveProfile(userId, profileData) {
         try {
@@ -83,7 +83,7 @@ export class UserService {
 }
 
 // Class management service
-export class ClassService {
+class ClassService {
     // Add a new class to user's subcollection
     async addClass(userId, classData) {
         try {
@@ -150,7 +150,7 @@ export class ClassService {
 }
 
 // Authentication service
-export class AuthService {
+class AuthService {
     constructor() {
         // Auth is accessed through window.firebase.auth()
     }
@@ -199,7 +199,7 @@ export class AuthService {
 }
 
 // Document management service
-export class DocumentService {
+class DocumentService {
     // Save a document to Firebase
     async saveDocument(userId, classId, documentData) {
         try {
@@ -266,7 +266,7 @@ export class DocumentService {
 }
 
 // Folder management service
-export class FolderService {
+class FolderService {
     // Save a folder to Firebase
     async saveFolder(userId, classId, folderData) {
         try {
@@ -333,7 +333,7 @@ export class FolderService {
 }
 
 // Study guide management service
-export class StudyGuideService {
+class StudyGuideService {
     // Save a study guide to Firebase
     async saveStudyGuide(userId, classId, studyGuideData) {
         try {
@@ -400,12 +400,12 @@ export class StudyGuideService {
 }
 
 // Create singleton instances
-export const userService = new UserService();
-export const classService = new ClassService();
-export const authService = new AuthService();
-export const documentService = new DocumentService();
-export const folderService = new FolderService();
-export const studyGuideService = new StudyGuideService();
+const userService = new UserService();
+const classService = new ClassService();
+const authService = new AuthService();
+const documentService = new DocumentService();
+const folderService = new FolderService();
+const studyGuideService = new StudyGuideService();
 
 // Chat Service for Genius Chat functionality
 class ChatService {
@@ -482,7 +482,7 @@ class ChatService {
 
 // Lazy initialization of chatService to ensure Firebase is ready
 let _chatService = null;
-export const chatService = {
+const chatService = {
     get instance() {
         if (!_chatService) {
             _chatService = new ChatService();
