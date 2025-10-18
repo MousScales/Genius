@@ -480,7 +480,28 @@ class ChatService {
     }
 }
 
-export const chatService = new ChatService();
+// Lazy initialization of chatService to ensure Firebase is ready
+let _chatService = null;
+export const chatService = {
+    get instance() {
+        if (!_chatService) {
+            _chatService = new ChatService();
+        }
+        return _chatService;
+    },
+    async getGeniusChats(userId) {
+        return this.instance.getGeniusChats(userId);
+    },
+    async saveGeniusChat(userId, chatData) {
+        return this.instance.saveGeniusChat(userId, chatData);
+    },
+    async updateGeniusChat(userId, chatId, chatData) {
+        return this.instance.updateGeniusChat(userId, chatId, chatData);
+    },
+    async deleteGeniusChat(userId, chatId) {
+        return this.instance.deleteGeniusChat(userId, chatId);
+    }
+};
 
 console.log('Firebase services initialized:', { 
     classService, 
