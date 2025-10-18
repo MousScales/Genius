@@ -127,6 +127,27 @@
         // Initialize Firebase
         initFirebase();
         
+        // Wait for Firebase services to be available before initializing dashboard
+        async function waitForFirebaseServices() {
+            let attempts = 0;
+            while ((!window.userService || !window.classService || !window.logout) && attempts < 100) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.userService || !window.classService || !window.logout) {
+                console.error('Firebase services not available after waiting');
+                alert('Firebase services are not available. Please refresh the page.');
+                return;
+            }
+            
+            console.log('Firebase services are ready, initializing dashboard...');
+            initializeDashboard();
+        }
+        
+        // Initialize dashboard after Firebase services are ready
+        function initializeDashboard() {
+        
         // Simple addClass function - inline to avoid module issues
         function addClass() {
             console.log('Add Class clicked - function called!');
@@ -185,19 +206,6 @@
         // Load profile info
         async function loadProfileInfo() {
             let profile = {};
-            
-            // Wait for Firebase services to be available
-            let attempts = 0;
-            while (!window.userService && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            if (!window.userService) {
-                console.error('UserService not available after waiting');
-                alert('Firebase services are not available. Please refresh the page.');
-                return;
-            }
             
             // Try to load from Firebase first
             try {
@@ -413,19 +421,6 @@
         async function loadClasses() {
             let classes = [];
             
-            // Wait for Firebase services to be available
-            let attempts = 0;
-            while (!window.classService && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            if (!window.classService) {
-                console.error('ClassService not available after waiting');
-                alert('Firebase services are not available. Please refresh the page.');
-                return;
-            }
-            
             // Try to load from Firebase first
             try {
                 const classService = window.classService;
@@ -565,18 +560,6 @@
 
         // Load class statistics
         async function loadClassStats(classes) {
-            // Wait for Firebase services to be available
-            let attempts = 0;
-            while ((!window.documentService || !window.studyGuideService) && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            if (!window.documentService || !window.studyGuideService) {
-                console.error('Document or StudyGuide services not available after waiting');
-                return;
-            }
-            
             for (const classData of classes) {
                 try {
                     // Import services
@@ -2299,6 +2282,14 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 this.updateDisplay();
             }
         }
+        
+        // Close the initializeDashboard function
+        }
+        
+        // Start waiting for Firebase services when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            waitForFirebaseServices();
+        });
     </script>
     
     <!-- Import Configuration -->
