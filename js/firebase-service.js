@@ -511,6 +511,53 @@ window.folderService = folderService;
 window.studyGuideService = studyGuideService;
 window.chatService = chatService;
 
+// Global logout function
+window.logout = async function() {
+    try {
+        console.log('Global logout function called');
+        
+        // Wait for Firebase to be available
+        let attempts = 0;
+        while (!window.firebase && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!window.firebase) {
+            console.error('Firebase not available for logout');
+            throw new Error('Firebase not available');
+        }
+        
+        // Sign out from Firebase
+        await window.firebase.auth().signOut();
+        console.log('Successfully signed out from Firebase');
+        
+        // Clear localStorage
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('genius_chats');
+        
+        // Clear all user-specific localStorage data
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('profile_') || key.includes('classes_') || key.includes('suggestions_'))) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        console.log('Cleared all user data from localStorage');
+        
+        // Redirect to login page
+        window.location.href = 'login.html';
+        
+    } catch (error) {
+        console.error('Logout error:', error);
+        throw error;
+    }
+};
+
 console.log('Firebase services initialized:', { 
     classService, 
     authService, 

@@ -316,11 +316,11 @@
         // Logout button
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
-                await signOut();
-                localStorage.removeItem('currentUser');
-                window.location.href = 'login.html';
+                console.log('Logout button clicked');
+                await window.logout();
             } catch (error) {
                 console.error('Logout error:', error);
+                alert('Error during logout. Please try again.');
             }
         });
 
