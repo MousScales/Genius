@@ -1,6 +1,19 @@
-// Class form module
-import { getCurrentUser } from './auth.js';
-import { classService } from './firebase-service.js';
+// Class form module using global Firebase SDK
+// Wait for Firebase to be available
+let classService;
+
+async function initFirebaseServices() {
+    while (!window.firebase) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Import classService after Firebase is ready
+    const { classService: importedClassService } = await import('./firebase-service.js');
+    classService = importedClassService;
+}
+
+// Initialize Firebase services
+initFirebaseServices();
 
 // Store uploaded image URL
 let uploadedImageUrl = null;
@@ -616,12 +629,13 @@ export async function createClass(event) {
     
     console.log('Creating class...');
     
-    const user = getCurrentUser();
-    if (!user) {
+    const currentUserData = localStorage.getItem('currentUser');
+    if (!currentUserData) {
         alert('Please log in to create a class');
         console.error('No user logged in');
         return;
     }
+    const user = JSON.parse(currentUserData);
     
     console.log('User verified:', user.uid);
     
@@ -753,7 +767,8 @@ export function cancelClassCreation() {
     // Show the add class button again (if there are classes)
     const addClassBtn = document.getElementById('addClassBtn');
     if (addClassBtn) {
-        const user = getCurrentUser();
+        const currentUserData = localStorage.getItem('currentUser');
+        const user = currentUserData ? JSON.parse(currentUserData) : null;
         const classes = JSON.parse(localStorage.getItem(`classes_${user?.uid}`) || localStorage.getItem('classes') || '[]');
         if (classes.length > 0) {
             addClassBtn.style.display = 'flex';

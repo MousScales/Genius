@@ -111,7 +111,20 @@
     </div>
 
     <script type="module">
-        import { auth, signOut } from './firebase-init.js';
+        // Wait for Firebase to be available
+        let auth, signOut;
+        
+        async function initFirebase() {
+            while (!window.firebase) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            auth = window.firebase.auth();
+            signOut = () => window.firebase.auth().signOut();
+        }
+        
+        // Initialize Firebase
+        initFirebase();
+        
         import { addClass } from './js/classForm.js';
         import { showClassView, closeClassView } from './js/classView.js';
         
@@ -266,7 +279,7 @@
         // Logout button
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
-                await signOut(auth);
+                await signOut();
                 localStorage.removeItem('currentUser');
                 window.location.href = 'login.html';
             } catch (error) {
