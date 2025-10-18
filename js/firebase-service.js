@@ -435,12 +435,14 @@ class ChatService {
             console.log('Getting genius chats for user:', userId);
             console.log('db object:', db);
             
+            // Wait for Firebase to be ready
             if (!db) {
-                throw new Error('Firebase database not initialized');
+                console.log('Firebase not ready, waiting...');
+                await this.waitForFirebase();
             }
             
-            const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
-            const snapshot = await chatsRef.get();
+            const chatsRef = collection(db, 'users', userId, 'geniusChats');
+            const snapshot = await getDocs(chatsRef);
             return snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -452,8 +454,8 @@ class ChatService {
                 console.log('Permission denied for genius chats, trying to initialize...');
                 try {
                     // Try to create an empty chat to initialize the collection
-                    const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
-                    await chatsRef.add({
+                    const chatsRef = collection(db, 'users', userId, 'geniusChats');
+                    await addDoc(chatsRef, {
                         title: 'Welcome to Genius Chat',
                         messages: [],
                         createdAt: new Date(),
@@ -466,6 +468,17 @@ class ChatService {
                 }
             }
             return [];
+        }
+    }
+    
+    async waitForFirebase() {
+        let attempts = 0;
+        while (!db && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        if (!db) {
+            throw new Error('Firebase not available after waiting');
         }
     }
 

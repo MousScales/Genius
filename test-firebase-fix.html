@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Firebase Fix Test</h1>
+        <p>This page tests if the Firebase initialization error has been fixed.</p>
+        
+        <div id="testResults"></div>
+        
+        <button onclick="runTests()">Run Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <!-- Load Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    
+    <!-- Load our services -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase-service.js"></script>
+    <script src="js/geniusChat.js"></script>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        async function runTests() {
+            clearResults();
+            addResult('Starting Firebase fix tests...', 'info');
+            
+            try {
+                // Test 1: Check if Firebase is available
+                addResult('Test 1: Checking Firebase availability...', 'info');
+                if (typeof window.firebase !== 'undefined') {
+                    addResult('✓ Firebase SDK loaded successfully', 'success');
+                } else {
+                    addResult('✗ Firebase SDK not loaded', 'error');
+                    return;
+                }
+
+                // Test 2: Check if config is loaded
+                addResult('Test 2: Checking config loading...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for config
+                
+                if (window.FIREBASE_API_KEY) {
+                    addResult('✓ Firebase config loaded', 'success');
+                } else {
+                    addResult('✗ Firebase config not loaded', 'error');
+                }
+
+                // Test 3: Check if services are initialized
+                addResult('Test 3: Checking service initialization...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for services
+                
+                if (window.chatService) {
+                    addResult('✓ Chat service available', 'success');
+                } else {
+                    addResult('✗ Chat service not available', 'error');
+                }
+
+                // Test 4: Test chat loading (this was the original error)
+                addResult('Test 4: Testing chat loading...', 'info');
+                try {
+                    // Simulate a user
+                    const testUser = {
+                        uid: 'test-user-123',
+                        email: 'test@example.com'
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(testUser));
+                    
+                    // Try to load chats
+                    const chats = await window.chatService.getGeniusChats(testUser.uid);
+                    addResult(`✓ Chat loading successful - found ${chats.length} chats`, 'success');
+                } catch (error) {
+                    addResult(`✗ Chat loading failed: ${error.message}`, 'error');
+                }
+
+                // Test 5: Test Genius Chat initialization
+                addResult('Test 5: Testing Genius Chat initialization...', 'info');
+                try {
+                    if (window.geniusChat) {
+                        addResult('✓ Genius Chat initialized successfully', 'success');
+                    } else {
+                        addResult('✗ Genius Chat not initialized', 'error');
+                    }
+                } catch (error) {
+                    addResult(`✗ Genius Chat initialization failed: ${error.message}`, 'error');
+                }
+
+                addResult('All tests completed!', 'info');
+                
+            } catch (error) {
+                addResult(`Test failed with error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -973,6 +973,9 @@ IMPORTANT:
                 return;
             }
             
+            // Wait a bit for Firebase to be ready
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             const chats = await chatService.getGeniusChats(this.currentUser.uid);
             
             if (chats.length > 0) {
