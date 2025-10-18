@@ -1,7 +1,41 @@
 // Onboarding logic with Ghost Text Autocomplete
-import { db, collection, addDoc, doc, setDoc } from './firebase-init.js';
-
 console.log('Onboarding script loaded');
+
+// Wait for Firebase to be available
+let db, collection, addDoc, doc, setDoc;
+
+async function initFirebase() {
+    // Wait for Firebase to be available
+    while (!window.firebase) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+        authDomain: "genius-b5656.firebaseapp.com",
+        projectId: "genius-b5656",
+        storageBucket: "genius-b5656.firebasestorage.app",
+        messagingSenderId: "567988128391",
+        appId: "1:567988128391:web:8a48294d736ec4013f8622",
+        measurementId: "G-3SEG2XJQMP"
+    };
+    
+    // Initialize Firebase
+    window.firebase.initializeApp(firebaseConfig);
+    db = window.firebase.firestore();
+    
+    // Get Firestore functions
+    collection = window.firebase.firestore().collection;
+    addDoc = window.firebase.firestore().addDoc;
+    doc = window.firebase.firestore().doc;
+    setDoc = window.firebase.firestore().setDoc;
+    
+    console.log('Firebase initialized in onboarding');
+}
+
+// Initialize Firebase
+initFirebase();
 
 // Check if user is logged in
 const currentUserData = localStorage.getItem('currentUser');

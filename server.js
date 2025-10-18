@@ -50,6 +50,19 @@ app.get('/firebase-service.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'firebase-service.js'));
 });
 
+// Serve JavaScript files from js/ directory
+app.get('/js/:filename', (req, res) => {
+    const filename = req.params.filename;
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'js', filename));
+});
+
+// Serve onboarding.js from root
+app.get('/onboarding.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'onboarding.js'));
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
