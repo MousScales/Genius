@@ -34,6 +34,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.APP_CONFIG.OPENAI_API_KEY = envConfig.openaiApiKey;
         window.APP_CONFIG.GENIUS_CHAT_API_KEY = envConfig.openaiApiKey;
     }
+    
+    // Set Firebase config globally for firebase-service.js
+    window.FIREBASE_API_KEY = envConfig.firebaseApiKey;
+    window.FIREBASE_AUTH_DOMAIN = envConfig.firebaseAuthDomain;
+    window.FIREBASE_PROJECT_ID = envConfig.firebaseProjectId;
+    window.FIREBASE_STORAGE_BUCKET = envConfig.firebaseStorageBucket;
+    window.FIREBASE_MESSAGING_SENDER_ID = envConfig.firebaseMessagingSenderId;
+    window.FIREBASE_APP_ID = envConfig.firebaseAppId;
+    window.FIREBASE_MEASUREMENT_ID = envConfig.firebaseMeasurementId;
+    
+    console.log('Firebase config loaded:', {
+        apiKey: !!window.FIREBASE_API_KEY,
+        authDomain: !!window.FIREBASE_AUTH_DOMAIN,
+        projectId: !!window.FIREBASE_PROJECT_ID
+    });
 });
 
 // Function to get OpenAI API key with fallbacks

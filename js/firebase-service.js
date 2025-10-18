@@ -8,6 +8,11 @@ async function initFirebaseServices() {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     
+    // Wait for Firebase config to be loaded
+    while (!window.FIREBASE_API_KEY) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
     // Initialize Firebase if not already initialized
     if (!window.firebase.apps || window.firebase.apps.length === 0) {
         const firebaseConfig = {
@@ -26,6 +31,12 @@ async function initFirebaseServices() {
     // Get Firebase services
     db = window.firebase.firestore();
     firebaseAuth = window.firebase.auth();
+    
+    console.log('Firebase services initialized:', {
+        db: !!db,
+        firebaseAuth: !!firebaseAuth,
+        firestore: !!window.firebase.firestore
+    });
     
     // Get Firestore functions - use the proper API
     collection = (path) => db.collection(path);
