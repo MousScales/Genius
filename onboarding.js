@@ -21,29 +21,104 @@ async function initFirebase() {
         measurementId: "G-3SEG2XJQMP"
     };
     
-    // Initialize Firebase
-    window.firebase.initializeApp(firebaseConfig);
-    db = window.firebase.firestore();
-    
-    // Get Firestore functions
-    collection = window.firebase.firestore().collection;
-    addDoc = window.firebase.firestore().addDoc;
-    doc = window.firebase.firestore().doc;
-    setDoc = window.firebase.firestore().setDoc;
-    
-    console.log('Firebase initialized in onboarding');
+    try {
+        // Initialize Firebase
+        window.firebase.initializeApp(firebaseConfig);
+        
+        // Wait for Firebase to be fully initialized
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Initialize Firestore with proper error handling
+        if (window.firebase.firestore) {
+            db = window.firebase.firestore();
+            
+            // Get Firestore functions safely
+            collection = window.firebase.firestore().collection;
+            addDoc = window.firebase.firestore().addDoc;
+            doc = window.firebase.firestore().doc;
+            setDoc = window.firebase.firestore().setDoc;
+            
+            console.log('Firebase initialized in onboarding');
+        } else {
+            throw new Error('Firestore not available');
+        }
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        // Continue without Firebase for now
+        db = null;
+    }
 }
 
 // Initialize Firebase
 initFirebase();
 
-// Check if user is logged in
-const currentUserData = localStorage.getItem('currentUser');
-if (!currentUserData) {
-    window.location.href = 'login.html';
+// Check if user is logged in via Firebase
+let currentUser = null;
+
+// Simple auth check without infinite loops
+function checkAuth() {
+    if (window.firebase && window.firebase.auth) {
+        const user = window.firebase.auth().currentUser;
+        if (user) {
+            currentUser = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL
+            };
+            console.log('User authenticated:', currentUser);
+            return true;
+        }
+    }
+    return false;
 }
 
-const currentUser = JSON.parse(currentUserData);
+// Check auth multiple times to catch Google login
+let authCheckCount = 0;
+const maxAuthChecks = 10;
+
+function checkAuthWithRetry() {
+    authCheckCount++;
+    console.log(`Auth check attempt ${authCheckCount}/${maxAuthChecks}`);
+    
+    if (checkAuth()) {
+        console.log('User authenticated successfully');
+        return;
+    }
+    
+    if (authCheckCount < maxAuthChecks) {
+        setTimeout(checkAuthWithRetry, 1000);
+    } else {
+        console.log('No user authenticated after multiple attempts, redirecting to login');
+        window.location.href = 'login.html';
+    }
+}
+
+// Start checking for authentication
+setTimeout(checkAuthWithRetry, 1000);
+
+// Also set up auth state listener for immediate detection
+if (window.firebase && window.firebase.auth) {
+    try {
+        window.firebase.auth().onAuthStateChanged((user) => {
+            console.log('Auth state changed in onboarding:', user);
+            if (user) {
+                currentUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                };
+                console.log('User authenticated via auth state listener:', currentUser);
+            } else {
+                console.log('User signed out');
+                currentUser = null;
+            }
+        });
+    } catch (error) {
+        console.log('Auth state listener not available in onboarding:', error);
+    }
+}
 
 // Check if user has already completed onboarding
 async function checkOnboardingStatus() {
@@ -52,6 +127,21 @@ async function checkOnboardingStatus() {
         while (!db) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
+        
+        // Wait for user authentication (with timeout)
+        let authWaitCount = 0;
+        while ((!currentUser || !currentUser.uid) && authWaitCount < 20) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            authWaitCount++;
+        }
+        
+        if (!currentUser || !currentUser.uid) {
+            console.log('No authenticated user after waiting, redirecting to login');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        console.log('Checking onboarding status for user:', currentUser.uid);
         
         // Check if user profile exists in Firebase
         const userProfileRef = window.firebase.firestore().collection('users').doc(currentUser.uid);
@@ -87,13 +177,17 @@ async function checkOnboardingStatus() {
             const profileData = JSON.parse(existingProfile);
             if (profileData.name && profileData.email && profileData.collegeName) {
                 console.log('User has existing profile data in localStorage, redirecting to dashboard');
-                // Save to Firebase and mark onboarding complete
-                if (db) {
-                    await window.firebase.firestore().collection('users').doc(currentUser.uid).set({
-                        ...profileData,
-                        onboardingComplete: true,
-                        lastLogin: new Date().toISOString()
-                    }, { merge: true });
+                // Save to Firebase and mark onboarding complete (only if user is authenticated)
+                if (db && currentUser && currentUser.uid) {
+                    try {
+                        await window.firebase.firestore().collection('users').doc(currentUser.uid).set({
+                            ...profileData,
+                            onboardingComplete: true,
+                            lastLogin: new Date().toISOString()
+                        }, { merge: true });
+                    } catch (error) {
+                        console.log('Could not save to Firebase, continuing anyway');
+                    }
                 }
                 window.location.href = 'dashboard.html';
                 return;
@@ -108,8 +202,10 @@ async function checkOnboardingStatus() {
     }
 }
 
-// Check onboarding status when page loads
-checkOnboardingStatus();
+// Check onboarding status when page loads (wait for auth first)
+setTimeout(() => {
+    checkOnboardingStatus();
+}, 2000);
 let currentStep = 1;
 let onboardingData = {};
 let universityCache = [];
@@ -317,25 +413,36 @@ async function completeOnboarding() {
     console.log('User:', currentUser);
     console.log('Onboarding data:', onboardingData);
     
+    // Check if user is authenticated
+    if (!currentUser || !currentUser.uid) {
+        console.log('No authenticated user, redirecting to login');
+        window.location.href = 'login.html';
+        return;
+    }
+    
     try {
-        // Save to Firestore in users/{userId} document
-        console.log('Attempting to save to Firestore...');
-        const userRef = doc(db, 'users', currentUser.uid);
-        await setDoc(userRef, {
-            userId: currentUser.uid,
-            email: currentUser.email,
-            name: onboardingData.name,
-            collegeName: onboardingData.college,
-            major: onboardingData.major,
-            level: onboardingData.level,
-            year: onboardingData.year,
-            // API keys are now handled globally, not per user
-            onboardingComplete: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        }, { merge: true });
-        
-        console.log('Profile saved to Firestore for user:', currentUser.uid);
+        // Save to Firestore if available
+        if (db && doc && setDoc) {
+            console.log('Attempting to save to Firestore...');
+            const userRef = doc(db, 'users', currentUser.uid);
+            await setDoc(userRef, {
+                userId: currentUser.uid,
+                email: currentUser.email,
+                name: onboardingData.name,
+                collegeName: onboardingData.college,
+                major: onboardingData.major,
+                level: onboardingData.level,
+                year: onboardingData.year,
+                // API keys are now handled globally, not per user
+                onboardingComplete: true,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }, { merge: true });
+            
+            console.log('Profile saved to Firestore for user:', currentUser.uid);
+        } else {
+            console.log('Firebase not available, saving to localStorage only');
+        }
         
         // Also save to localStorage as backup
         const profileData = {
@@ -360,7 +467,7 @@ async function completeOnboarding() {
         console.error('Error code:', error.code);
         console.error('Error message:', error.message);
         
-        alert(`Firebase Error: ${error.message}\n\nPlease make sure Firestore is enabled in your Firebase Console:\n1. Go to Firebase Console\n2. Click "Firestore Database"\n3. Click "Create Database"\n4. Choose "Start in test mode"\n5. Click "Enable"`);
+        console.log('Firebase not available, continuing with local storage only');
         
         // Save locally and continue anyway
         const profileData = {
@@ -369,10 +476,17 @@ async function completeOnboarding() {
             major: onboardingData.major,
             level: onboardingData.level,
             year: onboardingData.year,
-            // API keys are now handled globally, not per user
+            onboardingComplete: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
         };
         localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profileData));
+        localStorage.setItem('userData', JSON.stringify(profileData));
         localStorage.setItem(`onboarding_${currentUser.uid}`, 'true');
+        
+        console.log('Profile saved locally as backup');
+        console.log('Onboarding completed successfully!');
+        
         window.location.href = 'dashboard.html';
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genius - Login</title>
+    <title>Genius - Sign Up</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     
     <!-- Firebase SDK -->
@@ -29,7 +29,7 @@
             padding: 20px;
         }
 
-        .login-container {
+        .signup-container {
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
@@ -80,7 +80,8 @@
         }
 
         input[type="email"],
-        input[type="password"] {
+        input[type="password"],
+        input[type="text"] {
             width: 100%;
             padding: 15px;
             border: 2px solid rgba(255, 255, 255, 0.1);
@@ -92,7 +93,8 @@
         }
 
         input[type="email"]:focus,
-        input[type="password"]:focus {
+        input[type="password"]:focus,
+        input[type="text"]:focus {
             outline: none;
             border-color: #ffffff;
             background: rgba(255, 255, 255, 0.08);
@@ -100,7 +102,8 @@
         }
 
         input[type="email"]::placeholder,
-        input[type="password"]::placeholder {
+        input[type="password"]::placeholder,
+        input[type="text"]::placeholder {
             color: #888888;
         }
 
@@ -223,18 +226,48 @@
         .footer a:hover {
             text-decoration: underline;
         }
+
+        .password-requirements {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: left;
+            font-size: 14px;
+            color: #cccccc;
+        }
+
+        .password-requirements h4 {
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .password-requirements ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .password-requirements li {
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="signup-container">
         <div class="logo"></div>
-        <h1>Welcome to Genius</h1>
-        <p class="subtitle">Sign in to your account to continue</p>
+        <h1>Create Account</h1>
+        <p class="subtitle">Join Genius and start your learning journey</p>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
         <div id="successMessage" class="success-message" style="display: none;"></div>
 
-        <form id="loginForm">
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" required>
+            </div>
+
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" required>
@@ -243,10 +276,22 @@
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
+                <div class="password-requirements">
+                    <h4>Password Requirements:</h4>
+                    <ul>
+                        <li>At least 6 characters long</li>
+                        <li>Mix of letters and numbers recommended</li>
+                    </ul>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" id="loginBtn">
-                Sign In
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="signupBtn">
+                Create Account
             </button>
         </form>
 
@@ -261,16 +306,16 @@
                 <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18z"/>
                 <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
             </svg>
-            Sign in with Google
+            Sign up with Google
         </button>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Signing you in...</p>
+            <p>Creating your account...</p>
         </div>
 
         <div class="footer">
-            <p>Don't have an account? <a href="#" id="signupLink">Sign up here</a></p>
+            <p>Already have an account? <a href="login.html" id="loginLink">Sign in here</a></p>
         </div>
     </div>
 
@@ -329,45 +374,50 @@
 
         function setLoading(loading) {
             const loadingDiv = document.getElementById('loading');
-            const loginBtn = document.getElementById('loginBtn');
+            const signupBtn = document.getElementById('signupBtn');
             const googleBtn = document.getElementById('googleBtn');
             
             if (loading) {
                 loadingDiv.style.display = 'block';
-                loginBtn.disabled = true;
+                signupBtn.disabled = true;
                 googleBtn.disabled = true;
             } else {
                 loadingDiv.style.display = 'none';
-                loginBtn.disabled = false;
+                signupBtn.disabled = false;
                 googleBtn.disabled = false;
             }
         }
 
         // Authentication functions
-        async function signInWithEmail(email, password) {
+        async function signUpWithEmail(email, password, fullName) {
             try {
-                console.log('Attempting email sign-in with:', email);
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                console.log('Attempting email sign-up with:', email);
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                console.log('Email sign-in successful:', user.uid);
+                // Update the user's display name
+                await user.updateProfile({
+                    displayName: fullName
+                });
+                
+                console.log('Email sign-up successful:', user.uid);
                 return user;
             } catch (error) {
-                console.error('Email sign-in error:', error);
+                console.error('Email sign-up error:', error);
                 throw error;
             }
         }
 
-        async function signInWithGoogle() {
+        async function signUpWithGoogle() {
             try {
-                console.log('Attempting Google sign-in...');
+                console.log('Attempting Google sign-up...');
                 const result = await auth.signInWithPopup(googleProvider);
                 const user = result.user;
                 
-                console.log('Google sign-in successful:', user.uid);
+                console.log('Google sign-up successful:', user.uid);
                 return user;
             } catch (error) {
-                console.error('Google sign-in error:', error);
+                console.error('Google sign-up error:', error);
                 throw error;
             }
         }
@@ -400,7 +450,7 @@
         }
 
         // Redirect after successful authentication
-        async function handleSuccessfulLogin(user) {
+        async function handleSuccessfulSignup(user) {
             saveUserData(user);
             
             const needsOnboarding = !(await checkOnboardingStatus(user));
@@ -414,42 +464,62 @@
             }
         }
 
+        // Validate password
+        function validatePassword(password) {
+            if (password.length < 6) {
+                return 'Password must be at least 6 characters long';
+            }
+            return null;
+        }
+
         // Event listeners
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideMessages();
             setLoading(true);
 
+            const fullName = document.getElementById('fullName').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
 
-            if (!email || !password) {
+            if (!fullName || !email || !password || !confirmPassword) {
                 showError('Please fill in all fields');
                 setLoading(false);
                 return;
             }
 
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                setLoading(false);
+                return;
+            }
+
+            const passwordError = validatePassword(password);
+            if (passwordError) {
+                showError(passwordError);
+                setLoading(false);
+                return;
+            }
+
             try {
-                const user = await signInWithEmail(email, password);
-                await handleSuccessfulLogin(user);
+                const user = await signUpWithEmail(email, password, fullName);
+                await handleSuccessfulSignup(user);
             } catch (error) {
-                let errorMessage = 'Login failed. Please try again.';
+                let errorMessage = 'Sign up failed. Please try again.';
                 
                 switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessage = 'No account found with this email address.';
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = 'Incorrect password. Please try again.';
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'This email is already registered. Please sign in instead.';
                         break;
                     case 'auth/invalid-email':
                         errorMessage = 'Please enter a valid email address.';
                         break;
-                    case 'auth/user-disabled':
-                        errorMessage = 'This account has been disabled.';
+                    case 'auth/weak-password':
+                        errorMessage = 'Password is too weak. Please choose a stronger password.';
                         break;
-                    case 'auth/too-many-requests':
-                        errorMessage = 'Too many failed attempts. Please try again later.';
+                    case 'auth/operation-not-allowed':
+                        errorMessage = 'Email/password accounts are not enabled. Please contact support.';
                         break;
                     default:
                         errorMessage = error.message;
@@ -465,14 +535,14 @@
             setLoading(true);
 
             try {
-                const user = await signInWithGoogle();
-                await handleSuccessfulLogin(user);
+                const user = await signUpWithGoogle();
+                await handleSuccessfulSignup(user);
             } catch (error) {
-                let errorMessage = 'Google sign-in failed. Please try again.';
+                let errorMessage = 'Google sign-up failed. Please try again.';
                 
                 switch (error.code) {
                     case 'auth/popup-closed-by-user':
-                        errorMessage = 'Sign-in was cancelled. Please try again.';
+                        errorMessage = 'Sign-up was cancelled. Please try again.';
                         break;
                     case 'auth/popup-blocked':
                         errorMessage = 'Popup was blocked. Please allow popups and try again.';
@@ -492,15 +562,15 @@
             }
         });
 
-        // Sign up link
-        document.getElementById('signupLink').addEventListener('click', (e) => {
+        // Login link
+        document.getElementById('loginLink').addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = 'signup.html';
+            window.location.href = 'login.html';
         });
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Login page loaded');
+            console.log('Signup page loaded');
             
             if (!initFirebase()) {
                 return;
@@ -510,7 +580,7 @@
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     console.log('User already logged in:', user.uid);
-                    handleSuccessfulLogin(user);
+                    handleSuccessfulSignup(user);
                 }
             });
         });

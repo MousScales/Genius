@@ -153,70 +153,44 @@
 
         // Check authentication state
         function checkAuthState() {
-            onAuthStateChanged((user) => {
-                if (user) {
-                    console.log('User authenticated:', user.uid);
-                    currentUser = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        photoURL: user.photoURL
-                    };
-                    
-                    // Save to localStorage for compatibility
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    // Initialize dashboard after user is set
-                    setTimeout(() => {
-                        initializeDashboard();
-                    }, 100);
-                } else {
-                    console.log('No user authenticated, redirecting to login');
-                    // Clear any remaining user data
-                    localStorage.removeItem('currentUser');
-                    localStorage.removeItem('userData');
-                    // Redirect to login
-                    window.location.href = 'login.html';
-                }
-            });
+            if (window.firebase && window.firebase.auth) {
+                window.firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('User authenticated:', user.uid);
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            photoURL: user.photoURL
+                        };
+                        
+                        // Initialize dashboard after user is set
+                        setTimeout(() => {
+                            initializeDashboard();
+                        }, 100);
+                    } else {
+                        console.log('No user authenticated, redirecting to login');
+                        // Redirect to login
+                        window.location.href = 'login.html';
+                    }
+                });
+            } else {
+                console.log('Firebase auth not available, redirecting to login');
+                window.location.href = 'login.html';
+            }
         }
 
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            // First check if user is logged in
-            const savedUser = localStorage.getItem('currentUser');
-            if (!savedUser) {
-                console.log('No user found in localStorage, redirecting to login');
-                window.location.href = 'login.html';
-                return;
-            }
-            
             initDashboard().then(() => {
-                // Check if user is already in localStorage
-                if (savedUser) {
-                    try {
-                        currentUser = JSON.parse(savedUser);
-                        console.log('Loaded user from localStorage:', currentUser.email);
-                        // Initialize dashboard immediately if user is already saved
-                        setTimeout(() => {
-                            initializeDashboard();
-                        }, 100);
-                    } catch (error) {
-                        console.error('Error parsing saved user:', error);
-                        // If there's an error parsing user data, redirect to login
-                        window.location.href = 'login.html';
-                        return;
-                    }
-                }
-                
-                // Wait a bit for Firebase to fully initialize
-                setTimeout(() => {
-                    checkAuthState();
-                }, 200);
+                // Check Firebase authentication state
+                checkAuthState();
             });
         });
 
         function initializeDashboard() {
+            // Load user profile from Firestore
+            loadProfileInfo();
 
         // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
@@ -235,7 +209,7 @@
             localStorage.setItem('sidebarCollapsed', isCollapsed);
         });
 
-        // Load profile info
+        // Load profile info from Firestore
         async function loadProfileInfo() {
             if (!currentUser || !currentUser.uid) {
                 console.log('No current user available for profile loading');
@@ -244,65 +218,78 @@
             
             let profile = {};
             
-            // Try to load from Firebase first
             try {
                 const db = window.firebase.firestore();
                 const userRef = db.collection('users').doc(currentUser.uid);
                 const userDoc = await userRef.get();
-                if (userDoc.exists()) {
+                
+                if (userDoc.exists) {
                     profile = userDoc.data();
-                }
-                console.log('Loaded profile from Firebase:', profile);
-                
-                // If no profile in Firebase, try to migrate from localStorage
-                if (!profile || !profile.name) {
-                    console.log('No profile in Firebase, checking localStorage...');
-                    const localProfile = JSON.parse(localStorage.getItem(`profile_${currentUser.uid}`) || '{}');
+                    console.log('Loaded profile from Firestore:', profile);
+                } else {
+                    console.log('No profile found in Firestore for user:', currentUser.uid);
+                    // Create a basic profile if none exists
+                    profile = {
+                        name: currentUser.displayName || 'User',
+                        email: currentUser.email,
+                        collegeName: 'No college set',
+                        major: 'No major set',
+                        academicLevel: 'Not specified',
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
                     
-                    if (localProfile && localProfile.name) {
-                        console.log('Found profile in localStorage, migrating to Firebase...');
-                        // Fix field name mismatch: college -> collegeName
-                        const fixedProfile = {
-                            name: localProfile.name,
-                            collegeName: localProfile.collegeName || localProfile.college,
-                            major: localProfile.major,
-                            level: localProfile.level,
-                            year: localProfile.year
-                        };
-                        // Migrate to Firebase
-                        await db.collection('users').doc(currentUser.uid).set({
-                            ...fixedProfile,
-                            createdAt: new Date(),
-                            updatedAt: new Date()
-                        }, { merge: true });
-                        profile = fixedProfile;
-                        console.log('Profile migrated successfully!');
-                    }
-                }
-                
-                // Update localStorage cache
-                if (profile) {
-                    localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profile));
+                    // Save the basic profile to Firestore
+                    await userRef.set(profile);
+                    console.log('Created basic profile in Firestore:', profile);
                 }
             } catch (error) {
-                console.log('Error loading profile, using localStorage fallback:', error);
-                // Fall back to localStorage
-                profile = JSON.parse(localStorage.getItem(`profile_${currentUser.uid}`) || '{}');
+                console.error('Error loading profile from Firestore:', error);
+                // Create a basic profile as fallback
+                profile = {
+                    name: currentUser.displayName || 'User',
+                    email: currentUser.email,
+                    collegeName: 'No college set',
+                    major: 'No major set',
+                    academicLevel: 'Not specified'
+                };
             }
             
-            // Update profile button
+            // Update profile button with first name
             if (profile && profile.name) {
-                document.getElementById('profileName').textContent = profile.name.split(' ')[0];
+                const firstName = profile.name.split(' ')[0];
+                const profileNameElement = document.getElementById('profileName');
+                if (profileNameElement) {
+                    profileNameElement.textContent = firstName;
+                }
             }
             
-            // Update dropdown info
-            document.getElementById('dropdownName').textContent = (profile && profile.name) || 'User';
-            document.getElementById('dropdownEmail').textContent = currentUser.email || '';
-            document.getElementById('dropdownCollege').textContent = (profile && profile.collegeName) || 'No college set';
-            document.getElementById('dropdownMajor').textContent = (profile && profile.major) || 'No major set';
+            // Update dropdown info with Firestore data
+            const dropdownName = document.getElementById('dropdownName');
+            const dropdownEmail = document.getElementById('dropdownEmail');
+            const dropdownCollege = document.getElementById('dropdownCollege');
+            const dropdownMajor = document.getElementById('dropdownMajor');
+            
+            if (dropdownName) {
+                dropdownName.textContent = (profile && profile.name) || 'User';
+            }
+            if (dropdownEmail) {
+                dropdownEmail.textContent = (profile && profile.email) || (currentUser && currentUser.email) || 'No email';
+            }
+            if (dropdownCollege) {
+                dropdownCollege.textContent = (profile && profile.collegeName) || 'No college set';
+            }
+            if (dropdownMajor) {
+                dropdownMajor.textContent = (profile && profile.major) || 'No major set';
+            }
+            
+            console.log('Profile dropdown updated with:', {
+                name: profile.name,
+                email: profile.email,
+                college: profile.collegeName,
+                major: profile.major
+            });
         }
-
-        loadProfileInfo();
 
         // Profile dropdown toggle
         const profileBtn = document.getElementById('profileBtn');

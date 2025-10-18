@@ -16,21 +16,36 @@ class GeniusChat {
     async init() {
         console.log('Initializing Genius Chat...');
         
-        // Get current user
-        const currentUserData = localStorage.getItem('currentUser');
-        if (currentUserData) {
-            this.currentUser = JSON.parse(currentUserData);
-            console.log('Current user loaded:', this.currentUser.email);
-        } else {
-            console.log('No current user found');
-        }
-
+        // Get current user from Firebase auth state
+        this.currentUser = null;
+        
         // Create chat interface
         this.createChatInterface();
         this.setupEventListeners();
-        this.loadSavedChats();
+        
+        // Wait for user to be set before loading chats
+        this.waitForUserAndLoadChats();
         
         console.log('Genius Chat initialized successfully');
+    }
+
+    async waitForUserAndLoadChats() {
+        // Wait for currentUser to be set
+        const checkUser = () => {
+            if (this.currentUser && this.currentUser.uid) {
+                this.loadSavedChats();
+            } else {
+                setTimeout(checkUser, 100);
+            }
+        };
+        checkUser();
+    }
+
+    setCurrentUser(user) {
+        this.currentUser = user;
+        if (user && user.uid) {
+            this.loadSavedChats();
+        }
     }
 
     createChatInterface() {
@@ -1052,21 +1067,31 @@ IMPORTANT:
 
     async loadSavedChats() {
         try {
-            console.log('Loading saved chats from localStorage only...');
+            console.log('Loading saved chats from Firebase...');
             
-            // Use localStorage only - skip Firebase for now
-            const savedChats = localStorage.getItem('genius_chats');
-            if (savedChats) {
-                this.chats = JSON.parse(savedChats);
-                console.log('Loaded genius chats from localStorage:', this.chats.length);
-                this.updateSidebar();
-            } else {
-                console.log('No saved chats found in localStorage');
+            // Load from Firebase
+            if (this.currentUser && this.currentUser.uid) {
+                const db = window.firebase.firestore();
+                const chatsRef = db.collection('users').doc(this.currentUser.uid).collection('chats');
+                const querySnapshot = await chatsRef.orderBy('createdAt', 'desc').get();
+                
                 this.chats = [];
-                this.updateSidebar();
+                querySnapshot.forEach((doc) => {
+                    this.chats.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                console.log('Loaded genius chats from Firebase:', this.chats.length);
+            } else {
+                console.log('No current user, starting with empty chats');
+                this.chats = [];
             }
+            
+            this.updateSidebar();
         } catch (error) {
-            console.error('Error loading genius chats from localStorage:', error);
+            console.error('Error loading genius chats from Firebase:', error);
             this.chats = [];
             this.updateSidebar();
         }
@@ -1074,12 +1099,22 @@ IMPORTANT:
 
     async saveCurrentChat() {
         try {
-            console.log('Saving chats to localStorage only...');
-            // Save to localStorage only - skip Firebase for now
-            localStorage.setItem('genius_chats', JSON.stringify(this.chats));
-            console.log('Genius chats saved to localStorage');
+            console.log('Saving chats to Firebase...');
+            
+            if (this.currentUser && this.currentUser.uid && this.currentChatId) {
+                const db = window.firebase.firestore();
+                const currentChat = this.chats.find(chat => chat.id === this.currentChatId);
+                
+                if (currentChat) {
+                    await db.collection('users').doc(this.currentUser.uid).collection('chats').doc(this.currentChatId).set({
+                        ...currentChat,
+                        updatedAt: new Date()
+                    }, { merge: true });
+                    console.log('Chat saved to Firebase');
+                }
+            }
         } catch (error) {
-            console.error('Error saving genius chats to localStorage:', error);
+            console.error('Error saving genius chats to Firebase:', error);
         }
     }
 
@@ -1127,14 +1162,25 @@ IMPORTANT:
         console.log('Loaded chat:', chatId, 'with', chat.messages.length, 'messages');
     }
 
-    deleteChat(chatId) {
+    async deleteChat(chatId) {
         if (confirm('Are you sure you want to delete this chat?')) {
-            this.chats = this.chats.filter(chat => chat.id !== chatId);
-            if (this.currentChatId === chatId) {
-                this.startNewChat();
+            try {
+                // Delete from Firebase
+                if (this.currentUser && this.currentUser.uid) {
+                    const db = window.firebase.firestore();
+                    await db.collection('users').doc(this.currentUser.uid).collection('chats').doc(chatId).delete();
+                }
+                
+                // Remove from local array
+                this.chats = this.chats.filter(chat => chat.id !== chatId);
+                if (this.currentChatId === chatId) {
+                    this.startNewChat();
+                }
+                this.updateSidebar();
+            } catch (error) {
+                console.error('Error deleting chat from Firebase:', error);
+                alert('Error deleting chat. Please try again.');
             }
-            this.saveCurrentChat();
-            this.updateSidebar();
         }
     }
 

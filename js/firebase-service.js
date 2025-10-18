@@ -48,7 +48,7 @@ async function initFirebaseServices() {
     updateDoc = (ref, data) => ref.update(data);
     deleteDoc = (ref) => ref.delete();
     query = (ref) => ref;
-    orderBy = (ref, field) => ref.orderBy(field);
+    orderBy = (ref, field, direction = 'desc') => ref.orderBy(field, direction);
     where = (ref, field, op, value) => ref.where(field, op, value);
     
     console.log('Firebase services initialized in firebase-service.js');
@@ -108,7 +108,7 @@ class ClassService {
     // Add a new class to user's subcollection
     async addClass(userId, classData) {
         try {
-            const classesRef = collection(db, 'users', userId, 'classes');
+            const classesRef = db.collection('users').doc(userId).collection('classes');
             const docRef = await addDoc(classesRef, {
                 ...classData,
                 createdAt: new Date(),
@@ -125,8 +125,8 @@ class ClassService {
     // Get all classes for a specific user
     async getClasses(userId) {
         try {
-            const classesRef = collection(db, 'users', userId, 'classes');
-            const q = query(classesRef, orderBy('createdAt', 'desc'));
+            const classesRef = db.collection('users').doc(userId).collection('classes');
+            const q = classesRef.orderBy('createdAt', 'desc');
             const querySnapshot = await getDocs(q);
             const classes = [];
             querySnapshot.forEach((doc) => {
@@ -224,7 +224,7 @@ class DocumentService {
     // Save a document to Firebase
     async saveDocument(userId, classId, documentData) {
         try {
-            const documentsRef = collection(db, 'users', userId, 'classes', classId, 'documents');
+            const documentsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents');
             const docRef = await addDoc(documentsRef, {
                 ...documentData,
                 createdAt: new Date(),
@@ -241,8 +241,8 @@ class DocumentService {
     // Get all documents for a class
     async getDocuments(userId, classId) {
         try {
-            const documentsRef = collection(db, 'users', userId, 'classes', classId, 'documents');
-            const q = query(documentsRef, orderBy('createdAt', 'desc'));
+            const documentsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents');
+            const q = documentsRef.orderBy('createdAt', 'desc');
             const querySnapshot = await getDocs(q);
             const documents = [];
             querySnapshot.forEach((doc) => {
@@ -291,7 +291,7 @@ class FolderService {
     // Save a folder to Firebase
     async saveFolder(userId, classId, folderData) {
         try {
-            const foldersRef = collection(db, 'users', userId, 'classes', classId, 'folders');
+            const foldersRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('folders');
             const docRef = await addDoc(foldersRef, {
                 ...folderData,
                 createdAt: new Date(),
@@ -308,8 +308,8 @@ class FolderService {
     // Get all folders for a class
     async getFolders(userId, classId) {
         try {
-            const foldersRef = collection(db, 'users', userId, 'classes', classId, 'folders');
-            const q = query(foldersRef, orderBy('createdAt', 'desc'));
+            const foldersRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('folders');
+            const q = foldersRef.orderBy('createdAt', 'desc');
             const querySnapshot = await getDocs(q);
             const folders = [];
             querySnapshot.forEach((doc) => {
@@ -358,7 +358,7 @@ class StudyGuideService {
     // Save a study guide to Firebase
     async saveStudyGuide(userId, classId, studyGuideData) {
         try {
-            const studyGuidesRef = collection(db, 'users', userId, 'classes', classId, 'studyGuides');
+            const studyGuidesRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('studyGuides');
             const docRef = await addDoc(studyGuidesRef, {
                 ...studyGuideData,
                 createdAt: new Date(),
@@ -375,8 +375,8 @@ class StudyGuideService {
     // Get all study guides for a class
     async getStudyGuides(userId, classId) {
         try {
-            const studyGuidesRef = collection(db, 'users', userId, 'classes', classId, 'studyGuides');
-            const q = query(studyGuidesRef, orderBy('createdAt', 'desc'));
+            const studyGuidesRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('studyGuides');
+            const q = studyGuidesRef.orderBy('createdAt', 'desc');
             const querySnapshot = await getDocs(q);
             const studyGuides = [];
             querySnapshot.forEach((doc) => {
@@ -441,7 +441,7 @@ class ChatService {
                 await this.waitForFirebase();
             }
             
-            const chatsRef = collection(db, 'users', userId, 'geniusChats');
+            const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
             const snapshot = await getDocs(chatsRef);
             return snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -454,7 +454,7 @@ class ChatService {
                 console.log('Permission denied for genius chats, trying to initialize...');
                 try {
                     // Try to create an empty chat to initialize the collection
-                    const chatsRef = collection(db, 'users', userId, 'geniusChats');
+                    const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
                     await addDoc(chatsRef, {
                         title: 'Welcome to Genius Chat',
                         messages: [],
@@ -484,7 +484,7 @@ class ChatService {
 
     async saveGeniusChat(userId, chatData) {
         try {
-            const chatsRef = collection(db, 'users', userId, 'geniusChats');
+            const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
             const docRef = await addDoc(chatsRef, {
                 ...chatData,
                 createdAt: new Date(),
@@ -523,6 +523,71 @@ class ChatService {
 
 // Lazy initialization of chatService to ensure Firebase is ready
 let _chatService = null;
+// Event Service
+const eventService = {
+    async getEvents(userId, classId) {
+        try {
+            if (!userId || !classId) {
+                console.log('No userId or classId provided for getEvents');
+                return [];
+            }
+            
+            const eventsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('events');
+            const q = eventsRef.orderBy('date', 'asc');
+            const querySnapshot = await getDocs(q);
+            const events = [];
+            querySnapshot.forEach((doc) => {
+                events.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            return events;
+        } catch (error) {
+            console.error('Error getting events:', error);
+            return [];
+        }
+    },
+
+    async saveEvent(userId, classId, eventData) {
+        try {
+            const eventsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('events');
+            const docRef = await addDoc(eventsRef, {
+                ...eventData,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error('Error saving event:', error);
+            throw error;
+        }
+    },
+
+    async updateEvent(userId, classId, eventId, eventData) {
+        try {
+            const eventRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('events').doc(eventId);
+            await updateDoc(eventRef, {
+                ...eventData,
+                updatedAt: new Date()
+            });
+        } catch (error) {
+            console.error('Error updating event:', error);
+            throw error;
+        }
+    },
+
+    async deleteEvent(userId, classId, eventId) {
+        try {
+            const eventRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('events').doc(eventId);
+            await deleteDoc(eventRef);
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            throw error;
+        }
+    }
+};
+
 const chatService = {
     get instance() {
         if (!_chatService) {
@@ -624,5 +689,6 @@ export {
     documentService, 
     folderService, 
     studyGuideService, 
+    eventService,
     chatService 
 };

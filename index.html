@@ -5,12 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genius - Class Management</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .redirect-container {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
     <script>
-        // Redirect to login page
-        window.location.href = 'login.html';
+        console.log('Genius App - Redirecting to login...');
+        
+        // Check if user is already logged in
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            console.log('User found in localStorage, redirecting to dashboard');
+            window.location.href = 'dashboard.html';
+        } else {
+            console.log('No user found, redirecting to login');
+            window.location.href = 'login.html';
+        }
     </script>
 </head>
 <body>
-    <p>Redirecting...</p>
+    <div class="redirect-container">
+        <h1>Genius</h1>
+        <div class="spinner"></div>
+        <p>Redirecting to login...</p>
+    </div>
 </body>
 </html>
