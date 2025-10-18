@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Test</title>
+</head>
+<body>
+    <h1>Firebase Module Test</h1>
+    <div id="output"></div>
+
+    <script type="module">
+        try {
+            console.log('Testing firebase-init.js import...');
+            const firebaseModule = await import('./firebase-init.js');
+            console.log('Firebase module loaded successfully:', firebaseModule);
+            
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h2>✅ Firebase Module Loaded Successfully!</h2>
+                <p><strong>Available exports:</strong></p>
+                <ul>
+                    ${Object.keys(firebaseModule).map(key => `<li>${key}: ${typeof firebaseModule[key]}</li>`).join('')}
+                </ul>
+                <p><strong>Auth object:</strong> ${firebaseModule.auth ? '✅ Present' : '❌ Missing'}</p>
+            `;
+        } catch (error) {
+            console.error('Error loading Firebase module:', error);
+            document.getElementById('output').innerHTML = `
+                <h2>❌ Error Loading Firebase Module</h2>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <p><strong>Stack:</strong> ${error.stack}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
