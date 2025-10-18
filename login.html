@@ -58,6 +58,7 @@
         import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, googleProvider } from './firebase-init.js';
 
         console.log('Login page loaded');
+        console.log('Auth object:', auth);
 
         // Check if user is already logged in
         const currentUser = localStorage.getItem('currentUser');

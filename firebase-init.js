@@ -20,6 +20,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 console.log('Firebase initialized');
+console.log('Auth object created:', auth);
+console.log('Available exports:', { app, auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, googleProvider, signOut, onAuthStateChanged });
 
 // Create Google Auth Provider instance
 const googleProvider = new GoogleAuthProvider();
