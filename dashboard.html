@@ -68,9 +68,6 @@
                 </div>
             </div>
             <div class="header-buttons">
-                <button class="chat-btn" id="geniusChatBtn">
-                    💬 Genius Chat
-                </button>
                 <button class="add-class-btn" id="addClassBtn">
                     <span>+</span> Add Class
                 </button>
@@ -609,15 +606,6 @@
             addClass();
         });
         
-        // Genius Chat button
-        document.getElementById('geniusChatBtn').addEventListener('click', () => {
-            console.log('Genius Chat button clicked!');
-            if (window.geniusChat) {
-                window.geniusChat.openChat();
-            } else {
-                console.log('Genius Chat not initialized yet');
-            }
-        });
 
         // Empty state add button (center)
         const emptyAddButton = document.getElementById('emptyAddButton');
@@ -690,9 +678,6 @@
                         <div class="calculator-ai-controls-floating">
                             <button class="calc-ai-btn calc-file-btn" id="fileUploadBtn" title="Upload Homework File for AI Analysis">
                                 <span class="ai-btn-text">Upload Homework</span>
-                            </button>
-                            <button class="calc-ai-btn calc-genius-btn" id="geniusChatBtn" title="Ask Genius AI Math Questions">
-                                <img src="assets/darkgenius.png" alt="Genius AI" class="genius-btn-icon">
                             </button>
                             <button class="calc-ai-btn calc-history-btn" id="historyBtn" title="View Homework History">
                                 <span class="history-btn-icon">📄</span>
@@ -1313,7 +1298,6 @@
         // Calculator AI Features
         function initializeCalculatorAI() {
             const fileUploadBtn = document.getElementById('fileUploadBtn');
-            const geniusChatBtn = document.getElementById('geniusChatBtn');
             const chatContainer = document.getElementById('calculatorChatContainer');
             const chatInput = document.getElementById('calculatorChatInput');
             const sendBtn = document.getElementById('sendChatBtn');
@@ -1334,10 +1318,6 @@
                 }
             });
             
-            // Genius chat button
-            geniusChatBtn.addEventListener('click', () => {
-                toggleGeniusChat();
-            });
             
             // Close genius chat button
             const closeGeniusChatBtn = document.getElementById('closeGeniusChatBtn');
@@ -2298,8 +2278,6 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     <!-- Load Firebase Service first -->
     <script src="js/firebase-service.js?v=6"></script>
     
-    <!-- Load Genius Chat -->
-    <script src="js/geniusChat.js?v=7"></script>
 </body>
 </html>
 
