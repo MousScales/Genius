@@ -58,7 +58,7 @@ function addClass() {
 }
 
 // Create class form HTML
-export function createClassForm() {
+function createClassForm() {
     const formContainer = document.createElement('div');
     formContainer.className = 'class-form-container';
     formContainer.innerHTML = `
@@ -794,4 +794,4 @@ window.createClass = createClass;
 window.cancelClassCreation = cancelClassCreation;
 
 // ES6 Module Exports
-export { addClass, createClass, cancelClassCreation };
+export { addClass, createClass, cancelClassCreation, createClassForm };
