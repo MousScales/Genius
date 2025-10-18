@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512" style="border: 1px solid #ccc;"></canvas>
+    <br><br>
+    <button onclick="generateIcons()">Generate Icons</button>
+    <button onclick="downloadIcon(192)">Download 192x192</button>
+    <button onclick="downloadIcon(512)">Download 512x512</button>
+
+    <script>
+        function generateIcons() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, 512, 512);
+            
+            // Background
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Main circle
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(256, 256, 200, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Inner circle
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(256, 256, 150, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Letter G
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = 'bold 200px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('G', 256, 256);
+        }
+        
+        function downloadIcon(size) {
+            const canvas = document.getElementById('canvas');
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            
+            // Draw resized version
+            tempCtx.drawImage(canvas, 0, 0, size, size);
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = tempCanvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate icons on load
+        window.onload = generateIcons;
+    </script>
+</body>
+</html>

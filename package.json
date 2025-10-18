@@ -1,0 +1,28 @@
+{
+  "name": "genius-web-app",
+  "version": "1.0.0",
+  "description": "Genius Web App - Class Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "electron": "electron main.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "electron": "^38.3.0"
+  },
+  "keywords": [
+    "web",
+    "app",
+    "class",
+    "management"
+  ],
+  "author": "Genius Team",
+  "license": "MIT"
+}

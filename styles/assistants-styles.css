@@ -1,0 +1,417 @@
+/* OpenAI Assistants UI Styles */
+
+/* Loading Indicator */
+.assistants-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.loading-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+.loading-text {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.loading-dots {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+}
+
+.loading-dots span {
+    width: 8px;
+    height: 8px;
+    background: #007bff;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10001;
+    animation: slideIn 0.3s ease-out;
+    max-width: 400px;
+}
+
+.notification-success {
+    background: #28a745;
+}
+
+.notification-error {
+    background: #dc3545;
+}
+
+.notification-info {
+    background: #17a2b8;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Response Modal */
+.assistants-response-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.assistants-response-modal .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.assistants-response-modal .modal-header {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.assistants-response-modal .modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.assistants-response-modal .modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.response-content {
+    line-height: 1.6;
+    color: #333;
+}
+
+.response-content h1, .response-content h2, .response-content h3 {
+    color: #007bff;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.response-content ul, .response-content ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.response-content li {
+    margin: 0.5rem 0;
+}
+
+.response-content code {
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+.response-content pre {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+/* Study Guide Modal */
+.study-guide-modal .modal-content {
+    max-width: 1000px;
+}
+
+.study-guide-content {
+    line-height: 1.6;
+    color: #333;
+}
+
+.study-guide-content h1 {
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.study-guide-content h2 {
+    color: #28a745;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.study-guide-content h3 {
+    color: #6c757d;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+}
+
+.study-guide-content ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.study-guide-content li {
+    margin: 0.5rem 0;
+    position: relative;
+}
+
+.study-guide-content strong {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.study-guide-content em {
+    color: #28a745;
+    font-style: italic;
+}
+
+/* Flashcards Modal */
+.flashcards-modal .modal-content {
+    max-width: 1200px;
+}
+
+.flashcards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.flashcard {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 200px;
+    position: relative;
+    perspective: 1000px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.flashcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.flashcard.flipped {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem;
+    box-sizing: border-box;
+}
+
+.card-back {
+    transform: rotateY(180deg);
+    background: #f8f9fa;
+}
+
+.flashcard h4 {
+    margin: 0 0 1rem 0;
+    color: #007bff;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.flashcard p {
+    margin: 0;
+    line-height: 1.5;
+    color: #333;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.flip-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    align-self: flex-start;
+}
+
+.flip-btn:hover {
+    background: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .assistants-response-modal .modal-content,
+    .study-guide-modal .modal-content,
+    .flashcards-modal .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .flashcards-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .flashcard {
+        height: 180px;
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Integration with existing styles */
+.assistants-enhanced .file-upload-area {
+    border: 2px dashed #007bff;
+    background: #f8f9ff;
+    transition: all 0.3s ease;
+}
+
+.assistants-enhanced .file-upload-area:hover {
+    border-color: #0056b3;
+    background: #e6f3ff;
+}
+
+.assistants-enhanced .upload-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.assistants-enhanced .upload-button:hover {
+    background: #0056b3;
+}
+
+.assistants-enhanced .ai-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.assistants-enhanced .ai-action-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.assistants-enhanced .ai-action-btn:hover {
+    background: #218838;
+}
+
+.assistants-enhanced .ai-action-btn.secondary {
+    background: #6c757d;
+}
+
+.assistants-enhanced .ai-action-btn.secondary:hover {
+    background: #5a6268;
+}

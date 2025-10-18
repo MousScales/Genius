@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Test - No Module Imports</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/assistants-styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="main-wrapper">
+            <div class="header-bar">
+                <h1>Simple Test - File Upload</h1>
+            </div>
+            
+            <div class="content-area">
+                <div class="test-section">
+                    <h2>File Upload Test (Original Implementation)</h2>
+                    <div class="file-upload-area">
+                        <input type="file" id="fileInput" multiple>
+                        <div class="upload-prompt">
+                            <p>📁 Select files to upload</p>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple test without module imports
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const files = event.target.files;
+            const status = document.getElementById('uploadStatus');
+            
+            if (files.length === 0) {
+                status.innerHTML = '<p>No files selected</p>';
+                return;
+            }
+            
+            status.innerHTML = `<p>✅ ${files.length} file(s) selected: ${Array.from(files).map(f => f.name).join(', ')}</p>`;
+            
+            // Simulate file processing
+            Array.from(files).forEach((file, index) => {
+                console.log(`File ${index + 1}:`, {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                });
+            });
+        });
+    </script>
+    
+    <style>
+        .test-section {
+            margin: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #007bff;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #0056b3;
+            background: #e6f3ff;
+        }
+        
+        .upload-prompt p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .upload-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .upload-status p {
+            margin: 0;
+            color: #333;
+        }
+    </style>
+</body>
+</html>

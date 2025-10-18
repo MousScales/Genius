@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OpenAI Assistants Integration</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/assistants-styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="main-wrapper">
+            <div class="header-bar">
+                <h1>Test OpenAI Assistants Integration</h1>
+            </div>
+            
+            <div class="content-area">
+                <div class="test-section">
+                    <h2>File Upload Test</h2>
+                    <div class="file-upload-area assistants-enhanced">
+                        <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.txt,.md,.jpg,.jpeg,.png">
+                        <div class="upload-prompt">
+                            <p>📁 Drag and drop files here or click to select</p>
+                            <p class="upload-info">Supported: PDF, DOC, DOCX, TXT, MD, JPG, PNG</p>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-actions assistants-enhanced" id="aiActions" style="display: none;">
+                        <button class="ai-action-btn" id="askQuestionBtn">Ask Question</button>
+                        <button class="ai-action-btn" id="generateStudyGuideBtn">Generate Study Guide</button>
+                        <button class="ai-action-btn" id="generateFlashcardsBtn">Generate Flashcards</button>
+                    </div>
+                </div>
+                
+                <div class="test-section">
+                    <h2>Question Input</h2>
+                    <div class="question-input-area">
+                        <textarea id="questionInput" placeholder="Ask a question about your uploaded files..." rows="3"></textarea>
+                        <button id="submitQuestionBtn" class="ai-action-btn">Submit Question</button>
+                    </div>
+                </div>
+                
+                <div class="test-section">
+                    <h2>Response Area</h2>
+                    <div id="responseArea" class="response-area">
+                        <p>Upload files and ask questions to see AI responses here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { AssistantsClassView } from './js/assistants-class-view.js';
+        
+        let assistantsService = null;
+        let uploadedFiles = [];
+        
+        // Initialize the service
+        async function initializeService() {
+            try {
+                // Get API key from prompt for testing
+                const apiKey = prompt('Enter your OpenAI API key:');
+                if (!apiKey) {
+                    alert('API key required for testing');
+                    return;
+                }
+                
+                assistantsService = new AssistantsClassView();
+                assistantsService.assistantsService = new (await import('./js/openai-assistants-service.js')).OpenAIAssistantsService(apiKey);
+                await assistantsService.assistantsService.createAssistant();
+                await assistantsService.assistantsService.createThread();
+                
+                console.log('✅ Assistants service initialized');
+                document.getElementById('aiActions').style.display = 'flex';
+            } catch (error) {
+                console.error('❌ Failed to initialize:', error);
+                alert('Failed to initialize Assistants service: ' + error.message);
+            }
+        }
+        
+        // File upload handler
+        document.getElementById('fileInput').addEventListener('change', async (event) => {
+            if (!assistantsService) {
+                await initializeService();
+            }
+            
+            const files = event.target.files;
+            if (files.length === 0) return;
+            
+            try {
+                for (const file of files) {
+                    const uploadResult = await assistantsService.assistantsService.uploadFile(file);
+                    uploadedFiles.push(uploadResult);
+                    
+                    // Add message to thread
+                    await assistantsService.assistantsService.addMessage(
+                        `I've uploaded ${file.name} for analysis.`,
+                        [uploadResult.id]
+                    );
+                }
+                
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="success-message">
+                        ✅ Successfully uploaded ${files.length} file(s) to AI assistant!
+                        <br>Files: ${Array.from(files).map(f => f.name).join(', ')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="error-message">
+                        ❌ Upload failed: ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        // Question submission
+        document.getElementById('submitQuestionBtn').addEventListener('click', async () => {
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            if (!assistantsService) {
+                alert('Please upload files first');
+                return;
+            }
+            
+            try {
+                // Add question to thread
+                await assistantsService.assistantsService.addMessage(question);
+                
+                // Show loading
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="loading-message">
+                        🤔 Genius is thinking...
+                    </div>
+                `;
+                
+                // Run assistant and get response
+                let fullResponse = '';
+                await assistantsService.assistantsService.runAssistant(
+                    (update) => {
+                        if (update.event === 'thread.message.delta') {
+                            const content = update.data.delta.content?.[0]?.text?.value;
+                            if (content) {
+                                fullResponse += content;
+                                document.getElementById('responseArea').innerHTML = `
+                                    <div class="ai-response">
+                                        <h3>Genius AI Response:</h3>
+                                        <div class="response-content">${fullResponse}</div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    },
+                    () => {
+                        console.log('✅ Response complete');
+                    }
+                );
+                
+            } catch (error) {
+                console.error('Question error:', error);
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="error-message">
+                        ❌ Error processing question: ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        // Study guide generation
+        document.getElementById('generateStudyGuideBtn').addEventListener('click', async () => {
+            if (!assistantsService || uploadedFiles.length === 0) {
+                alert('Please upload files first');
+                return;
+            }
+            
+            try {
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="loading-message">
+                        📚 Generating study guide...
+                    </div>
+                `;
+                
+                const studyGuide = await assistantsService.generateStudyGuide(
+                    uploadedFiles.map(f => ({ content: f.content, fileName: f.filename, type: f.purpose })),
+                    null
+                );
+                
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="study-guide-response">
+                        <h3>Study Guide Generated:</h3>
+                        <div class="study-guide-content">${studyGuide}</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Study guide error:', error);
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="error-message">
+                        ❌ Error generating study guide: ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        // Flashcard generation
+        document.getElementById('generateFlashcardsBtn').addEventListener('click', async () => {
+            if (!assistantsService || uploadedFiles.length === 0) {
+                alert('Please upload files first');
+                return;
+            }
+            
+            try {
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="loading-message">
+                        🃏 Generating flashcards...
+                    </div>
+                `;
+                
+                const flashcards = await assistantsService.generateFlashcards(
+                    uploadedFiles.map(f => ({ content: f.content, fileName: f.filename, type: f.purpose })),
+                    null
+                );
+                
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="flashcards-response">
+                        <h3>Flashcards Generated:</h3>
+                        <div class="flashcards-container">
+                            ${flashcards.map((card, index) => `
+                                <div class="flashcard" data-index="${index}">
+                                    <div class="card-front">
+                                        <h4>Question ${index + 1}</h4>
+                                        <p>${card.question}</p>
+                                        <button class="flip-btn">Show Answer</button>
+                                    </div>
+                                    <div class="card-back">
+                                        <h4>Answer ${index + 1}</h4>
+                                        <p>${card.answer}</p>
+                                        <button class="flip-btn">Show Question</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // Add flip functionality
+                document.querySelectorAll('.flip-btn').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const card = e.target.closest('.flashcard');
+                        card.classList.toggle('flipped');
+                    };
+                });
+                
+            } catch (error) {
+                console.error('Flashcards error:', error);
+                document.getElementById('responseArea').innerHTML = `
+                    <div class="error-message">
+                        ❌ Error generating flashcards: ${error.message}
+                    </div>
+                `;
+            }
+        });
+    </script>
+    
+    <style>
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #007bff;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #0056b3;
+            background: #e6f3ff;
+        }
+        
+        .upload-prompt p {
+            margin: 0.5rem 0;
+        }
+        
+        .upload-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .question-input-area {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .question-input-area textarea {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .response-area {
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .success-message, .error-message, .loading-message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading-message {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .ai-response, .study-guide-response, .flashcards-response {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .response-content {
+            line-height: 1.6;
+            color: #333;
+        }
+    </style>
+</body>
+</html>

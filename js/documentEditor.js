@@ -1,0 +1,5234 @@
+// Import Firebase services
+import { documentService } from './firebase-service.js';
+
+// Document Editor Module - Google Docs style
+export function openDocumentEditor(classData, existingDoc = null) {
+    console.log('Opening document editor', { classData, existingDoc });
+    
+    // Set global variables for manual save functionality
+    window.currentClassData = classData;
+    window.currentExistingDoc = existingDoc;
+    
+    // Hide class view
+    const classView = document.getElementById('classViewContainer');
+    if (classView) {
+        classView.style.display = 'none';
+    }
+    
+    // Create editor screen
+    const editorScreen = createEditorScreen(classData, existingDoc);
+    const mainWrapper = document.querySelector('.main-wrapper');
+    if (mainWrapper) {
+        mainWrapper.appendChild(editorScreen);
+    }
+    
+    // DISABLED: Don't load any suggestions to prevent multiplying
+    // setTimeout(() => {
+    //     // Clean up any orphaned suggestions first
+    //     window.cleanupOrphanedSuggestions(classData, existingDoc);
+    //     
+    //     // Load current suggestions (active ones)
+    //     window.loadCurrentSuggestions(classData, existingDoc);
+    //     
+    //     // Only load saved suggestions if no current suggestions exist
+    //     const currentSuggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_current-document`;
+    //     const hasCurrentSuggestions = localStorage.getItem(currentSuggestionsKey);
+    //     if (!hasCurrentSuggestions) {
+    //         window.loadSavedSuggestions(classData, existingDoc);
+    //     }
+    // }, 500);
+    
+    // Clear only suggestion storage, not DOM elements that might interfere with editing
+    setTimeout(() => {
+        if (typeof clearSuggestionStorageOnly === 'function') {
+            clearSuggestionStorageOnly();
+        } else {
+            console.log('clearSuggestionStorageOnly function not available, skipping cleanup');
+        }
+        
+        // Ensure text selection works properly
+        if (typeof enableTextSelection === 'function') {
+            enableTextSelection();
+        } else {
+            console.log('enableTextSelection function not available, skipping');
+        }
+    }, 100);
+    
+    // Add event listener to save suggestions when navigating away
+    const saveOnUnload = () => {
+        window.saveCurrentSuggestions();
+    };
+    
+    // Save suggestions on various navigation events
+    window.addEventListener('beforeunload', saveOnUnload);
+    window.addEventListener('popstate', saveOnUnload);
+    
+    // Also save when the editor screen is removed
+    const editorScreenElement = document.getElementById('documentEditorScreen');
+    if (editorScreenElement) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.removedNodes.forEach((node) => {
+                        if (node.id === 'documentEditorScreen') {
+                            window.saveCurrentSuggestions();
+                            observer.disconnect();
+                        }
+                    });
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+    
+    // Periodic save every 5 seconds to ensure suggestions are always saved
+    const periodicSave = setInterval(() => {
+        if (document.getElementById('documentEditorScreen')) {
+            window.saveCurrentSuggestions();
+        } else {
+            clearInterval(periodicSave);
+        }
+    }, 5000);
+    
+    // Auto-save document content every 3 seconds
+    const autoSaveInterval = setInterval(() => {
+        if (document.getElementById('documentEditorScreen')) {
+            autoSaveDocument(classData, existingDoc);
+        } else {
+            clearInterval(autoSaveInterval);
+        }
+    }, 3000);
+    
+    // Auto-save on content changes
+    const contentElements = document.querySelectorAll('.doc-editor-content');
+    contentElements.forEach(content => {
+        // Ensure content is focusable and editable
+        content.setAttribute('contenteditable', 'true');
+        content.setAttribute('tabindex', '0');
+        content.setAttribute('spellcheck', 'true');
+        
+        // Enable text selection
+        content.style.userSelect = 'text';
+        content.style.webkitUserSelect = 'text';
+        content.style.mozUserSelect = 'text';
+        content.style.msUserSelect = 'text';
+        
+        // Multiple event listeners for comprehensive auto-save
+        const triggerAutoSave = () => {
+            clearTimeout(window.autoSaveTimeout);
+            window.autoSaveTimeout = setTimeout(() => {
+                autoSaveDocument(classData, existingDoc);
+            }, 500); // Reduced debounce time for more responsive saving
+        };
+        
+        // Input events
+        content.addEventListener('input', triggerAutoSave);
+        content.addEventListener('keyup', triggerAutoSave);
+        content.addEventListener('paste', () => {
+            setTimeout(triggerAutoSave, 100); // Small delay for paste content to be processed
+        });
+        
+        // Ensure content can be focused and selected
+        content.addEventListener('click', () => {
+            content.focus();
+        });
+        
+        // Enable text selection on mouse events
+        content.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+        
+        content.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
+        });
+        
+        content.addEventListener('selectstart', (e) => {
+            e.stopPropagation();
+        });
+    });
+    
+    // Auto-save on title changes
+    const titleInput = document.getElementById('docEditorTitle');
+    if (titleInput) {
+        const triggerTitleAutoSave = () => {
+            clearTimeout(window.titleAutoSaveTimeout);
+            window.titleAutoSaveTimeout = setTimeout(() => {
+                autoSaveDocument(classData, existingDoc);
+            }, 500);
+        };
+        
+        titleInput.addEventListener('input', triggerTitleAutoSave);
+        titleInput.addEventListener('keyup', triggerTitleAutoSave);
+        titleInput.addEventListener('blur', triggerTitleAutoSave); // Save when user clicks away
+    }
+    
+    // Save on focus loss (when user clicks outside or switches tabs)
+    window.addEventListener('blur', saveOnUnload);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            window.saveCurrentSuggestions();
+        }
+    });
+}
+
+function generatePages(content) {
+    // Create single infinite content area instead of multiple pages
+    const hasContent = content && content.trim().length > 0;
+    console.log('generatePages - hasContent:', hasContent, 'content length:', content?.length);
+    
+    if (hasContent) {
+        console.log('Loading document content with full HTML:', content.substring(0, 200) + '...');
+    }
+    
+    return `
+        <div class="doc-editor-content" 
+             id="docEditorContent" 
+             contenteditable="true" 
+             spellcheck="true" 
+             tabindex="0">
+            ${hasContent ? content : ''}
+            ${!hasContent ? '<div class="empty-document-placeholder"><div class="placeholder-content"><img src="assets/darkgenius.png" alt="Genius AI" class="placeholder-icon"><h3>Start Writing with Genius AI</h3><p>Switch to edit mode and ask Genius to write your first draft, or begin typing to get started</p><div class="placeholder-examples"><span class="example-tag clickable-example" data-example="Write a blog post about">"Write a blog post about..."</span><span class="example-tag clickable-example" data-example="Create a report on">"Create a report on..."</span><span class="example-tag clickable-example" data-example="Draft an email about">"Draft an email about..."</span></div><div class="placeholder-hint">💡 Click any example above or type your own request</div></div></div>' : ''}
+        </div>
+    `;
+}
+
+function createEditorScreen(classData, existingDoc) {
+    const container = document.createElement('div');
+    container.className = 'document-editor-screen';
+    container.id = 'documentEditorScreen';
+    
+    const docTitle = existingDoc ? existingDoc.title : 'Untitled Document';
+    const docContent = existingDoc ? existingDoc.content : '';
+    
+    container.innerHTML = `
+        <div class="doc-editor-header">
+            <button class="doc-tool-btn doc-back-btn-arrow" id="docBackToClassBtn" title="Back to Class" onclick="closeDocumentEditor()">
+                <span class="back-icon">←</span>
+            </button>
+            <input type="text" class="doc-editor-title" id="docEditorTitle" 
+                   value="${docTitle}" placeholder="Untitled Document">
+            <button class="doc-tool-btn" id="manualSaveBtn" title="Save Document (Ctrl+S)">💾 Save</button>
+            <button class="doc-tool-btn" id="savingStatus">Saved</button>
+            <button class="doc-tool-btn" id="downloadPdfBtn" title="Download as PDF">📥 PDF</button>
+            <div class="doc-stats">
+                <span class="stat-item" id="wordCount">0 words</span>
+                <span class="stat-divider">•</span>
+                <span class="stat-item" id="charCount">0 characters</span>
+            </div>
+            <button class="doc-tool-btn" id="humanizeBtn" title="Humanize Text">Humanize</button>
+            <button class="doc-chat-toggle-btn" id="chatToggleBtn" title="Toggle Genius AI Chat">
+                <img src="assets/darkgenius.png" alt="Genius AI" class="chat-toggle-icon">
+            </button>
+        </div>
+        
+        <div class="doc-editor-toolbar">
+            <div class="toolbar-group">
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Segoe UI" selected>Segoe UI</option>
+                </select>
+                <select class="toolbar-select" id="fontSizeSelect">
+                    <option value="10">10</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16" selected>16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="24">24</option>
+                    <option value="28">28</option>
+                    <option value="32">32</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                </select>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="boldBtn" title="Bold (Ctrl+B)" tabindex="-1">
+                    <strong>B</strong>
+                </button>
+                <button class="toolbar-btn" id="italicBtn" title="Italic (Ctrl+I)" tabindex="-1">
+                    <em>I</em>
+                </button>
+                <button class="toolbar-btn" id="underlineBtn" title="Underline (Ctrl+U)" tabindex="-1">
+                    <u>U</u>
+                </button>
+                <button class="toolbar-btn" id="strikeBtn" title="Strikethrough" tabindex="-1">
+                    <s>S</s>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn align-icon-btn" id="alignLeftBtn" title="Align Left" tabindex="-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <rect x="2" y="3" width="12" height="1.5"/>
+                        <rect x="2" y="6" width="8" height="1.5"/>
+                        <rect x="2" y="9" width="10" height="1.5"/>
+                        <rect x="2" y="12" width="6" height="1.5"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn align-icon-btn" id="alignCenterBtn" title="Align Center" tabindex="-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <rect x="2" y="3" width="12" height="1.5"/>
+                        <rect x="4" y="6" width="8" height="1.5"/>
+                        <rect x="3" y="9" width="10" height="1.5"/>
+                        <rect x="5" y="12" width="6" height="1.5"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn align-icon-btn" id="alignRightBtn" title="Align Right" tabindex="-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <rect x="2" y="3" width="12" height="1.5"/>
+                        <rect x="6" y="6" width="8" height="1.5"/>
+                        <rect x="4" y="9" width="10" height="1.5"/>
+                        <rect x="8" y="12" width="6" height="1.5"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn align-icon-btn" id="justifyBtn" title="Justify" tabindex="-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <rect x="2" y="3" width="12" height="1.5"/>
+                        <rect x="2" y="6" width="12" height="1.5"/>
+                        <rect x="2" y="9" width="12" height="1.5"/>
+                        <rect x="2" y="12" width="12" height="1.5"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="bulletListBtn" title="Bullet List" tabindex="-1">
+                    •
+                </button>
+                <button class="toolbar-btn" id="numberListBtn" title="Numbered List" tabindex="-1">
+                    1.
+                </button>
+                <button class="toolbar-btn" id="outdentBtn" title="Decrease Indent" tabindex="-1">
+                    ⇤
+                </button>
+                <button class="toolbar-btn" id="indentBtn" title="Increase Indent" tabindex="-1">
+                    ⇥
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="imageBtn" title="Insert Image" tabindex="-1">
+                    🖼️
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="undoBtn" title="Undo (Ctrl+Z)" tabindex="-1">
+                    ↶
+                </button>
+                <button class="toolbar-btn" id="redoBtn" title="Redo (Ctrl+Y)" tabindex="-1">
+                    ↷
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="removeSuggestionsBtn" title="Remove All Suggestions" tabindex="-1">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="clearFormatBtn" title="Clear Formatting" tabindex="-1">
+                    ✖️
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            
+        </div>
+        
+        <div class="doc-editor-content-wrapper">
+            <div class="suggestions-sidebar" id="suggestionsSidebar"></div>
+            ${generatePages(docContent)}
+        </div>
+        
+        <div class="genius-chat-container" id="geniusChatContainer">
+            <div class="genius-chat-input-wrapper">
+                <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
+                <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
+                <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
+                    <svg class="mode-icon" id="modeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="genius-sidebar" id="geniusSidebar">
+            <div class="genius-sidebar-header">
+                <div class="genius-sidebar-title">
+                    <img src="assets/darkgenius.png" alt="Genius" class="genius-sidebar-icon">
+                    <span>Genius AI</span>
+                </div>
+                <div class="genius-header-actions">
+                    <button class="genius-new-chat-btn" id="newChatBtn" title="New Chat">+</button>
+                    <button class="genius-close-btn" id="closeSidebarBtn">✕</button>
+                </div>
+            </div>
+            <div class="genius-chat-tabs" id="geniusChatTabs">
+                <!-- Chat tabs will be dynamically added here -->
+            </div>
+            <div class="genius-chat-messages" id="geniusChatMessages"></div>
+            <div class="genius-chat-input-container">
+                <div class="genius-chat-input-wrapper-sidebar">
+                    <input type="text" class="genius-chat-input-sidebar" id="geniusChatInputSidebar" placeholder="Ask Genius anything...">
+                    <button class="genius-send-btn" id="geniusSendBtn">Send</button>
+                </div>
+            </div>
+            <div class="genius-chat-status" id="geniusChatStatus"></div>
+            <div class="genius-resize-handle" id="geniusResizeHandle"></div>
+        </div>
+    `;
+    
+    // Setup editor functionality
+    setTimeout(() => {
+        try {
+            setupEditorControls(classData, existingDoc);
+        } catch (error) {
+            console.error('Error setting up editor controls:', error);
+        }
+        
+         try {
+             setupGeniusChat(classData, existingDoc);
+         } catch (error) {
+             console.error('Error setting up Genius chat:', error);
+         }
+         
+         // Add event delegation as fallback for back button
+         document.addEventListener('click', (e) => {
+             if (e.target && e.target.id === 'docBackToClassBtn') {
+                 console.log('Back button clicked via event delegation!');
+                 e.preventDefault();
+                 e.stopPropagation();
+                 closeDocumentEditor();
+             }
+         });
+         
+         // Test if back button is clickable
+         const testBtn = document.getElementById('docBackToClassBtn');
+         if (testBtn) {
+             console.log('Back button test - element:', testBtn);
+             console.log('Back button test - computed style:', window.getComputedStyle(testBtn));
+             console.log('Back button test - offsetParent:', testBtn.offsetParent);
+             console.log('Back button test - disabled:', testBtn.disabled);
+         }
+         
+         // Load saved suggestions after everything is set up
+         setTimeout(() => {
+             loadSavedSuggestions(classData, existingDoc);
+         }, 300);
+    }, 100);
+    
+    return container;
+}
+
+function setupEditorControls(classData, existingDoc) {
+    const titleInput = document.getElementById('docEditorTitle');
+    const content = document.getElementById('docEditorContent');
+    const savingStatus = document.getElementById('savingStatus');
+    
+    // Initialize counters
+    updateDocumentStats();
+    
+    // Initialize placeholder visibility
+    updatePlaceholderVisibility();
+    
+    // Setup clickable placeholder examples
+    setupPlaceholderExamples(classData, existingDoc);
+    
+    // Initialize undo/redo functionality - function removed, no longer needed
+    
+    // Store the document ID to ensure we always update the same document
+    let currentDocId = existingDoc ? existingDoc.id : Date.now().toString();
+    
+    // Auto-save timer (make global so spell check can access)
+    window.saveTimer = window.saveTimer || null;
+    window.hasChanges = window.hasChanges || false;
+    
+    const autoSave = async () => {
+        if (window.hasChanges) {
+            // Always use the existingDoc reference to ensure we update the same document
+            if (existingDoc) {
+                const updatedDoc = await saveDocument(classData, existingDoc);
+                // Update the existingDoc reference with the returned document
+                Object.assign(existingDoc, updatedDoc);
+            } else {
+                // Only create a new document if we don't have an existing one
+                const docToUpdate = { id: currentDocId };
+                const updatedDoc = await saveDocument(classData, docToUpdate);
+                // Create the existingDoc reference for future auto-saves
+                existingDoc = updatedDoc;
+            }
+            window.hasChanges = false;
+            savingStatus.textContent = 'Saved';
+            savingStatus.style.color = '#888888';
+        }
+    };
+    
+    // Helper function to trigger auto-save after formatting changes
+    const triggerFormattingSave = () => {
+        window.hasChanges = true;
+        savingStatus.textContent = 'Saving...';
+        savingStatus.style.color = '#aaaaaa';
+        clearTimeout(window.saveTimer);
+        window.saveTimer = setTimeout(autoSave, 1000); // Save quickly after formatting
+    };
+    
+    // Make autoSave globally accessible
+    window.autoSave = autoSave;
+    
+    // Define the click handler function first
+    function handleBackButtonClick(e) {
+        console.log('Back button clicked!');
+        e.preventDefault();
+        e.stopPropagation();
+            closeDocumentEditor();
+    }
+    
+    // Simple back button setup
+    setTimeout(() => {
+        const backBtn = document.getElementById('docBackToClassBtn');
+        if (backBtn) {
+            backBtn.onclick = () => {
+                console.log('Back clicked');
+                closeDocumentEditor();
+            };
+        }
+    }, 100);
+    
+    // Simple save button setup
+    setTimeout(() => {
+        const saveBtn = document.getElementById('manualSaveBtn');
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                console.log('Save clicked');
+                const classData = window.currentClassData;
+                const existingDoc = window.currentExistingDoc;
+                if (classData && existingDoc) {
+                    await saveDocument(classData, existingDoc);
+                }
+            };
+        }
+    }, 150);
+    
+    // Simple PDF button setup
+    setTimeout(() => {
+        const pdfBtn = document.getElementById('downloadPdfBtn');
+        if (pdfBtn) {
+            pdfBtn.onclick = () => {
+                console.log('PDF clicked');
+            downloadAsPDF();
+            };
+    }
+    }, 200);
+    
+    // Simple humanize button setup
+    setTimeout(() => {
+    const humanizeBtn = document.getElementById('humanizeBtn');
+    if (humanizeBtn) {
+            humanizeBtn.onclick = () => {
+                console.log('Humanize clicked');
+            humanizeText();
+            };
+        }
+    }, 250);
+    
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            const manualSaveBtn = document.getElementById('manualSaveBtn');
+            if (manualSaveBtn && !manualSaveBtn.disabled) {
+                manualSaveBtn.click();
+            }
+        }
+    });
+    
+    // Title change
+    if (titleInput) {
+        titleInput.addEventListener('input', () => {
+            window.hasChanges = true;
+            savingStatus.textContent = 'Saving...';
+            savingStatus.style.color = '#aaaaaa';
+            clearTimeout(window.saveTimer);
+            window.saveTimer = setTimeout(autoSave, 2000);
+        });
+    }
+    
+    // Content change
+    if (content) {
+        content.addEventListener('input', () => {
+            window.hasChanges = true;
+            savingStatus.textContent = 'Saving...';
+            savingStatus.style.color = '#aaaaaa';
+            clearTimeout(window.saveTimer);
+            window.saveTimer = setTimeout(autoSave, 2000);
+            updateDocumentStats();
+            
+            // Show/hide placeholder based on content with delay to prevent flashing
+            setTimeout(() => updatePlaceholderVisibility(), 200);
+            
+        });
+        
+        // Handle Tab key
+        content.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                // Insert tab character (4 spaces)
+                document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;');
+                
+                window.hasChanges = true;
+                savingStatus.textContent = 'Saving...';
+                savingStatus.style.color = '#aaaaaa';
+                clearTimeout(window.saveTimer);
+                window.saveTimer = setTimeout(autoSave, 2000);
+            }
+            
+        });
+        
+        // No pagination needed for infinite page - content can grow infinitely
+        
+        // Focus on content
+        content.focus();
+        
+        // Handle focus/blur for placeholder with delay to prevent flashing
+        content.addEventListener('focus', () => {
+            setTimeout(() => updatePlaceholderVisibility(), 100);
+        });
+        
+        content.addEventListener('blur', () => {
+            setTimeout(() => updatePlaceholderVisibility(), 100);
+        });
+    }
+    
+    // Simple toolbar setup - no complex function needed
+    
+    // Simple CSS fix for button clickability
+    setTimeout(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .doc-tool-btn, .toolbar-btn, .doc-back-btn-arrow {
+                pointer-events: auto !important;
+                cursor: pointer !important;
+            }
+        `;
+        document.head.appendChild(style);
+        console.log('Simple CSS fix applied');
+    }, 500);
+}
+
+// createNewPage function removed - no longer needed for infinite page
+
+function selectAllInElement(element) {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function setupToolbarButtons() {
+    console.log('setupToolbarButtons called');
+    
+    // Helper function to execute command and maintain focus
+    const executeCommand = (command, value = null) => {
+        // Save current selection
+        const selection = window.getSelection();
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        
+        // Execute command
+        document.execCommand(command, false, value);
+        
+        // Restore selection if it was lost
+        if (range) {
+            try {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } catch (e) {
+                // Ignore errors
+            }
+        }
+        
+        // Ensure content is focused
+        const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+        if (activeContent) {
+            setTimeout(() => activeContent.focus(), 0);
+        }
+    };
+    
+    // Font select
+    const fontSelect = document.getElementById('fontSelect');
+    console.log('Font select found:', !!fontSelect);
+    if (fontSelect) {
+        fontSelect.addEventListener('change', (e) => {
+            console.log('Font changed to:', e.target.value);
+            executeCommand('fontName', e.target.value);
+            triggerFormattingSave();
+        });
+    }
+    
+    // Font size select
+    const fontSizeSelect = document.getElementById('fontSizeSelect');
+    if (fontSizeSelect) {
+        fontSizeSelect.addEventListener('change', (e) => {
+            const size = e.target.value;
+            // Use a more reliable method for font size
+            executeCommand('fontSize', '7');
+            setTimeout(() => {
+                const fontElements = document.querySelectorAll('font[size="7"]');
+                fontElements.forEach(el => {
+                    el.removeAttribute('size');
+                    el.style.fontSize = size + 'px';
+                });
+                triggerFormattingSave();
+            }, 10);
+        });
+    }
+    
+    // Text formatting buttons - completely redo
+    setTimeout(() => {
+    const boldBtn = document.getElementById('boldBtn');
+    console.log('Bold button found:', !!boldBtn);
+    if (boldBtn) {
+            // Remove all existing listeners
+            boldBtn.replaceWith(boldBtn.cloneNode(true));
+            const newBoldBtn = document.getElementById('boldBtn');
+            
+            // Make sure it's clickable
+            newBoldBtn.style.pointerEvents = 'auto';
+            newBoldBtn.style.cursor = 'pointer';
+            newBoldBtn.style.zIndex = '9999';
+            newBoldBtn.style.position = 'relative';
+            
+            // Add multiple event types
+            newBoldBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+                console.log('Bold button mousedown!');
+            executeCommand('bold');
+                triggerFormattingSave();
+        });
+            
+            newBoldBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+                e.stopPropagation();
+                console.log('Bold button clicked!');
+                executeCommand('bold');
+                triggerFormattingSave();
+        });
+            
+            console.log('Bold button completely resetup');
+    }
+    }, 300);
+    
+    // Italic button - completely redo
+    setTimeout(() => {
+    const italicBtn = document.getElementById('italicBtn');
+    if (italicBtn) {
+            // Remove all existing listeners
+            italicBtn.replaceWith(italicBtn.cloneNode(true));
+            const newItalicBtn = document.getElementById('italicBtn');
+            
+            // Make sure it's clickable
+            newItalicBtn.style.pointerEvents = 'auto';
+            newItalicBtn.style.cursor = 'pointer';
+            newItalicBtn.style.zIndex = '9999';
+            newItalicBtn.style.position = 'relative';
+            
+            // Add multiple event types
+            newItalicBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+                console.log('Italic button mousedown!');
+            executeCommand('italic');
+                triggerFormattingSave();
+            });
+            
+            newItalicBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Italic button clicked!');
+                executeCommand('italic');
+                triggerFormattingSave();
+            });
+            
+            console.log('Italic button completely resetup');
+        }
+    }, 350);
+    
+    const underlineBtn = document.getElementById('underlineBtn');
+    if (underlineBtn) {
+        underlineBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('underline');
+            triggerFormattingSave();
+        });
+        underlineBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const strikeBtn = document.getElementById('strikeBtn');
+    if (strikeBtn) {
+        strikeBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('strikeThrough');
+            triggerFormattingSave();
+        });
+        strikeBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    // Alignment buttons
+    const alignLeftBtn = document.getElementById('alignLeftBtn');
+    if (alignLeftBtn) {
+        alignLeftBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const selection = window.getSelection();
+            if (!selection.toString()) {
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    selectAllInElement(activeContent);
+                }
+            }
+            executeCommand('justifyLeft');
+            triggerFormattingSave();
+        });
+        alignLeftBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const alignCenterBtn = document.getElementById('alignCenterBtn');
+    if (alignCenterBtn) {
+        alignCenterBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const selection = window.getSelection();
+            if (!selection.toString()) {
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    selectAllInElement(activeContent);
+                }
+            }
+            executeCommand('justifyCenter');
+            triggerFormattingSave();
+        });
+        alignCenterBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const alignRightBtn = document.getElementById('alignRightBtn');
+    if (alignRightBtn) {
+        alignRightBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const selection = window.getSelection();
+            if (!selection.toString()) {
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    selectAllInElement(activeContent);
+                }
+            }
+            executeCommand('justifyRight');
+            triggerFormattingSave();
+        });
+        alignRightBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const justifyBtn = document.getElementById('justifyBtn');
+    if (justifyBtn) {
+        justifyBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const selection = window.getSelection();
+            if (!selection.toString()) {
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    selectAllInElement(activeContent);
+                }
+            }
+            executeCommand('justifyFull');
+            triggerFormattingSave();
+        });
+        justifyBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    // List buttons
+    const bulletListBtn = document.getElementById('bulletListBtn');
+    if (bulletListBtn) {
+        bulletListBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('insertUnorderedList');
+            triggerFormattingSave();
+        });
+        bulletListBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const numberListBtn = document.getElementById('numberListBtn');
+    if (numberListBtn) {
+        numberListBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('insertOrderedList');
+            triggerFormattingSave();
+        });
+        numberListBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    // Indent buttons
+    const indentBtn = document.getElementById('indentBtn');
+    if (indentBtn) {
+        indentBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('indent');
+            triggerFormattingSave();
+        });
+        indentBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const outdentBtn = document.getElementById('outdentBtn');
+    if (outdentBtn) {
+        outdentBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('outdent');
+            triggerFormattingSave();
+        });
+        outdentBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    // Image
+    const imageBtn = document.getElementById('imageBtn');
+    if (imageBtn) {
+        imageBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Create hidden file input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const imageUrl = event.target.result;
+                        
+                        // Create a wrapper div for the image with resize handles
+                        const imageWrapper = document.createElement('div');
+                        imageWrapper.className = 'image-wrapper';
+                        imageWrapper.contentEditable = 'false';
+                        imageWrapper.style.cssText = `
+                            position: relative;
+                            display: inline-block;
+                            max-width: 100%;
+                            margin: 10px 0;
+                            cursor: move;
+                        `;
+                        
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        img.style.cssText = `
+                            width: 300px;
+                            height: auto;
+                            display: block;
+                            border-radius: 8px;
+                            pointer-events: none;
+                        `;
+                        
+                        // Add resize handle
+                        const resizeHandle = document.createElement('div');
+                        resizeHandle.className = 'resize-handle';
+                        resizeHandle.style.cssText = `
+                            position: absolute;
+                            bottom: 5px;
+                            right: 5px;
+                            width: 20px;
+                            height: 20px;
+                            background: rgba(255, 255, 255, 0.8);
+                            border-radius: 50%;
+                            cursor: nwse-resize;
+                            display: none;
+                            z-index: 10;
+                        `;
+                        
+                        imageWrapper.appendChild(img);
+                        imageWrapper.appendChild(resizeHandle);
+                        
+                        // Show/hide resize handle on hover
+                        imageWrapper.addEventListener('mouseenter', () => {
+                            resizeHandle.style.display = 'block';
+                        });
+                        imageWrapper.addEventListener('mouseleave', () => {
+                            if (!imageWrapper.classList.contains('resizing')) {
+                                resizeHandle.style.display = 'none';
+                            }
+                        });
+                        
+                        // Make image draggable
+                        let isDragging = false;
+                        let startX, startY, startLeft, startTop;
+                        
+                        imageWrapper.addEventListener('mousedown', (e) => {
+                            if (e.target === resizeHandle) return;
+                            isDragging = true;
+                            startX = e.clientX;
+                            startY = e.clientY;
+                            const rect = imageWrapper.getBoundingClientRect();
+                            startLeft = rect.left;
+                            startTop = rect.top;
+                            imageWrapper.style.position = 'absolute';
+                            imageWrapper.style.left = startLeft + 'px';
+                            imageWrapper.style.top = startTop + 'px';
+                            e.preventDefault();
+                        });
+                        
+                        document.addEventListener('mousemove', (e) => {
+                            if (isDragging) {
+                                const deltaX = e.clientX - startX;
+                                const deltaY = e.clientY - startY;
+                                imageWrapper.style.left = (startLeft + deltaX) + 'px';
+                                imageWrapper.style.top = (startTop + deltaY) + 'px';
+                            }
+                        });
+                        
+                        document.addEventListener('mouseup', () => {
+                            isDragging = false;
+                        });
+                        
+                        // Make image resizable
+                        let isResizing = false;
+                        let startWidth;
+                        
+                        resizeHandle.addEventListener('mousedown', (e) => {
+                            isResizing = true;
+                            startX = e.clientX;
+                            startWidth = img.offsetWidth;
+                            imageWrapper.classList.add('resizing');
+                            e.stopPropagation();
+                            e.preventDefault();
+                        });
+                        
+                        document.addEventListener('mousemove', (e) => {
+                            if (isResizing) {
+                                const deltaX = e.clientX - startX;
+                                const newWidth = Math.max(100, startWidth + deltaX);
+                                img.style.width = newWidth + 'px';
+                            }
+                        });
+                        
+                        document.addEventListener('mouseup', () => {
+                            if (isResizing) {
+                                isResizing = false;
+                                imageWrapper.classList.remove('resizing');
+                                resizeHandle.style.display = 'none';
+                            }
+                        });
+                        
+                        // Insert into editor
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            range.insertNode(imageWrapper);
+                            range.collapse(false);
+                        }
+                        
+                        // Trigger auto-save after image insertion
+                        triggerFormattingSave();
+                    };
+                    reader.readAsDataURL(file);
+                }
+                // Remove the input element
+                fileInput.remove();
+            });
+            
+            // Trigger file picker
+            document.body.appendChild(fileInput);
+            fileInput.click();
+        });
+    }
+    
+    // Undo/Redo buttons
+    const undoBtn = document.getElementById('undoBtn');
+    if (undoBtn) {
+        undoBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            undo();
+        });
+        undoBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    const redoBtn = document.getElementById('redoBtn');
+    if (redoBtn) {
+        redoBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            redo();
+        });
+        redoBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    // Clear Formatting button
+    const clearFormatBtn = document.getElementById('clearFormatBtn');
+    if (clearFormatBtn) {
+        clearFormatBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            executeCommand('removeFormat');
+        });
+        clearFormatBtn.addEventListener('click', (e) => e.preventDefault());
+    }
+    
+    
+    // Remove all suggestions button
+    const removeSuggestionsBtn = document.getElementById('removeSuggestionsBtn');
+    if (removeSuggestionsBtn) {
+        removeSuggestionsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Confirm before removing all suggestions
+            if (confirm('Are you sure you want to remove all suggestions? This action cannot be undone.')) {
+                removeAllSuggestions();
+            }
+        });
+    }
+}
+
+function removeAllSuggestions() {
+    console.log('Removing all suggestions...');
+    
+    try {
+        // Remove all suggestion markers from the document
+        const markers = document.querySelectorAll('.suggestion-marker');
+        markers.forEach(marker => {
+            const textNode = document.createTextNode(marker.textContent);
+            marker.replaceWith(textNode);
+        });
+        
+        // Remove all sidebar indicators
+        const indicators = document.querySelectorAll('.suggestion-indicator');
+        indicators.forEach(indicator => {
+            indicator.remove();
+        });
+        
+        // Remove all popups
+        const popups = document.querySelectorAll('.suggestion-popup');
+        popups.forEach(popup => {
+            popup.remove();
+        });
+        
+        // Clear all suggestion storage
+        const currentUserData = localStorage.getItem('currentUser');
+        if (currentUserData) {
+            const currentUser = JSON.parse(currentUserData);
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            
+            // Clear suggestions for all classes of this user
+            classes.forEach(classData => {
+                if (classData.userId === currentUser.uid) {
+                    // Clear document-specific suggestions
+                    const docId = 'current-document';
+                    const suggestionsKey = `suggestions_${classData.userId}_${classData.name}_${docId}`;
+                    localStorage.removeItem(suggestionsKey);
+                    
+                    // Clear current suggestions
+                    const currentSuggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_${docId}`;
+                    localStorage.removeItem(currentSuggestionsKey);
+                    
+                    // Clear all document-specific suggestions
+                    const documents = JSON.parse(classData.documents || '[]');
+                    documents.forEach(doc => {
+                        const docSuggestionsKey = `suggestions_${classData.userId}_${classData.name}_${doc.id}`;
+                        localStorage.removeItem(docSuggestionsKey);
+                    });
+                }
+            });
+        }
+        
+        // Update current suggestions state
+        window.saveCurrentSuggestions();
+        
+        console.log('All suggestions removed successfully');
+        
+        // Show success message
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        notification.textContent = 'All suggestions removed successfully';
+        document.body.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Error removing suggestions:', error);
+        alert('Error removing suggestions. Please try again.');
+    }
+}
+
+async function saveDocument(classData, existingDoc) {
+    try {
+        const title = document.getElementById('docEditorTitle').value.trim() || 'Untitled Document';
+        
+        // Collect content from all pages - preserve all HTML and styling
+        const allContents = document.querySelectorAll('.doc-editor-content');
+        let combinedContent = '';
+        allContents.forEach((contentDiv, index) => {
+            if (index > 0) {
+                combinedContent += '<div class="page-break"></div>';
+            }
+            // Use innerHTML to preserve all HTML tags, attributes, and styling
+            combinedContent += contentDiv.innerHTML;
+        });
+        
+        console.log('Saving document content with full HTML:', combinedContent.substring(0, 200) + '...');
+        
+        const doc = {
+            title: title,
+            content: combinedContent,
+            type: 'text',
+            folderId: existingDoc?.folderId || null
+        };
+        
+        let documentId = existingDoc?.id;
+        
+        // Check if this is a valid Firebase document ID (not a timestamp or local ID)
+        const isValidFirebaseId = existingDoc && existingDoc.id && 
+            existingDoc.id !== 'new-document' && 
+            !existingDoc.id.startsWith('new-document-') &&
+            !/^\d+$/.test(existingDoc.id); // Not just numbers (timestamps)
+        
+        console.log('Document ID check:', {
+            existingDocId: existingDoc?.id,
+            isValidFirebaseId: isValidFirebaseId,
+            isNewDocument: existingDoc?.id === 'new-document',
+            isNewDocumentPrefix: existingDoc?.id?.startsWith('new-document-'),
+            isTimestamp: existingDoc?.id ? /^\d+$/.test(existingDoc.id) : false
+        });
+        
+        if (isValidFirebaseId) {
+            // Update existing document in Firebase
+            await documentService.updateDocument(classData.userId, classData.id, existingDoc.id, doc);
+            console.log('Document updated in Firebase:', doc.title);
+            
+            // Also update localStorage for immediate visibility
+            const currentUserData = localStorage.getItem('currentUser');
+            if (currentUserData) {
+                const currentUser = JSON.parse(currentUserData);
+                const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+                const classIndex = classes.findIndex(c => c.userId === currentUser.uid && c.name === classData.name);
+                
+                if (classIndex !== -1) {
+                    const documents = JSON.parse(classes[classIndex].documents || '[]');
+                    const docIndex = documents.findIndex(d => d.id === existingDoc.id);
+                    
+                    if (docIndex !== -1) {
+                        documents[docIndex].title = doc.title;
+                        documents[docIndex].content = doc.content;
+                        documents[docIndex].lastModified = new Date().toISOString();
+                        classes[classIndex].documents = JSON.stringify(documents);
+                        localStorage.setItem('classes', JSON.stringify(classes));
+                        console.log('Updated localStorage for existing document:', doc.title);
+                    }
+                }
+            }
+        } else {
+            // Create new document in Firebase
+            documentId = await documentService.saveDocument(classData.userId, classData.id, doc);
+            console.log('New document created in Firebase:', doc.title, 'with ID:', documentId);
+            
+            // Update the existingDoc object with the new ID for future operations
+            if (existingDoc) {
+                existingDoc.id = documentId;
+            } else {
+                // If no existingDoc was passed, create one for future auto-saves
+                existingDoc = {
+                    id: documentId,
+                    title: doc.title,
+                    content: doc.content,
+                    type: doc.type,
+                    folderId: doc.folderId
+                };
+            }
+            
+            // Update localStorage with the new Firebase document ID
+            const currentUserData = localStorage.getItem('currentUser');
+            if (currentUserData) {
+                const currentUser = JSON.parse(currentUserData);
+                const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+                const classIndex = classes.findIndex(c => c.userId === currentUser.uid && c.name === classData.name);
+                
+                if (classIndex !== -1) {
+                    const documents = JSON.parse(classes[classIndex].documents || '[]');
+                    const docIndex = documents.findIndex(d => d.id === existingDoc.id || d.id.startsWith('new-document-'));
+                    
+                    if (docIndex !== -1) {
+                        // Update existing document entry
+                        documents[docIndex].id = documentId;
+                        documents[docIndex].title = doc.title;
+                        documents[docIndex].content = doc.content;
+                        documents[docIndex].lastModified = new Date().toISOString();
+                    } else {
+                        // Add new document to localStorage
+                        documents.push({
+                            id: documentId,
+                            title: doc.title,
+                            content: doc.content,
+                            type: doc.type,
+                            createdAt: new Date().toISOString(),
+                            lastModified: new Date().toISOString(),
+                            folderId: doc.folderId
+                        });
+                    }
+                    
+                    classes[classIndex].documents = JSON.stringify(documents);
+                    localStorage.setItem('classes', JSON.stringify(classes));
+                    console.log('Updated localStorage with Firebase document ID:', documentId);
+                    
+                    // Trigger documents updated event to refresh class view
+                    window.dispatchEvent(new CustomEvent('documentsUpdated'));
+                }
+            }
+            
+            // Transfer suggestions from 'new-document' to actual document ID
+            const oldSuggestionsKey = `suggestions_${classData.userId}_${classData.name}_new-document`;
+            const newSuggestionsKey = `suggestions_${classData.userId}_${classData.name}_${documentId}`;
+            
+            const oldSuggestions = localStorage.getItem(oldSuggestionsKey);
+            if (oldSuggestions) {
+                localStorage.setItem(newSuggestionsKey, oldSuggestions);
+                localStorage.removeItem(oldSuggestionsKey);
+                console.log('Transferred suggestions from new-document to actual document ID:', documentId);
+            }
+        }
+        
+        // Return the updated document reference for future auto-saves
+        return {
+            id: documentId,
+            title: doc.title,
+            content: doc.content,
+            type: doc.type,
+            folderId: doc.folderId
+        };
+    } catch (error) {
+        console.error('Error saving document:', error);
+        alert('Error saving document. Please try again.');
+        return existingDoc; // Return the original document on error
+    }
+}
+
+export function closeDocumentEditor() {
+    console.log('closeDocumentEditor called');
+    const editorScreen = document.getElementById('documentEditorScreen');
+    console.log('Editor screen found:', editorScreen);
+    if (editorScreen) {
+        // Save any pending suggestions before closing
+        if (typeof window.saveCurrentSuggestions === 'function') {
+        window.saveCurrentSuggestions();
+        }
+        editorScreen.remove();
+        console.log('Editor screen removed');
+    }
+    
+    // Show class view again
+    const classView = document.getElementById('classViewContainer');
+    console.log('Class view found:', classView);
+    if (classView) {
+        classView.style.display = 'flex';
+        console.log('Class view shown');
+    }
+    
+    // Reload documents to show updated list
+    const event = new CustomEvent('documentsUpdated');
+    window.dispatchEvent(event);
+    console.log('Documents updated event dispatched');
+}
+
+// Global function to auto-save document content
+window.autoSaveDocument = function(classData, existingDoc) {
+    try {
+        const title = document.getElementById('docEditorTitle')?.value?.trim() || 'Untitled Document';
+        const content = getDocumentContent(false); // Get full document content
+        
+        if (!content.trim()) return; // Don't save empty documents
+        
+        const currentUserData = localStorage.getItem('currentUser');
+        if (!currentUserData) return;
+        
+        const currentUser = JSON.parse(currentUserData);
+        const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+        const classIndex = classes.findIndex(c => c.userId === currentUser.uid && c.name === classData.name);
+        
+        if (classIndex === -1) return;
+        
+        const documents = JSON.parse(classes[classIndex].documents || '[]');
+        
+        // Check if this is a valid Firebase document ID (not a timestamp or local ID)
+        const isValidFirebaseId = existingDoc && existingDoc.id && 
+            existingDoc.id !== 'new-document' && 
+            !existingDoc.id.startsWith('new-document-') &&
+            !/^\d+$/.test(existingDoc.id); // Not just numbers (timestamps)
+        
+        console.log('Auto-save ID check:', {
+            existingDocId: existingDoc?.id,
+            isValidFirebaseId: isValidFirebaseId,
+            isTimestamp: existingDoc?.id ? /^\d+$/.test(existingDoc.id) : false
+        });
+        
+        const doc = {
+            title: title,
+            content: content,
+            type: 'text',
+            folderId: existingDoc?.folderId || null,
+            lastModified: new Date().toISOString()
+        };
+        
+        if (isValidFirebaseId) {
+            // Update existing document in both Firebase and localStorage
+            documentService.updateDocument(classData.userId, classData.id, existingDoc.id, doc)
+                .then(() => {
+                    console.log('Auto-saved existing document in Firebase:', title);
+                    
+                    // Also update localStorage for immediate visibility
+            const docIndex = documents.findIndex(d => d.id === existingDoc.id);
+            if (docIndex !== -1) {
+                documents[docIndex].title = title;
+                        documents[docIndex].content = content;
+                documents[docIndex].lastModified = new Date().toISOString();
+                classes[classIndex].documents = JSON.stringify(documents);
+                localStorage.setItem('classes', JSON.stringify(classes));
+                        console.log('Updated localStorage for existing document:', title);
+                    }
+                })
+                .catch(error => {
+                    console.error('Auto-save Firebase error:', error);
+                });
+        } else {
+            // Create new document in Firebase first, then update localStorage
+            documentService.saveDocument(classData.userId, classData.id, doc)
+                .then(newDocId => {
+                    console.log('Auto-saved new document in Firebase:', title, 'with ID:', newDocId);
+                    
+                    // Update the existingDoc reference
+                    if (existingDoc) {
+                        existingDoc.id = newDocId;
+                    }
+                    
+                    // Update localStorage with the new Firebase document ID
+                    const docIndex = documents.findIndex(d => d.id === existingDoc?.id || d.id.startsWith('new-document-'));
+                    
+                    if (docIndex !== -1) {
+                        // Update existing document entry
+                        documents[docIndex].id = newDocId;
+                        documents[docIndex].title = title;
+                        documents[docIndex].content = content;
+                        documents[docIndex].lastModified = new Date().toISOString();
+        } else {
+                        // Add new document to localStorage
+                        documents.push({
+                id: newDocId,
+                title: title,
+                content: content,
+                            type: 'text',
+                createdAt: new Date().toISOString(),
+                            lastModified: new Date().toISOString(),
+                            folderId: existingDoc?.folderId || null
+                        });
+                    }
+                    
+            classes[classIndex].documents = JSON.stringify(documents);
+            localStorage.setItem('classes', JSON.stringify(classes));
+                    console.log('Updated localStorage with Firebase document ID:', newDocId);
+                    
+                    // Trigger documents updated event to refresh class view
+                    window.dispatchEvent(new CustomEvent('documentsUpdated'));
+                })
+                .catch(error => {
+                    console.error('Auto-save Firebase error:', error);
+                });
+        }
+    } catch (error) {
+        console.error('Auto-save error:', error);
+    }
+};
+
+// Global function to save current suggestions
+window.saveCurrentSuggestions = function() {
+    try {
+        // Save current suggestions state before closing
+        const suggestionsSidebar = document.getElementById('suggestionsSidebar');
+        if (suggestionsSidebar) {
+            const indicators = suggestionsSidebar.querySelectorAll('.suggestion-indicator');
+            const suggestions = [];
+            
+            indicators.forEach(indicator => {
+                const index = indicator.dataset.suggestionIndex;
+                const marker = document.getElementById(`suggestion-${index}`);
+                if (marker) {
+                    suggestions.push({
+                        index: index,
+                        original: marker.textContent,
+                        markerId: marker.id,
+                        indicatorId: indicator.id
+                    });
+                }
+            });
+            
+            // Also check for any remaining markers in the document
+            const allMarkers = document.querySelectorAll('.suggestion-marker');
+            allMarkers.forEach(marker => {
+                const index = marker.dataset.suggestionIndex;
+                if (index && !suggestions.find(s => s.index === index)) {
+                    suggestions.push({
+                        index: index,
+                        original: marker.textContent,
+                        markerId: marker.id,
+                        indicatorId: `indicator-${index}`
+                    });
+                }
+            });
+            
+            // Save to localStorage
+            const currentUserData = localStorage.getItem('currentUser');
+            if (currentUserData) {
+                const currentUser = JSON.parse(currentUserData);
+                const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+                if (classes.length > 0) {
+                    const classData = classes[0];
+                    const docId = 'current-document'; // Use a generic key for current document
+                    const suggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_${docId}`;
+                    localStorage.setItem(suggestionsKey, JSON.stringify(suggestions));
+                    console.log('Saved current suggestions:', suggestions.length, 'suggestions');
+                }
+            }
+        } else {
+            console.log('No suggestions sidebar found, nothing to save');
+        }
+    } catch (error) {
+        console.error('Error saving current suggestions:', error);
+    }
+};
+
+function downloadAsPDF() {
+    const title = document.getElementById('docEditorTitle').value.trim() || 'Untitled Document';
+    const content = document.getElementById('docEditorContent');
+    
+    if (!content) {
+        alert('No content to download');
+        return;
+    }
+    
+    // Create a temporary container for printing
+    const printContainer = document.createElement('div');
+    printContainer.style.cssText = `
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 8.5in;
+        background: white;
+        color: black;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    `;
+    
+    // Add title
+    const titleEl = document.createElement('h1');
+    titleEl.textContent = title;
+    titleEl.style.cssText = 'color: black; margin-bottom: 20px; font-size: 24px;';
+    printContainer.appendChild(titleEl);
+    
+    // Add content
+    const contentClone = content.cloneNode(true);
+    contentClone.style.cssText = `
+        color: black;
+        background: white;
+        padding: 1in;
+        min-height: 9.5in;
+        page-break-after: auto;
+    `;
+    printContainer.appendChild(contentClone);
+    
+    document.body.appendChild(printContainer);
+    
+    // Use browser's print dialog with the container
+    const originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContainer.innerHTML;
+    document.title = title; // Set the filename
+    
+    window.print();
+    
+    // Restore original content
+    document.body.innerHTML = originalContents;
+    
+    // Reload the page to restore all event listeners
+    window.location.reload();
+}
+
+function humanizeText() {
+    const contentElements = document.querySelectorAll('.doc-editor-content');
+    
+    if (contentElements.length === 0) {
+        alert('No content to humanize.');
+        return;
+    }
+    
+    // Check if there's a text selection
+    const selection = window.getSelection();
+    const hasSelection = selection.toString().trim().length > 0;
+    
+    // Get text content based on selection while preserving formatting context
+    let textToHumanize = '';
+    if (hasSelection) {
+        textToHumanize = selection.toString().trim();
+    } else {
+        // Get all text content while preserving formatting structure
+        contentElements.forEach(content => {
+            textToHumanize += content.innerText + '\n\n';
+        });
+        textToHumanize = textToHumanize.trim();
+    }
+    
+    if (!textToHumanize) {
+        alert('No text content found to humanize.');
+        return;
+    }
+    
+    // Show confirmation popup
+    const scope = hasSelection ? 'highlighted region' : 'entire document';
+    const confirmed = confirm(`This will humanize your ${scope}. This action will replace the current text with a more human-like version. Continue?`);
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Show loading state
+    const humanizeBtn = document.getElementById('humanizeBtn');
+    const originalText = humanizeBtn.textContent;
+    humanizeBtn.textContent = 'Humanizing...';
+    humanizeBtn.disabled = true;
+    
+    // Show Genius thinking animation and spotlight if there's a selection
+    let geniusThinking = null;
+    let spotlightOverlay = null;
+    if (hasSelection) {
+        geniusThinking = showGeniusThinking();
+        // Use the existing spotlight effect from genius edit mode
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            window.createSpotlightEffect(range);
+        }
+    }
+    
+    // Use OpenAI instead of HumanizeAI Pro due to CORS issues
+    const currentUserData = localStorage.getItem('currentUser');
+    if (!currentUserData) {
+        alert('Please log in to use the Humanize feature.');
+        humanizeBtn.textContent = originalText;
+        humanizeBtn.disabled = false;
+        if (geniusThinking) geniusThinking.remove();
+        return;
+    }
+    
+    const currentUser = JSON.parse(currentUserData);
+    
+    // Use global API key for all users
+    const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
+    
+    if (!OPENAI_API_KEY) {
+        showNotification('OpenAI API key not found. Please add your API key in settings.', 'error');
+        humanizeBtn.textContent = originalText;
+        humanizeBtn.disabled = false;
+        if (geniusThinking) geniusThinking.remove();
+        return;
+    }
+    
+    // Use OpenAI for humanization (CORS-friendly)
+    fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are a professional text humanizer. Your task is to rewrite text to make it sound more natural, human-like, and engaging while maintaining the original meaning and key information.
+
+Guidelines:
+- Use natural, conversational language
+- Add variety in sentence structure and length
+- Include personal touches and human expressions
+- Make the text flow more naturally
+- Avoid overly formal or robotic language
+- Keep the core message and facts intact
+- Make it engaging and readable
+
+Rewrite the following text to sound more human and natural:`
+                },
+                {
+                    role: 'user',
+                    content: textToHumanize
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 2000
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        const humanizedText = data.choices[0].message.content;
+        
+        // Show preview dialog for humanized text
+        showHumanizePreview(textToHumanize, humanizedText, hasSelection);
+        
+    })
+    .catch(error => {
+        console.error('Humanization API Error:', error);
+        showNotification('Error humanizing text. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        humanizeBtn.textContent = originalText;
+        humanizeBtn.disabled = false;
+        if (geniusThinking) geniusThinking.remove();
+        // Use the existing spotlight removal function
+        window.removeSpotlightEffect();
+    });
+}
+
+// Show humanize preview dialog
+function showHumanizePreview(originalText, humanizedText, hasSelection) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    `;
+    
+    modalContent.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="margin: 0; color: #ffffff; font-size: 24px;">Humanize Preview</h2>
+            <button id="closeHumanizeModal" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; padding: 5px;">×</button>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 400px;">
+            <div style="display: flex; flex-direction: column;">
+                <h3 style="color: #ff6b6b; margin-bottom: 10px; font-size: 18px;">Original Text</h3>
+                <div id="originalTextPreview" style="
+                    background: rgba(255, 107, 107, 0.1);
+                    border: 1px solid rgba(255, 107, 107, 0.3);
+                    border-radius: 8px;
+                    padding: 15px;
+                    min-height: 150px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    line-height: 1.6;
+                    white-space: pre-wrap;
+                ">${originalText}</div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column;">
+                <h3 style="color: #51cf66; margin-bottom: 10px; font-size: 18px;">Humanized Text</h3>
+                <div id="humanizedTextPreview" style="
+                    background: rgba(81, 207, 102, 0.1);
+                    border: 1px solid rgba(81, 207, 102, 0.3);
+                    border-radius: 8px;
+                    padding: 15px;
+                    min-height: 150px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    line-height: 1.6;
+                    white-space: pre-wrap;
+                ">${humanizedText}</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; justify-content: space-between; margin-top: 20px;">
+            <button id="redoHumanize" style="
+                background: linear-gradient(135deg, #4a9eff, #6bb6ff);
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            ">
+                <span>🔄</span>
+                Redo
+            </button>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="rejectHumanize" style="
+                    background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
+                ">Reject Changes</button>
+                <button id="acceptHumanize" style="
+                    background: linear-gradient(135deg, #51cf66, #69db7c);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
+                ">Accept Changes</button>
+            </div>
+        </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Close modal functionality
+    const closeModal = () => {
+        modal.remove();
+    };
+    
+    document.getElementById('closeHumanizeModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Redo humanization
+    document.getElementById('redoHumanize').addEventListener('click', async () => {
+        const redoBtn = document.getElementById('redoHumanize');
+        const originalRedoText = redoBtn.innerHTML;
+        
+        // Show loading state
+        redoBtn.innerHTML = '<span>⏳</span> Regenerating...';
+        redoBtn.disabled = true;
+        
+        try {
+            // Call humanize API again
+            const newHumanizedText = await regenerateHumanization(originalText);
+            
+            // Update the preview with new text
+            document.getElementById('humanizedTextPreview').textContent = newHumanizedText;
+            
+            // Update the humanizedText variable for accept button
+            window.currentHumanizedText = newHumanizedText;
+            
+            showNotification('New humanized version generated!', 'success');
+        } catch (error) {
+            console.error('Redo humanization error:', error);
+            showNotification('Error regenerating text. Please try again.', 'error');
+        } finally {
+            // Restore button state
+            redoBtn.innerHTML = originalRedoText;
+            redoBtn.disabled = false;
+        }
+    });
+    
+    // Reject changes
+    document.getElementById('rejectHumanize').addEventListener('click', () => {
+        closeModal();
+        showNotification('Humanization rejected. No changes made.', 'info');
+    });
+    
+    // Accept changes
+    document.getElementById('acceptHumanize').addEventListener('click', () => {
+        const finalHumanizedText = window.currentHumanizedText || humanizedText;
+        applyHumanization(finalHumanizedText, hasSelection);
+        closeModal();
+        showNotification('Text humanized successfully!', 'success');
+        
+        // Auto-save the document after humanization
+        setTimeout(() => {
+            autoSaveDocument(window.currentClassData, window.currentExistingDoc);
+        }, 100);
+    });
+    
+    // Close on Escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Add hover effects
+    const redoBtn = document.getElementById('redoHumanize');
+    const rejectBtn = document.getElementById('rejectHumanize');
+    const acceptBtn = document.getElementById('acceptHumanize');
+    
+    redoBtn.addEventListener('mouseenter', () => {
+        redoBtn.style.transform = 'translateY(-2px)';
+        redoBtn.style.boxShadow = '0 4px 12px rgba(74, 158, 255, 0.3)';
+    });
+    redoBtn.addEventListener('mouseleave', () => {
+        redoBtn.style.transform = 'translateY(0)';
+        redoBtn.style.boxShadow = 'none';
+    });
+    
+    rejectBtn.addEventListener('mouseenter', () => {
+        rejectBtn.style.transform = 'translateY(-2px)';
+        rejectBtn.style.boxShadow = '0 4px 12px rgba(255, 107, 107, 0.3)';
+    });
+    rejectBtn.addEventListener('mouseleave', () => {
+        rejectBtn.style.transform = 'translateY(0)';
+        rejectBtn.style.boxShadow = 'none';
+    });
+    
+    acceptBtn.addEventListener('mouseenter', () => {
+        acceptBtn.style.transform = 'translateY(-2px)';
+        acceptBtn.style.boxShadow = '0 4px 12px rgba(81, 207, 102, 0.3)';
+    });
+    acceptBtn.addEventListener('mouseleave', () => {
+        acceptBtn.style.transform = 'translateY(0)';
+        acceptBtn.style.boxShadow = 'none';
+    });
+}
+
+// Apply humanization to the document while preserving formatting
+function applyHumanization(humanizedText, hasSelection) {
+    const contentElements = document.querySelectorAll('.doc-editor-content');
+    
+        if (hasSelection) {
+        // Replace selected text while preserving HTML formatting
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+            
+            // Get the selected text and its HTML context
+            const selectedText = selection.toString();
+            const selectedHTML = range.cloneContents();
+            
+            // Check if selection contains HTML formatting
+            if (selectedHTML.children.length > 0 || selectedHTML.querySelector('strong, em, u, s, b, i, span, p, div, h1, h2, h3, h4, h5, h6, ul, ol, li')) {
+                // Selection contains formatting - preserve it
+                preserveFormattingAndReplace(range, humanizedText);
+            } else {
+                // Plain text selection - simple replacement
+                range.deleteContents();
+                range.insertNode(document.createTextNode(humanizedText));
+            }
+            }
+        } else {
+        // For full document, preserve HTML structure and only replace text content
+            contentElements.forEach(content => {
+            preserveDocumentFormatting(content, humanizedText);
+        });
+    }
+}
+
+// Preserve formatting when replacing selected text
+function preserveFormattingAndReplace(range, newText) {
+    const selectedHTML = range.cloneContents();
+    const container = document.createElement('div');
+    container.appendChild(selectedHTML);
+    
+    // Find all text nodes in the selection
+    const textNodes = [];
+    const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+        if (node.textContent.trim()) {
+            textNodes.push(node);
+        }
+    }
+    
+    if (textNodes.length > 0) {
+        // Replace text in the first text node, remove others
+        textNodes[0].textContent = newText;
+        for (let i = 1; i < textNodes.length; i++) {
+            textNodes[i].textContent = '';
+        }
+        
+        // Replace the selection with the modified HTML
+        range.deleteContents();
+        range.insertNode(container.firstChild);
+    } else {
+        // Fallback to simple text replacement
+        range.deleteContents();
+        range.insertNode(document.createTextNode(newText));
+    }
+}
+
+// Preserve document formatting when humanizing entire content
+function preserveDocumentFormatting(contentElement, humanizedText) {
+    // Get all text content with formatting preserved
+    const textWithFormatting = contentElement.innerHTML;
+    
+    // Extract just the text content for humanization
+    const textContent = contentElement.innerText || contentElement.textContent || '';
+    
+    // Split the humanized text into sentences/paragraphs to match structure
+    const humanizedSentences = humanizedText.split(/(?<=[.!?])\s+/);
+    const originalSentences = textContent.split(/(?<=[.!?])\s+/);
+    
+    let newHTML = textWithFormatting;
+    let sentenceIndex = 0;
+    
+    // Replace text content while preserving HTML tags
+    const walker = document.createTreeWalker(
+        contentElement,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+        if (node.textContent.trim()) {
+            textNodes.push(node);
+        }
+    }
+    
+    // Replace text in each text node with corresponding humanized text
+    textNodes.forEach((textNode, index) => {
+        if (textNode.textContent.trim()) {
+            // Use the humanized text for this text node
+            const nodeText = textNode.textContent.trim();
+            const humanizedNodeText = humanizedSentences[sentenceIndex] || humanizedText;
+            textNode.textContent = humanizedNodeText;
+            sentenceIndex++;
+        }
+    });
+}
+
+// Regenerate humanization for redo functionality
+async function regenerateHumanization(originalText) {
+    const currentUserData = localStorage.getItem('currentUser');
+    if (!currentUserData) {
+        throw new Error('Please log in to use the Humanize feature.');
+    }
+    
+    const currentUser = JSON.parse(currentUserData);
+    const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
+    
+    if (!OPENAI_API_KEY) {
+        throw new Error('OpenAI API key not found. Please add your API key in settings.');
+    }
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are a professional text humanizer. Your task is to rewrite text to make it sound more natural, human-like, and engaging while maintaining the original meaning and key information.
+
+Guidelines:
+- Use natural, conversational language
+- Add personality and voice to the text
+- Make it more engaging and readable
+- Maintain the original meaning and key points
+- Use varied sentence structures
+- Add appropriate transitions and flow
+- Make it sound like a human wrote it, not AI
+
+Rewrite the following text to make it more human-like:`
+                },
+                {
+                    role: 'user',
+                    content: originalText
+                }
+            ],
+            temperature: 0.8, // Higher temperature for more variation
+            max_tokens: 1000
+        })
+    });
+    
+    if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+function showGeniusThinking() {
+    // Find the existing Genius floating component
+    const geniusFloating = document.querySelector('.genius-floating');
+    if (!geniusFloating) {
+        console.log('No floating Genius component found');
+        return null;
+    }
+    
+    // Store the original content
+    const originalContent = geniusFloating.innerHTML;
+    
+    // Replace with thinking animation
+    geniusFloating.innerHTML = `
+        <div class="genius-thinking-content" style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+        ">
+            <div class="genius-thinking-icon" style="
+                width: 20px;
+                height: 20px;
+                background: linear-gradient(45deg, #4a9eff, #5ba8ff);
+                border-radius: 50%;
+                animation: pulse 1.5s ease-in-out infinite;
+            "></div>
+            <div style="font-size: 14px; font-weight: 500;">Genius is thinking...</div>
+        </div>
+    `;
+    
+    // Add pulse animation if not already added
+    if (!document.querySelector('#genius-pulse-animation')) {
+        const style = document.createElement('style');
+        style.id = 'genius-pulse-animation';
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.1); opacity: 0.7; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Return an object with restore method
+    return {
+        element: geniusFloating,
+        originalContent: originalContent,
+        remove: function() {
+            // Restore original content
+            geniusFloating.innerHTML = originalContent;
+            // Re-setup input listeners
+            const input = geniusFloating.querySelector('.genius-input');
+            if (input) {
+                setupGeniusInputListeners(input, window.currentClassData, window.currentExistingDoc);
+            }
+        }
+    };
+}
+
+
+function showHumanizationSuggestion(originalText, humanizedText, isSelection, contentElements) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        color: #ffffff;
+    `;
+    
+    modalContent.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 8px; height: 8px; background: linear-gradient(45deg, #4a9eff, #5ba8ff); border-radius: 50%;"></div>
+                <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">Humanization Suggestion</h2>
+            </div>
+            <button id="closeModal" style="
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                color: #ffffff;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 8px 12px;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+            " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">×</button>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="width: 4px; height: 20px; background: linear-gradient(135deg, #4a9eff, #5ba8ff); border-radius: 2px;"></div>
+                <h3 style="color: #4a9eff; margin: 0; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Original Text</h3>
+            </div>
+            <div style="
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08));
+                border: 1px solid rgba(74, 158, 255, 0.2);
+                padding: 20px;
+                border-radius: 12px;
+                line-height: 1.7;
+                font-size: 15px;
+                color: #e0e0e0;
+                position: relative;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            ">
+                <div style="position: absolute; top: 12px; right: 12px; color: #4a9eff; font-size: 12px; opacity: 0.7;">ORIGINAL</div>
+                ${originalText.replace(/\n/g, '<br>')}
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="width: 4px; height: 20px; background: linear-gradient(135deg, #51cf66, #40c057); border-radius: 2px;"></div>
+                <h3 style="color: #51cf66; margin: 0; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Humanized Version</h3>
+            </div>
+            <div style="
+                background: linear-gradient(145deg, rgba(81, 207, 102, 0.05), rgba(64, 192, 87, 0.1));
+                border: 1px solid rgba(81, 207, 102, 0.3);
+                padding: 20px;
+                border-radius: 12px;
+                line-height: 1.7;
+                font-size: 15px;
+                color: #e8f5e8;
+                position: relative;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            ">
+                <div style="position: absolute; top: 12px; right: 12px; color: #51cf66; font-size: 12px; opacity: 0.7;">IMPROVED</div>
+                ${humanizedText.replace(/\n/g, '<br>')}
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 16px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <button id="rejectHumanization" style="
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.12));
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                color: #b0b0b0;
+                padding: 12px 24px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                min-width: 100px;
+            " onmouseover="this.style.background='linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.2)'; this.style.color='#ffffff'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.12))'; this.style.color='#b0b0b0'; this.style.transform='translateY(0)'">Cancel</button>
+            <button id="acceptHumanization" style="
+                background: linear-gradient(145deg, #51cf66, #40c057);
+                border: 1px solid rgba(81, 207, 102, 0.3);
+                border-radius: 10px;
+                color: #ffffff;
+                padding: 12px 24px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                min-width: 160px;
+                box-shadow: 0 4px 12px rgba(81, 207, 102, 0.2);
+            " onmouseover="this.style.background='linear-gradient(145deg, #5dd877, #4dd16a)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(81, 207, 102, 0.3)'" onmouseout="this.style.background='linear-gradient(145deg, #51cf66, #40c057)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(81, 207, 102, 0.2)'">✨ Apply Humanization</button>
+        </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Close modal functionality
+    const closeModal = () => {
+        modal.remove();
+    };
+    
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('rejectHumanization').addEventListener('click', closeModal);
+    
+    document.getElementById('acceptHumanization').addEventListener('click', () => {
+        // Apply humanization
+        if (isSelection) {
+            // Replace selected text
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(document.createTextNode(humanizedText));
+            }
+        } else {
+            // Replace all content
+            contentElements.forEach(content => {
+                content.innerHTML = humanizedText;
+            });
+        }
+        
+        // Show success notification
+        showNotification('Text humanized successfully!', 'success');
+        
+        // Auto-save the document after humanization
+        setTimeout(() => {
+            autoSaveDocument(window.currentClassData, window.currentExistingDoc);
+        }, 100);
+        
+        closeModal();
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Close on Escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    
+    let background, icon;
+    switch(type) {
+        case 'success':
+            background = 'linear-gradient(145deg, #51cf66, #40c057)';
+            icon = '✓';
+            break;
+        case 'error':
+            background = 'linear-gradient(145deg, #ff6b6b, #ee5a52)';
+            icon = '✕';
+            break;
+        default:
+            background = 'linear-gradient(145deg, #4a9eff, #5ba8ff)';
+            icon = 'ℹ';
+    }
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${background};
+        color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 10001;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 300px;
+    `;
+    
+    notification.innerHTML = `
+        <span style="font-size: 16px;">${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Add slide-in animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Remove after 4 seconds for errors, 3 seconds for others
+    setTimeout(() => {
+        notification.remove();
+    }, type === 'error' ? 4000 : 3000);
+}
+
+
+
+function updateDocumentStats() {
+    const wordCount = document.getElementById('wordCount');
+    const charCount = document.getElementById('charCount');
+    
+    if (!wordCount || !charCount) return;
+    
+    // Get all text content from the single content area
+    const content = document.getElementById('docEditorContent');
+    if (!content) return;
+    
+    let allText = content.innerText || content.textContent || '';
+    
+    // Remove placeholder content and chat messages from word count
+    allText = allText
+        .replace(/Start Writing with Genius AI[\s\S]*?Draft an email about\.\.\./g, '')
+        .replace(/Genius is thinking\.\.\./g, '')
+        .replace(/Press ESC to close/g, '')
+        .replace(/Switch to edit mode and ask Genius to write your first draft, or begin typing to get started/g, '')
+        .replace(/Genius AI[\s\S]*?How can I assist you today\? ✨/g, '')
+        .trim();
+    
+    // Count words
+    const words = allText.trim().split(/\s+/).filter(word => word.length > 0);
+    const numWords = words.length;
+    wordCount.textContent = `${numWords} word${numWords !== 1 ? 's' : ''}`;
+    
+    // Count characters (without spaces) - only count actual content
+    const chars = allText.replace(/\s/g, '').length;
+    charCount.textContent = `${chars} character${chars !== 1 ? 's' : ''}`;
+    
+    console.log('Document stats updated - Words:', numWords, 'Chars:', chars, 'Text:', allText.substring(0, 100));
+}
+
+function updatePlaceholderVisibility() {
+    const content = document.getElementById('docEditorContent');
+    if (!content) return;
+    
+    const placeholder = content.querySelector('.empty-document-placeholder');
+    if (!placeholder) return;
+    
+    // Check if content is empty (only whitespace, placeholder, or chat messages)
+    const textContent = content.innerText || '';
+    const htmlContent = content.innerHTML || '';
+    
+    // Remove placeholder and chat message content from consideration
+    const contentWithoutPlaceholder = htmlContent
+        .replace(/<div class="empty-document-placeholder">[\s\S]*?<\/div>/g, '')
+        .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
+        .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
+        .replace(/<br\s*\/?>/g, '') // Remove line breaks
+        .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+    
+    // Only hide placeholder if there's substantial user content (more than just whitespace or single characters)
+    const hasRealContent = contentWithoutPlaceholder.length > 10; // Increased threshold
+    
+    if (hasRealContent) {
+        placeholder.classList.add('hidden');
+    } else {
+        placeholder.classList.remove('hidden');
+        // Re-setup clickable examples when placeholder becomes visible
+        setupPlaceholderExamples(window.currentClassData, window.currentExistingDoc);
+    }
+}
+
+function setupPlaceholderExamples(classData, existingDoc) {
+    console.log('Setting up placeholder examples...');
+    // Add event listeners to clickable placeholder examples
+    const examples = document.querySelectorAll('.clickable-example');
+    console.log('Found clickable examples:', examples.length);
+    
+    examples.forEach((example, index) => {
+        console.log(`Setting up example ${index + 1}:`, example.dataset.example);
+        example.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const exampleText = example.dataset.example;
+            console.log('Placeholder example clicked:', exampleText);
+            
+            // Switch to edit mode and send the example as a message
+            console.log('Switching to edit mode...');
+            switchToEditMode();
+            
+            // Set the input value and send the message
+            setTimeout(() => {
+                const chatInput = document.getElementById('geniusChatInput');
+                console.log('Chat input found:', !!chatInput);
+                if (chatInput) {
+                    chatInput.value = exampleText;
+                    chatInput.focus();
+                    console.log('Set input value to:', exampleText);
+                    
+                    // Trigger the send message
+                    setTimeout(() => {
+                        const sendBtn = document.getElementById('geniusSendBtn');
+                        console.log('Send button found:', !!sendBtn, 'Disabled:', sendBtn?.disabled);
+                        if (sendBtn && !sendBtn.disabled) {
+                            console.log('Clicking send button...');
+                            sendBtn.click();
+                        } else {
+                            console.log('Send button not available or disabled');
+                        }
+                    }, 100);
+                } else {
+                    console.log('Chat input not found');
+                }
+            }, 200);
+        });
+    });
+}
+
+ function setupGeniusChat(classData, existingDoc) {
+    // Store globally for use in other functions
+    window.currentClassData = classData;
+    window.currentExistingDoc = existingDoc;
+    
+    const chatInput = document.getElementById('geniusChatInput');
+    const chatContainer = document.getElementById('geniusChatContainer');
+    const sidebar = document.getElementById('geniusSidebar');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const chatMessages = document.getElementById('geniusChatMessages');
+    const chatStatus = document.getElementById('geniusChatStatus');
+    const modeToggle = document.getElementById('geniusModeToggle');
+    const modeIcon = document.getElementById('modeIcon');
+    
+    if (chatInput) {
+        setupGeniusInputListeners(chatInput, classData, existingDoc);
+    }
+}
+
+function setupGeniusInputListeners(chatInput, classData, existingDoc) {
+    const chatContainer = document.getElementById('geniusChatContainer');
+    const sidebar = document.getElementById('geniusSidebar');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const chatMessages = document.getElementById('geniusChatMessages');
+    const chatStatus = document.getElementById('geniusChatStatus');
+    const modeToggle = document.getElementById('geniusModeToggle');
+    const modeIcon = document.getElementById('modeIcon');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const chatTabs = document.getElementById('geniusChatTabs');
+    const sidebarInput = document.getElementById('geniusChatInputSidebar');
+    const sendBtn = document.getElementById('geniusSendBtn');
+    
+    const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
+    
+    // Mode state: 'help' or 'edit'
+    let currentMode = 'help'; // Start with help mode (? icon)
+    
+    // Save selection when user clicks on input
+    let savedSelection = null;
+    
+    // Chat management
+    let currentChatId = 'default';
+    let chats = {};
+    let chatCounter = 1;
+    
+    if (!chatInput || !chatContainer || !sidebar) {
+        console.log('Missing required elements for Genius chat setup');
+        return;
+    }
+    
+    // Ensure input is always focusable
+    chatInput.disabled = false;
+    chatInput.readOnly = false;
+    chatInput.tabIndex = 0;
+    
+    // Add click handler to ensure input is always focusable
+    chatInput.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chatInput.focus();
+        console.log('Genius input clicked and focused');
+    });
+    
+    // Add focus handler to ensure input stays focusable
+    chatInput.addEventListener('focus', () => {
+        chatContainer.classList.add('focused');
+        console.log('Genius input focused');
+    });
+    
+    chatInput.addEventListener('blur', () => {
+        chatContainer.classList.remove('focused');
+        console.log('Genius input blurred');
+    });
+    
+    // Periodic check to ensure input stays focusable
+    const focusCheckInterval = setInterval(() => {
+        if (chatInput && chatInput.disabled) {
+            console.log('Input was disabled, re-enabling...');
+            chatInput.disabled = false;
+            chatInput.readOnly = false;
+        }
+    }, 1000);
+    
+    // Clean up interval when input is removed
+    const observer = new MutationObserver(() => {
+        if (!document.contains(chatInput)) {
+            clearInterval(focusCheckInterval);
+            observer.disconnect();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Update placeholder based on selection and mode
+    function updatePlaceholder() {
+        // Check saved selection first
+        let hasSelection = false;
+        if (savedSelection) {
+            try {
+                hasSelection = savedSelection.toString().trim().length > 0;
+            } catch (err) {
+                hasSelection = false;
+            }
+        }
+        
+        // Check current selection if no saved selection
+        if (!hasSelection) {
+            const selection = window.getSelection();
+            hasSelection = selection && selection.toString().trim().length > 0;
+        }
+        
+        if (chatInput.value.trim().length > 0) {
+            chatInput.placeholder = '';
+        } else {
+            if (currentMode === 'edit' && hasSelection) {
+                chatInput.placeholder = 'Edit highlighted part with Genius';
+            } else if (currentMode === 'edit') {
+                chatInput.placeholder = 'Edit document with Genius';
+            } else {
+                chatInput.placeholder = 'Talk to Genius';
+            }
+        }
+    }
+    
+    // When user starts typing, remove placeholder
+    chatInput.addEventListener('input', () => {
+        updatePlaceholder();
+    });
+    
+    // Update placeholder when selection changes
+    document.addEventListener('selectionchange', () => {
+        if (document.activeElement && document.activeElement.closest('.doc-editor-content')) {
+            updatePlaceholder();
+        }
+    });
+    
+    // Handle Enter key
+    chatInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter' && chatInput.value.trim()) {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            chatInput.value = '';
+            
+             if (currentMode === 'help') {
+                 // Help mode: Show response in sidebar chat
+                 chatInput.placeholder = 'Talk to Genius';
+                 sidebar.classList.add('open');
+                 
+                 // Add user message to current chat
+                 addMessageToChat('user', message);
+                 
+                 const documentContent = getDocumentContent(false); // Help mode
+                 
+                 // Show thinking status
+                 if (chatStatus) {
+                     chatStatus.textContent = 'Genius is thinking...';
+                     chatStatus.style.display = 'block';
+                 }
+                 
+                 try {
+                     // Send to OpenAI
+                     const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                         method: 'POST',
+                         headers: {
+                             'Content-Type': 'application/json',
+                             'Authorization': `Bearer ${OPENAI_API_KEY}`
+                         },
+                         body: JSON.stringify({
+                             model: 'gpt-4o-mini',
+                             messages: [
+                                 {
+                                     role: 'system',
+                                     content: `You are Genius AI, a helpful writing assistant. The user is working on a document. Here is the current content of their document:\n\n${documentContent}\n\nAnswer their questions about the document or provide help. Be concise, helpful, and format your response nicely. Use the document as reference but don't quote it directly. Keep responses under 200 words and use proper formatting with line breaks and bullet points when appropriate.`
+                                 },
+                                 {
+                                     role: 'user',
+                                     content: message
+                                 }
+                             ],
+                             temperature: 0.7,
+                             max_tokens: 500
+                         })
+                     });
+                     
+                     if (!response.ok) {
+                         throw new Error(`API error: ${response.status}`);
+                     }
+                     
+                     const data = await response.json();
+                     const aiResponse = data.choices[0].message.content;
+                     
+                     // Hide thinking status
+                     if (chatStatus) {
+                         chatStatus.style.display = 'none';
+                     }
+                     
+                     // Add AI response to current chat
+                     const formattedResponse = formatAIResponse(aiResponse);
+                     addMessageToChat('assistant', formattedResponse);
+                     
+                 } catch (error) {
+                     console.error('OpenAI API Error:', error);
+                     if (chatStatus) {
+                         chatStatus.style.display = 'none';
+                     }
+                     addMessageToChat('assistant', 'Sorry, I encountered an error. Please try again.');
+                 }
+             } else {
+                 // Edit mode: Show suggestions in document
+                 chatInput.placeholder = 'Edit document with Genius';
+                 const documentContent = getDocumentContent(true); // Edit mode
+                 
+                 // Check if we have content to work with in edit mode
+                 if (!documentContent.trim()) {
+                     // For empty documents, we'll generate content instead of showing error
+                     console.log('Empty document detected in edit mode - will generate content');
+                 }
+                 
+                 // Keep spotlight effect active during AI processing
+                 const keepSpotlight = () => {
+                     if (window.spotlightOverlay && !window.spotlightOverlay.parentNode) {
+                         // Recreate spotlight if it was removed
+                         const selection = window.getSelection();
+                         if (selection && selection.rangeCount > 0) {
+                             const range = selection.getRangeAt(0);
+                             window.createSpotlightEffect(range);
+                         }
+                     }
+                 };
+                 
+                 // Keep spotlight active
+                 const spotlightInterval = setInterval(keepSpotlight, 100);
+                 
+                 try {
+                     console.log('Sending to OpenAI - message:', message, 'documentContent:', documentContent, 'mode: edit');
+                     await sendToOpenAI(message, documentContent, 'edit', classData, existingDoc);
+                 } catch (error) {
+                     console.error('Error in sendToOpenAI:', error);
+                     // Show user-friendly error message
+                     showNotification('Error processing your request. Please try again.', 'error');
+                 } finally {
+                     // Clear interval and remove spotlight after processing
+                     clearInterval(spotlightInterval);
+                     removeSpotlightEffect();
+                 }
+             }
+        }
+    });
+    
+    // Save selection when clicking input and create spotlight effect
+    window.spotlightOverlay = null;
+    
+    chatInput.addEventListener('mousedown', (e) => {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+            try {
+                savedSelection = selection.getRangeAt(0).cloneRange();
+                
+                // Create spotlight effect
+                const selectedText = selection.toString();
+                if (selectedText.trim()) {
+                    window.createSpotlightEffect(savedSelection);
+                }
+            } catch (err) {
+                savedSelection = null;
+            }
+        }
+    });
+    
+    window.createSpotlightEffect = function(range) {
+        // Remove existing spotlight
+        removeSpotlightEffect();
+        
+        try {
+            // Get the selected text and HTML
+            const selectedText = range.toString();
+            if (!selectedText.trim()) return;
+            
+            // Get the bounding rectangles of the selection
+            const rects = range.getClientRects();
+            if (rects.length === 0) return;
+            
+            // Get the editor wrapper for positioning context
+            const wrapper = document.querySelector('.doc-editor-content-wrapper');
+            if (!wrapper) return;
+            
+            // Add dimming class to wrapper
+            wrapper.classList.add('genius-spotlight-active');
+            
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
+            // Create container for highlights and text
+            window.spotlightOverlay = document.createElement('div');
+            window.spotlightOverlay.className = 'genius-spotlight-container';
+            
+            // Create a single text copy for the entire selection
+            const firstRect = rects[0];
+            const lastRect = rects[rects.length - 1];
+            
+            // Calculate bounding box for all rectangles
+            let minLeft = Infinity, minTop = Infinity, maxRight = -Infinity, maxBottom = -Infinity;
+            for (let i = 0; i < rects.length; i++) {
+                const rect = rects[i];
+                const left = rect.left - wrapperRect.left + wrapper.scrollLeft;
+                const top = rect.top - wrapperRect.top + wrapper.scrollTop;
+                const right = left + rect.width;
+                const bottom = top + rect.height;
+                
+                minLeft = Math.min(minLeft, left);
+                minTop = Math.min(minTop, top);
+                maxRight = Math.max(maxRight, right);
+                maxBottom = Math.max(maxBottom, bottom);
+                
+                // Create blur backdrop for each line
+                const blurBox = document.createElement('div');
+                blurBox.className = 'genius-spotlight-blur';
+                blurBox.style.left = left + 'px';
+                blurBox.style.top = top + 'px';
+                blurBox.style.width = rect.width + 'px';
+                blurBox.style.height = rect.height + 'px';
+                window.spotlightOverlay.appendChild(blurBox);
+                
+                // Create glow box for each line
+                const highlightBox = document.createElement('div');
+                highlightBox.className = 'genius-spotlight-highlight';
+                highlightBox.style.left = left + 'px';
+                highlightBox.style.top = top + 'px';
+                highlightBox.style.width = rect.width + 'px';
+                highlightBox.style.height = rect.height + 'px';
+                window.spotlightOverlay.appendChild(highlightBox);
+            }
+            
+            // Clone the entire selection and render it exactly as it appears
+            const fragment = range.cloneContents();
+            
+            // Find the containing parent element to clone its structure
+            const startContainer = range.commonAncestorContainer;
+            const parentElement = startContainer.nodeType === Node.TEXT_NODE 
+                ? startContainer.parentElement 
+                : startContainer;
+            
+            // Create wrapper that matches the parent structure
+            const textCopy = document.createElement('div');
+            textCopy.className = 'genius-spotlight-text-copy';
+            
+            // Position it exactly over the original selection
+            textCopy.style.left = minLeft + 'px';
+            textCopy.style.top = minTop + 'px';
+            textCopy.style.width = (maxRight - minLeft) + 'px';
+            
+            // Append the cloned fragment directly
+            textCopy.appendChild(fragment);
+            
+            window.spotlightOverlay.appendChild(textCopy);
+            
+            wrapper.appendChild(window.spotlightOverlay);
+        } catch (err) {
+            console.error('Error creating spotlight:', err);
+        }
+    }
+    
+    window.removeSpotlightEffect = function() {
+        const wrapper = document.querySelector('.doc-editor-content-wrapper');
+        if (wrapper) {
+            wrapper.classList.remove('genius-spotlight-active');
+        }
+        if (window.spotlightOverlay) {
+            window.spotlightOverlay.remove();
+            window.spotlightOverlay = null;
+        }
+    }
+    
+    // Remove spotlight when clicking back on document
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.doc-editor-content')) {
+            removeSpotlightEffect();
+        }
+    });
+    
+     // Don't remove spotlight after submitting - let the processing handle it
+     // chatInput.addEventListener('keydown', (e) => {
+     //     if (e.key === 'Enter') {
+     //         setTimeout(() => removeSpotlightEffect(), 100);
+     //     }
+     // });
+    
+    // Focus effect
+    chatInput.addEventListener('focus', () => {
+        chatContainer.classList.add('focused');
+    });
+    
+    chatInput.addEventListener('blur', () => {
+        chatContainer.classList.remove('focused');
+    });
+    
+    // Close sidebar
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Close button clicked');
+            sidebar.style.display = 'none';
+            console.log('Sidebar completely hidden');
+        });
+    } else {
+        console.log('Close button not found');
+    }
+    
+    // Setup resize functionality
+    setupGeniusSidebarResize();
+    
+    // Initialize chat management
+    initializeChatManagement();
+    
+    // New chat button
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', createNewChat);
+    }
+    
+    // Sidebar input functionality
+    if (sidebarInput && sendBtn) {
+        setupSidebarInput();
+    }
+    
+    async function initializeChatManagement() {
+        // Load saved chats from Firebase first, then localStorage
+        const docId = existingDoc ? existingDoc.id : 'new-document';
+        
+        try {
+            // Try Firebase first
+            const { chatService } = await import('./firebase-service.js');
+            const firebaseChats = await chatService.getChats(classData.userId, classData.id, docId);
+            
+            if (Object.keys(firebaseChats).length > 0) {
+                console.log('Loaded chats from Firebase:', Object.keys(firebaseChats).length);
+                chats = firebaseChats;
+                chatCounter = Math.max(...Object.keys(chats).map(id => parseInt(id.split('-')[1]) || 0)) + 1;
+                
+                // Ensure all existing chats have the needsNaming flag
+                Object.values(chats).forEach(chat => {
+                    if (chat.needsNaming === undefined) {
+                        chat.needsNaming = false; // Existing chats don't need renaming
+                    }
+                });
+            } else {
+                // Fallback to localStorage
+        const chatsKey = `genius_chats_${classData.userId}_${classData.name}_${docId}`;
+        const savedChats = localStorage.getItem(chatsKey);
+        
+        if (savedChats) {
+            try {
+                chats = JSON.parse(savedChats);
+                chatCounter = Math.max(...Object.keys(chats).map(id => parseInt(id.split('-')[1]) || 0)) + 1;
+                
+                // Ensure all existing chats have the needsNaming flag
+                Object.values(chats).forEach(chat => {
+                    if (chat.needsNaming === undefined) {
+                        chat.needsNaming = false; // Existing chats don't need renaming
+                    }
+                });
+                        
+                        console.log('Loaded chats from localStorage:', Object.keys(chats).length);
+                        
+                        // Migrate to Firebase
+                        if (Object.keys(chats).length > 0) {
+                            console.log('Migrating chats from localStorage to Firebase...');
+                            await chatService.saveChats(classData.userId, classData.id, docId, chats);
+                            console.log('Chats migrated to Firebase');
+                        }
+            } catch (error) {
+                        console.error('Error parsing saved chats:', error);
+                chats = {};
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading chats:', error);
+            // Fallback to localStorage
+            const chatsKey = `genius_chats_${classData.userId}_${classData.name}_${docId}`;
+            const savedChats = localStorage.getItem(chatsKey);
+            
+            if (savedChats) {
+                try {
+                    chats = JSON.parse(savedChats);
+                    chatCounter = Math.max(...Object.keys(chats).map(id => parseInt(id.split('-')[1]) || 0)) + 1;
+                    
+                    // Ensure all existing chats have the needsNaming flag
+                    Object.values(chats).forEach(chat => {
+                        if (chat.needsNaming === undefined) {
+                            chat.needsNaming = false; // Existing chats don't need renaming
+                        }
+                    });
+                    
+                    console.log('Loaded chats from localStorage fallback:', Object.keys(chats).length);
+                } catch (error) {
+                    console.error('Error parsing saved chats:', error);
+                    chats = {};
+                }
+            }
+        }
+        
+        // Create default chat if none exist
+        if (Object.keys(chats).length === 0) {
+            createNewChat();
+        } else {
+            // Load the first chat
+            const firstChatId = Object.keys(chats)[0];
+            switchToChat(firstChatId);
+        }
+        
+        // Update any existing chats that still have generic names
+        Object.values(chats).forEach(chat => {
+            if (chat.title.startsWith('Chat ') && chat.messages.length > 0) {
+                const firstUserMessage = chat.messages.find(m => m.role === 'user');
+                if (firstUserMessage) {
+                    chat.title = generateChatTitle(firstUserMessage.content);
+                    chat.needsNaming = false;
+                }
+            }
+        });
+        
+        // Save updated chats and re-render
+        saveChats();
+        renderChatTabs();
+    }
+    
+    function createNewChat() {
+        const chatId = `chat-${chatCounter++}`;
+        const chatTitle = `New Chat`;
+        
+        chats[chatId] = {
+            id: chatId,
+            title: chatTitle,
+            messages: [],
+            createdAt: new Date().toISOString(),
+            needsNaming: true // Flag to indicate this chat needs a proper name
+        };
+        
+        currentChatId = chatId;
+        switchToChat(chatId);
+        renderChatTabs();
+        saveChats();
+        
+        console.log('Created new chat:', chatId);
+    }
+    
+    function switchToChat(chatId) {
+        if (!chats[chatId]) return;
+        
+        currentChatId = chatId;
+        
+        // Clear current messages
+        chatMessages.innerHTML = '';
+        
+        // Load messages for this chat
+        const chat = chats[chatId];
+        chat.messages.forEach(message => {
+            addMessageToChat(message.role, message.content, false);
+        });
+        
+        // Update active tab
+        document.querySelectorAll('.chat-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-chat-id="${chatId}"]`)?.classList.add('active');
+        
+        console.log('Switched to chat:', chatId);
+    }
+    
+    function renderChatTabs() {
+        if (!chatTabs) return;
+        
+        chatTabs.innerHTML = '';
+        
+        Object.values(chats).forEach(chat => {
+            const tab = document.createElement('div');
+            tab.className = `chat-tab ${chat.id === currentChatId ? 'active' : ''}`;
+            tab.dataset.chatId = chat.id;
+            tab.innerHTML = `
+                <span class="chat-tab-title">${chat.title}</span>
+                <button class="chat-tab-close" data-chat-id="${chat.id}">×</button>
+            `;
+            
+            // Click to switch chat
+            tab.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('chat-tab-close')) {
+                    switchToChat(chat.id);
+                }
+            });
+            
+            // Close chat button
+            const closeBtn = tab.querySelector('.chat-tab-close');
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteChat(chat.id);
+            });
+            
+            chatTabs.appendChild(tab);
+        });
+    }
+    
+    function deleteChat(chatId) {
+        if (Object.keys(chats).length <= 1) {
+            alert('Cannot delete the last chat');
+            return;
+        }
+        
+        delete chats[chatId];
+        
+        // Switch to another chat
+        const remainingChats = Object.keys(chats);
+        if (remainingChats.length > 0) {
+            switchToChat(remainingChats[0]);
+        }
+        
+        renderChatTabs();
+        saveChats();
+        
+        console.log('Deleted chat:', chatId);
+    }
+    
+    async function saveChats() {
+        const docId = existingDoc ? existingDoc.id : 'new-document';
+        
+        try {
+            // Save to Firebase
+            const { chatService } = await import('./firebase-service.js');
+            await chatService.saveChats(classData.userId, classData.id, docId, chats);
+            console.log('Chats saved to Firebase');
+        } catch (error) {
+            console.error('Error saving chats to Firebase:', error);
+        }
+        
+        // Also save to localStorage as backup
+        const chatsKey = `genius_chats_${classData.userId}_${classData.name}_${docId}`;
+        localStorage.setItem(chatsKey, JSON.stringify(chats));
+    }
+    
+    function generateChatTitle(firstMessage) {
+        // Simple title generation based on first message
+        let title = firstMessage.trim();
+        
+        // Remove common question words and make it shorter
+        title = title.replace(/^(what|how|why|when|where|can|could|would|should|is|are|do|does|did|will|would|please|help|explain|tell|show|give|make|create|write|edit|fix|improve|change|update|add|remove|delete)\s+/i, '');
+        
+        // Capitalize first letter
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        
+        // Limit length and add ellipsis if needed
+        if (title.length > 30) {
+            title = title.substring(0, 30).trim() + '...';
+        }
+        
+        // If title is too short or empty, use a default
+        if (title.length < 3) {
+            title = 'Quick Question';
+        }
+        
+        return title;
+    }
+    
+    function updateChatTitleIfNeeded(chatId, firstUserMessage) {
+        if (chats[chatId] && chats[chatId].needsNaming && firstUserMessage) {
+            const newTitle = generateChatTitle(firstUserMessage);
+            chats[chatId].title = newTitle;
+            chats[chatId].needsNaming = false;
+            
+            // Update the tab display
+            renderChatTabs();
+            saveChats();
+            
+            console.log('Updated chat title:', newTitle);
+        }
+    }
+    
+    function setupSidebarInput() {
+        // Handle Enter key
+        sidebarInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && sidebarInput.value.trim()) {
+                e.preventDefault();
+                await sendSidebarMessage();
+            }
+        });
+        
+        // Handle Send button click
+        sendBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (sidebarInput.value.trim()) {
+                await sendSidebarMessage();
+            }
+        });
+        
+        // Focus input when sidebar opens
+        sidebarInput.addEventListener('focus', () => {
+            console.log('Sidebar input focused');
+        });
+    }
+    
+    async function sendSidebarMessage() {
+        const message = sidebarInput.value.trim();
+        if (!message) return;
+        
+        // Clear input
+        sidebarInput.value = '';
+        
+        // Add user message to chat
+        addMessageToChat('user', message);
+        
+        // Show thinking status
+        if (chatStatus) {
+            chatStatus.textContent = 'Genius is thinking...';
+            chatStatus.style.display = 'block';
+        }
+        
+        try {
+            // Get document content
+            const documentContent = getDocumentContent(false); // Help mode for sidebar
+            
+            // Send to OpenAI
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are Genius AI, a helpful writing assistant. The user is working on a document. Here is the current content of their document:\n\n${documentContent}\n\nAnswer their questions about the document or provide help. Be concise, helpful, and format your response nicely. Use the document as reference but don't quote it directly. Keep responses under 200 words and use proper formatting with line breaks and bullet points when appropriate.`
+                        },
+                        {
+                            role: 'user',
+                            content: message
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 500
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const aiResponse = data.choices[0].message.content;
+            
+            // Hide thinking status
+            if (chatStatus) {
+                chatStatus.style.display = 'none';
+            }
+            
+            // Add AI response to chat
+            const formattedResponse = formatAIResponse(aiResponse);
+            addMessageToChat('assistant', formattedResponse);
+            
+        } catch (error) {
+            console.error('OpenAI API Error:', error);
+            if (chatStatus) {
+                chatStatus.style.display = 'none';
+            }
+            addMessageToChat('assistant', 'Sorry, I encountered an error. Please try again.');
+        }
+    }
+    
+    function setupGeniusSidebarResize() {
+        const sidebar = document.getElementById('geniusSidebar');
+        const resizeHandle = document.getElementById('geniusResizeHandle');
+        
+        if (!sidebar || !resizeHandle) {
+            console.log('Resize elements not found');
+            return;
+        }
+        
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        
+        resizeHandle.addEventListener('mousedown', (e) => {
+            console.log('Resize started');
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = parseInt(window.getComputedStyle(sidebar).width, 10);
+            
+            // Add visual feedback
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+            
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            const newWidth = startWidth - (e.clientX - startX); // Subtract because we're dragging from the left
+            const minWidth = 300;
+            const maxWidth = window.innerWidth * 0.7;
+            
+            console.log('Resizing to:', newWidth, 'min:', minWidth, 'max:', maxWidth);
+            
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                sidebar.style.width = newWidth + 'px';
+            }
+        }
+        
+        function stopResize() {
+            console.log('Resize stopped');
+            isResizing = false;
+            
+            // Remove visual feedback
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+    }
+    
+    // Chat toggle button in header
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
+    if (chatToggleBtn) {
+        chatToggleBtn.addEventListener('click', () => {
+            if (sidebar.style.display === 'none') {
+                sidebar.style.display = 'flex';
+                sidebar.classList.add('open');
+            } else {
+                sidebar.classList.toggle('open');
+            }
+        });
+    }
+    
+    // Also add close functionality to the close button in the document editor header
+    const docCloseBtn = document.getElementById('closeSidebarBtn');
+    if (docCloseBtn) {
+        docCloseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Document close button clicked');
+            sidebar.style.display = 'none';
+        });
+    }
+    
+    // Mode toggle
+    if (modeToggle && modeIcon) {
+        // Set initial state
+        if (currentMode === 'help') {
+            modeIcon.innerHTML = `
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            `;
+            modeToggle.title = 'Help mode - Click to switch to Edit mode';
+            chatInput.placeholder = 'Talk to Genius';
+        }
+        
+        modeToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (currentMode === 'help') {
+                // Switch to edit mode
+                currentMode = 'edit';
+                modeIcon.innerHTML = `
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                `;
+                modeToggle.title = 'Edit mode - Click to switch to Help mode';
+                modeToggle.classList.add('edit-mode-active');
+                updatePlaceholder();
+            } else {
+                // Switch to help mode
+                currentMode = 'help';
+                modeIcon.innerHTML = `
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                `;
+                modeToggle.title = 'Help mode - Click to switch to Edit mode';
+                modeToggle.classList.remove('edit-mode-active');
+                updatePlaceholder();
+            }
+        });
+    }
+    
+    function formatAIResponse(response) {
+        // Clean up the response and format it nicely
+        let formatted = response
+            .replace(/\n\n+/g, '\n\n') // Remove excessive line breaks
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+            .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic text
+            .replace(/\n/g, '<br>') // Convert line breaks to HTML
+            .replace(/^•\s*/gm, '• ') // Ensure bullet points are consistent
+            .replace(/^\d+\.\s*/gm, (match) => `<br>${match}`) // Numbered lists
+            .trim();
+        
+        // Add some basic styling
+        return `<div class="ai-response-content">${formatted}</div>`;
+    }
+    
+    function addMessageToChat(role, content, saveToChat = true) {
+        const messageDiv = document.createElement('div');
+        
+        if (role === 'user') {
+            // User messages in chat bubble
+            messageDiv.className = `chat-message ${role}-message`;
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+            `;
+            chatMessages.appendChild(messageDiv);
+        } else {
+            // AI responses as plain text without chat bubble (like main Genius Chat)
+            messageDiv.className = 'genius-ai-response';
+            const uniqueId = Date.now() + Math.random().toString(36).substr(2, 9);
+            messageDiv.innerHTML = `
+                <div class="genius-ai-content">
+                    <div class="genius-ai-text" id="typingText-${uniqueId}"></div>
+                    <div class="genius-ai-actions" style="opacity: 0;">
+                        <button class="genius-ai-action" id="copyBtn-${uniqueId}" title="Copy">📋</button>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            
+            // Add typing animation for AI responses
+            displayTypingResponse(content, `typingText-${uniqueId}`, `copyBtn-${uniqueId}`);
+        }
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Save message to current chat
+        if (saveToChat && chats[currentChatId]) {
+            chats[currentChatId].messages.push({
+                role: role,
+                content: content,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Update chat title if this is the first user message
+            if (role === 'user' && chats[currentChatId].messages.filter(m => m.role === 'user').length === 1) {
+                updateChatTitleIfNeeded(currentChatId, content);
+            }
+            
+            saveChats();
+        }
+    }
+    
+    function formatGeniusMessage(content) {
+        // Enhanced markdown formatting like ChatGPT
+        let formatted = content
+            // Headers
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            // Bold and italic
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            // Code blocks
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            // Lists
+            .replace(/^\* (.*$)/gim, '<li>$1</li>')
+            .replace(/^- (.*$)/gim, '<li>$1</li>')
+            .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+            // Line breaks
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+
+        // Wrap list items in ul tags
+        formatted = formatted.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+        
+        // Wrap paragraphs
+        if (!formatted.startsWith('<h') && !formatted.startsWith('<ul') && !formatted.startsWith('<pre')) {
+            formatted = '<p>' + formatted + '</p>';
+        }
+
+        return formatted;
+    }
+    
+    function displayTypingResponse(response, textElementId, copyBtnId) {
+        const textElement = document.getElementById(textElementId);
+        const copyBtn = document.getElementById(copyBtnId);
+        let currentText = '';
+        let index = 0;
+
+        // Setup copy button
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(response);
+        });
+
+        // Type out the response character by character
+        const typeWriter = () => {
+            if (index < response.length) {
+                currentText += response[index];
+                textElement.innerHTML = formatGeniusMessage(currentText);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                index++;
+                
+                // Variable speed - faster for spaces, slower for punctuation
+                const char = response[index - 1];
+                let delay = 20; // Base delay
+                if (char === ' ') delay = 10;
+                if (char === '.' || char === '!' || char === '?') delay = 100;
+                if (char === '\n') delay = 50;
+                
+                setTimeout(typeWriter, delay);
+            } else {
+                // Show copy button after typing is complete
+                const actions = copyBtn.parentElement;
+                actions.style.opacity = '1';
+            }
+        };
+
+        // Start typing
+        typeWriter();
+    }
+    
+    window.getDocumentContent = function(editMode = false) {
+        // In edit mode, prioritize highlighted text
+        if (editMode) {
+            // Check if there's a saved selection
+            if (savedSelection) {
+                try {
+                    const selectedText = savedSelection.toString().trim();
+                    if (selectedText) {
+                        console.log('Using saved selection for edit mode:', selectedText);
+                        return selectedText;
+                    }
+                } catch (err) {
+                    console.log('Error with saved selection:', err);
+                }
+            }
+            
+            // Check current selection
+            const selection = window.getSelection();
+            const selectedText = selection ? selection.toString().trim() : '';
+            
+            if (selectedText) {
+                console.log('Using current selection for edit mode:', selectedText);
+                return selectedText;
+            }
+            
+            // If no selection in edit mode, return empty string but allow content generation
+            console.log('No selection found in edit mode, allowing content generation');
+            return '';
+        }
+        
+        // For help mode, use the original logic
+        // Check if there's a saved selection
+        if (savedSelection) {
+            try {
+                const selectedText = savedSelection.toString().trim();
+                if (selectedText) {
+                    return selectedText;
+                }
+            } catch (err) {
+                // Fall through to full document
+            }
+        }
+        
+        // Check current selection
+        const selection = window.getSelection();
+        const selectedText = selection ? selection.toString().trim() : '';
+        
+        if (selectedText) {
+            // Return only the selected text
+            return selectedText;
+        }
+        
+        // Return full document if no selection
+        const allContent = document.querySelectorAll('.doc-editor-content');
+        let fullText = '';
+        allContent.forEach(content => {
+            fullText += content.innerText + '\n\n';
+        });
+        return fullText.trim();
+    }
+    
+     async function sendToOpenAI(userMessage, documentContext, mode, classData, existingDoc) {
+        console.log('sendToOpenAI called with:', { userMessage, documentContext, mode });
+        try {
+            if (mode === 'help') {
+                // Help mode: chat response
+                chatStatus.textContent = 'Genius is thinking...';
+                chatStatus.style.display = 'block';
+                
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENAI_API_KEY}`
+                    },
+                     body: JSON.stringify({
+                         model: 'gpt-4o-mini',
+                         messages: [
+                             {
+                                 role: 'system',
+                                 content: `You are Genius AI, a helpful writing assistant. The user is working on a document. Here is the current content of their document:\n\n${documentContext}\n\nAnswer their questions about the document or provide help. Be concise, helpful, and format your response nicely. Use the document as reference but don't quote it directly. Keep responses under 200 words and use proper formatting with line breaks and bullet points when appropriate.`
+                             },
+                             {
+                                 role: 'user',
+                                 content: userMessage
+                             }
+                         ],
+                         temperature: 0.7,
+                         max_tokens: 500
+                     })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                 const data = await response.json();
+                 const aiResponse = data.choices[0].message.content;
+                 
+                 chatStatus.style.display = 'none';
+                 const formattedResponse = formatAIResponse(aiResponse);
+                 addMessageToChat('assistant', formattedResponse);
+                
+             } else {
+                 // Edit mode: suggestions or content generation
+                 // Check if document is empty
+                 const content = document.getElementById('docEditorContent');
+                 const isDocumentEmpty = !content || !content.innerText || content.innerText.trim().length === 0;
+                 
+                 console.log('Edit mode - isDocumentEmpty:', isDocumentEmpty, 'content:', content?.innerText);
+                 
+                 // If document is empty in edit mode, treat it as content generation
+                 if (isDocumentEmpty) {
+                     console.log('Empty document in edit mode - switching to content generation');
+                 }
+                 
+                 // Replace floating Genius component with thinking status
+                 const chatContainer = document.getElementById('geniusChatContainer');
+                 const originalDisplay = chatContainer.style.display;
+                 const originalContent = chatContainer.innerHTML;
+                 
+                 // Show thinking status in place of floating component
+                 chatContainer.style.display = 'flex';
+                 chatContainer.innerHTML = `
+                     <div class="genius-thinking-container">
+                         <img src="assets/darkgenius.png" alt="Genius" class="genius-thinking-icon">
+                         <div class="genius-thinking-text">Genius is thinking...</div>
+                         <div class="genius-thinking-dots">
+                             <span></span>
+                             <span></span>
+                             <span></span>
+                         </div>
+                     </div>
+                 `;
+                 
+                 // Add delay to show first step
+                 await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: isDocumentEmpty 
+                                    ? `You are a professional content writer. The user has an empty document and wants you to write content based on their request.
+
+USER'S REQUEST: ${userMessage}
+
+INSTRUCTIONS:
+1. Write high-quality, well-structured content based on the user's request
+2. Use proper formatting with headings, paragraphs, and lists as appropriate
+3. Make the content engaging and informative
+4. Write in a professional but accessible tone
+5. Include relevant details and examples where appropriate
+6. Format the response as HTML with proper tags (h1, h2, h3, p, ul, ol, li, strong, em, etc.)
+
+Write the complete content that the user requested.`
+                                    : `You are an expert writing editor. Your job is to improve text based on user requests.
+
+DOCUMENT CONTENT:
+${documentContext}
+
+USER'S REQUEST: ${userMessage}
+
+INSTRUCTIONS:
+1. Analyze the text carefully
+2. Find 3-7 specific improvements based on the user's request
+3. For each improvement, identify the EXACT original text (word-for-word match including punctuation)
+4. Provide a better version and explain why it's better
+5. Focus on what the user asked for (grammar, clarity, conciseness, tone, style, etc.)
+
+IMPORTANT RULES:
+- "original" MUST be EXACT text from the document - copy it character-by-character
+- Match ALL punctuation, spacing, and capitalization exactly
+- If the user's request is vague, improve grammar, clarity, and flow
+- Each "original" should be 3-50 words long
+- ALWAYS return valid JSON in this exact format:
+
+{
+  "suggestions": [
+    {
+      "original": "exact text from document",
+      "suggestion": "improved version",
+      "reason": "brief explanation"
+    }
+  ]
+}
+
+Do NOT include any text outside the JSON. ALWAYS find at least 3 suggestions.`
+                            },
+                            {
+                                role: 'user',
+                                content: isDocumentEmpty 
+                                    ? `Please write content for me: ${userMessage}`
+                                    : `Please analyze and provide editing suggestions: ${userMessage}`
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 4000,
+                        response_format: isDocumentEmpty ? undefined : { type: "json_object" }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                 const data = await response.json();
+                 let aiResponse = data.choices[0].message.content;
+                 
+                if (isDocumentEmpty) {
+                    // For empty documents, paste the generated content directly
+                    try {
+                        // Clear any existing placeholder
+                        const placeholder = content.querySelector('.empty-document-placeholder');
+                        if (placeholder) {
+                            placeholder.remove();
+                        }
+                        
+                        // Type out the AI response with animation
+                        window.typeOutContent(content, aiResponse);
+                        
+                        // Auto-save the document
+                        setTimeout(() => {
+                            window.autoSaveDocument(classData, existingDoc);
+                        }, 500);
+                        
+                        // Show success notification
+                        showNotification('Content generated successfully!', 'success');
+                        
+                    } catch (error) {
+                        console.error('Error pasting generated content:', error);
+                        showNotification('Error generating content. Please try again.', 'error');
+                    }
+                } else {
+                    // For documents with content, parse suggestions and display them
+                    try {
+                        // Try to parse as JSON
+                        let suggestions;
+                        
+                        const parsed = JSON.parse(aiResponse);
+                        
+                        // Handle different response formats
+                        if (Array.isArray(parsed)) {
+                            // Direct array
+                            suggestions = parsed;
+                        } else if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+                            // Wrapped in suggestions key
+                            suggestions = parsed.suggestions;
+                        } else if (parsed.edits && Array.isArray(parsed.edits)) {
+                            // Wrapped in edits key
+                            suggestions = parsed.edits;
+                        } else if (parsed.original && parsed.suggestion) {
+                            // Single suggestion object - wrap in array
+                            suggestions = [parsed];
+                        } else {
+                            // Try to extract from any nested structure
+                            const possibleArrays = Object.values(parsed).filter(val => Array.isArray(val));
+                            if (possibleArrays.length > 0) {
+                                suggestions = possibleArrays[0];
+                            } else {
+                                throw new Error('No valid suggestions found in response');
+                            }
+                        }
+                        
+                        if (suggestions.length === 0) {
+                            alert('No improvements needed - your text looks great!');
+                            return;
+                        }
+                     
+                     await new Promise(resolve => setTimeout(resolve, 500));
+                     
+                     displaySuggestions(suggestions, classData, existingDoc);
+                    } catch (parseError) {
+                        console.error('Could not parse suggestions:', parseError);
+                        console.log('Raw response:', aiResponse);
+                        alert('Successfully analyzed your text! Try being more specific about what to improve (e.g., "make it more concise" or "fix grammar").');
+                    }
+                }
+                 
+                 // Restore original floating component
+                 chatContainer.style.display = originalDisplay;
+                 chatContainer.innerHTML = originalContent;
+                 
+                 // Re-setup the input event listeners and focus
+                 setTimeout(() => {
+                     const restoredInput = document.getElementById('geniusChatInput');
+                     if (restoredInput) {
+                         // Re-add all event listeners
+                         setupGeniusInputListeners(restoredInput, classData, existingDoc);
+                         
+                         // Make sure input is focusable
+                         restoredInput.focus();
+                         restoredInput.disabled = false;
+                         restoredInput.readOnly = false;
+                     }
+                 }, 100);
+            }
+            
+        } catch (error) {
+            console.error('OpenAI API Error:', error);
+            if (mode === 'help') {
+                chatStatus.style.display = 'none';
+                addMessageToChat('assistant', 'Sorry, I encountered an error. Please try again.');
+            } else {
+                // Check if this was for an empty document
+                const content = document.getElementById('docEditorContent');
+                const isDocumentEmpty = !content || !content.innerText || content.innerText.trim().length === 0;
+                
+                if (isDocumentEmpty) {
+                    showNotification('Error generating content. Please try again.', 'error');
+                } else {
+                    alert('Error generating suggestions. Please try again.');
+                }
+                
+                // Restore original floating component on error
+                const chatContainer = document.getElementById('geniusChatContainer');
+                if (chatContainer && typeof originalDisplay !== 'undefined' && typeof originalContent !== 'undefined') {
+                    chatContainer.style.display = originalDisplay;
+                    chatContainer.innerHTML = originalContent;
+                    
+                    // Re-setup the input event listeners
+                    setTimeout(() => {
+                        const restoredInput = document.getElementById('geniusChatInput');
+                        if (restoredInput) {
+                            setupGeniusInputListeners(restoredInput, classData, existingDoc);
+                        }
+                    }, 100);
+                }
+            }
+        }
+    }
+    
+    function showEditingStatus(message) {
+        let statusEl = document.getElementById('editingStatusOverlay');
+        if (!statusEl) {
+            statusEl = document.createElement('div');
+            statusEl.id = 'editingStatusOverlay';
+            statusEl.className = 'editing-status-overlay';
+            document.body.appendChild(statusEl);
+        }
+        statusEl.textContent = message;
+        statusEl.style.display = 'flex';
+    }
+    
+    function hideEditingStatus() {
+        const statusEl = document.getElementById('editingStatusOverlay');
+        if (statusEl) {
+            statusEl.style.display = 'none';
+        }
+    }
+    
+    function removeOverlappingSuggestions(newText, contentElement) {
+        // Find all existing suggestion markers in this content element
+        const existingMarkers = contentElement.querySelectorAll('.suggestion-marker');
+        
+        existingMarkers.forEach(marker => {
+            const markerText = marker.textContent;
+            
+            // Check if the new text overlaps with existing marker text
+            if (isTextOverlapping(newText, markerText)) {
+                console.log('Removing overlapping suggestion:', markerText, 'for new text:', newText);
+                
+                // Get the suggestion index
+                const suggestionIndex = marker.dataset.suggestionIndex;
+                
+                // Remove the marker and replace with plain text
+                const textNode = document.createTextNode(markerText);
+                marker.replaceWith(textNode);
+                
+                // Remove the corresponding sidebar indicator
+                const indicator = document.getElementById(`indicator-${suggestionIndex}`);
+                if (indicator) {
+                    indicator.remove();
+                }
+                
+                // Remove the suggestion from localStorage
+                removeSuggestionFromStorage(suggestionIndex);
+                
+                // Update current suggestions state
+                window.saveCurrentSuggestions();
+            }
+        });
+    }
+    
+    function isTextOverlapping(text1, text2) {
+        // Normalize text for comparison (remove extra whitespace)
+        const normalized1 = text1.trim().toLowerCase();
+        const normalized2 = text2.trim().toLowerCase();
+        
+        // Check if one text contains the other or if they overlap significantly
+        if (normalized1 === normalized2) {
+            return true; // Exact match
+        }
+        
+        // Check if one is a substring of the other (with some tolerance)
+        if (normalized1.length > 10 && normalized2.length > 10) {
+            const minLength = Math.min(normalized1.length, normalized2.length);
+            const maxLength = Math.max(normalized1.length, normalized2.length);
+            
+            // If the shorter text is more than 70% of the longer text, consider it overlapping
+            if (minLength / maxLength > 0.7) {
+                return normalized1.includes(normalized2) || normalized2.includes(normalized1);
+            }
+        }
+        
+        // Check for word-level overlap (if they share significant words)
+        const words1 = normalized1.split(/\s+/);
+        const words2 = normalized2.split(/\s+/);
+        
+        if (words1.length > 1 && words2.length > 1) {
+            const commonWords = words1.filter(word => words2.includes(word));
+            const overlapRatio = commonWords.length / Math.min(words1.length, words2.length);
+            
+            // If more than 60% of words overlap, consider it overlapping
+            if (overlapRatio > 0.6) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+     function displaySuggestions(suggestions, classData, existingDoc) {
+         console.log('displaySuggestions called with:', suggestions, classData, existingDoc);
+         
+         // Don't clear existing suggestions - allow overlapping
+         document.querySelectorAll('.suggestion-popup').forEach(el => el.remove());
+         
+         const sidebar = document.getElementById('suggestionsSidebar');
+         console.log('Suggestions sidebar found:', !!sidebar);
+         if (!sidebar) return;
+        
+        if (!Array.isArray(suggestions) || suggestions.length === 0) {
+            alert('No suggestions generated.');
+            return;
+        }
+        
+        // Load existing suggestions and merge with new ones
+        const docId = existingDoc ? existingDoc.id : 'new-document';
+        const suggestionsKey = `suggestions_${classData.userId}_${classData.name}_${docId}`;
+        const existingSuggestions = JSON.parse(localStorage.getItem(suggestionsKey) || '[]');
+        
+        // Calculate starting index for new suggestions
+        const startIndex = existingSuggestions.length;
+        
+         // Merge suggestions
+         const allSuggestions = [...existingSuggestions, ...suggestions];
+         
+         // Limit suggestions to prevent localStorage quota exceeded
+         const limitedSuggestions = allSuggestions.slice(0, 50); // Keep only first 50 suggestions
+         
+         try {
+             localStorage.setItem(suggestionsKey, JSON.stringify(limitedSuggestions));
+             console.log('Saved suggestions to localStorage:', suggestionsKey, limitedSuggestions.length);
+         } catch (error) {
+             console.error('Failed to save suggestions to localStorage:', error);
+             // Clear old suggestions and try again
+             try {
+                 localStorage.removeItem(suggestionsKey);
+                 localStorage.setItem(suggestionsKey, JSON.stringify(limitedSuggestions.slice(0, 10)));
+                 console.log('Saved limited suggestions after clearing old data');
+             } catch (e) {
+                 console.error('Still failed to save suggestions:', e);
+             }
+         }
+         
+         // Also save current suggestions for persistence
+         window.saveCurrentSuggestions();
+        
+        const contentElements = document.querySelectorAll('.doc-editor-content');
+        
+        suggestions.forEach((suggestion, localIndex) => {
+            if (!suggestion.original || !suggestion.suggestion) return;
+            
+            const globalIndex = startIndex + localIndex;
+            const colorClass = `suggestion-color-unified`; // Use single color for all suggestions
+            
+            // Find the text in the document
+            contentElements.forEach(content => {
+                const html = content.innerHTML;
+                const originalText = suggestion.original;
+                
+                if (html.includes(originalText)) {
+                    // Check for overlapping suggestions and remove them
+                    removeOverlappingSuggestions(originalText, content);
+                    
+                    // Mark the original text with underline and color
+                    const markerId = `suggestion-${globalIndex}`;
+                    const markedHtml = html.replace(
+                        originalText,
+                        `<span class="suggestion-marker ${colorClass}" id="${markerId}" data-suggestion-index="${globalIndex}">${originalText}</span>`
+                    );
+                    content.innerHTML = markedHtml;
+                    
+                     // Create indicator in left sidebar with proper alignment
+                     setTimeout(() => {
+                         const marker = document.getElementById(markerId);
+                         console.log('Looking for marker:', markerId, 'Found:', !!marker);
+                         if (marker) {
+                             console.log('Creating suggestion indicator for:', suggestion.original);
+                             createSuggestionIndicator(marker, suggestion, globalIndex, sidebar, colorClass);
+                         }
+                     }, 100);
+                }
+            });
+        });
+    }
+    
+// Global function to clean up orphaned suggestions
+window.cleanupOrphanedSuggestions = function(classData, existingDoc) {
+    try {
+        const currentUserData = localStorage.getItem('currentUser');
+        if (!currentUserData) return;
+        
+        const currentUser = JSON.parse(currentUserData);
+        const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+        
+        classes.forEach(classData => {
+            if (classData.userId === currentUser.uid) {
+                // Clean up all suggestion keys for this user
+                const docId = 'current-document';
+                const suggestionsKey = `suggestions_${classData.userId}_${classData.name}_${docId}`;
+                const currentSuggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_${docId}`;
+                
+                // Remove any empty or invalid suggestion arrays
+                [suggestionsKey, currentSuggestionsKey].forEach(key => {
+                    try {
+                        const suggestions = JSON.parse(localStorage.getItem(key) || '[]');
+                        if (!Array.isArray(suggestions) || suggestions.length === 0) {
+                            localStorage.removeItem(key);
+                            console.log('Removed empty suggestions key:', key);
+                        }
+                    } catch (error) {
+                        localStorage.removeItem(key);
+                        console.log('Removed invalid suggestions key:', key);
+                    }
+                });
+                
+                // Clean up document-specific suggestions
+                const documents = JSON.parse(classData.documents || '[]');
+                documents.forEach(doc => {
+                    const docSuggestionsKey = `suggestions_${classData.userId}_${classData.name}_${doc.id}`;
+                    try {
+                        const suggestions = JSON.parse(localStorage.getItem(docSuggestionsKey) || '[]');
+                        if (!Array.isArray(suggestions) || suggestions.length === 0) {
+                            localStorage.removeItem(docSuggestionsKey);
+                            console.log('Removed empty document suggestions key:', docSuggestionsKey);
+                        }
+                    } catch (error) {
+                        localStorage.removeItem(docSuggestionsKey);
+                        console.log('Removed invalid document suggestions key:', docSuggestionsKey);
+                    }
+                });
+            }
+        });
+        
+        console.log('Cleanup of orphaned suggestions completed');
+    } catch (error) {
+        console.error('Error cleaning up orphaned suggestions:', error);
+    }
+};
+
+// Global function to load saved suggestions
+window.loadSavedSuggestions = function(classData, existingDoc) {
+    // Generate document ID for new documents
+    const docId = existingDoc ? existingDoc.id : 'new-document';
+    const suggestionsKey = `suggestions_${classData.userId}_${classData.name}_${docId}`;
+    const savedSuggestions = localStorage.getItem(suggestionsKey);
+    
+    console.log('Loading saved suggestions for:', suggestionsKey, 'Found:', !!savedSuggestions);
+    
+    if (savedSuggestions) {
+        try {
+            const suggestions = JSON.parse(savedSuggestions);
+            console.log('Loaded suggestions:', suggestions.length);
+            setTimeout(() => {
+                displaySuggestions(suggestions, classData, existingDoc);
+            }, 500);
+        } catch (error) {
+            console.error('Error loading saved suggestions:', error);
+        }
+    }
+};
+    
+// Global function to load current suggestions
+window.loadCurrentSuggestions = function(classData, existingDoc) {
+    // Load suggestions that were active when the editor was last closed
+    const docId = 'current-document';
+    const suggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_${docId}`;
+    const currentSuggestions = localStorage.getItem(suggestionsKey);
+    
+    console.log('Loading current suggestions for:', suggestionsKey, 'Found:', !!currentSuggestions);
+    
+    if (currentSuggestions) {
+        try {
+            const suggestions = JSON.parse(currentSuggestions);
+            console.log('Loaded current suggestions:', suggestions.length);
+            
+            // Restore suggestions to the document
+            setTimeout(() => {
+                window.restoreSuggestionsToDocument(suggestions);
+            }, 1000);
+        } catch (error) {
+            console.error('Error loading current suggestions:', error);
+        }
+    }
+};
+    
+// Global function to restore suggestions to document
+window.restoreSuggestionsToDocument = function(suggestions) {
+    const contentElements = document.querySelectorAll('.doc-editor-content');
+    
+    suggestions.forEach(suggestion => {
+        const { index, original, markerId, indicatorId } = suggestion;
+        
+        // Find the text in the document and mark it
+        contentElements.forEach(content => {
+            const html = content.innerHTML;
+            if (html.includes(original) && !html.includes('suggestion-marker')) {
+                const colorClass = `suggestion-color-unified`;
+                const markedHtml = html.replace(
+                    original,
+                    `<span class="suggestion-marker ${colorClass}" id="${markerId}" data-suggestion-index="${index}">${original}</span>`
+                );
+                content.innerHTML = markedHtml;
+                
+                // Create indicator in sidebar
+                setTimeout(() => {
+                    const marker = document.getElementById(markerId);
+                    if (marker) {
+                        const sidebar = document.getElementById('suggestionsSidebar');
+                        if (sidebar) {
+                            createSuggestionIndicator(marker, { original: original }, index, sidebar, colorClass);
+                        }
+                    }
+                }, 100);
+            }
+        });
+    });
+    
+    console.log('Restored suggestions to document:', suggestions.length);
+};
+    
+     function createSuggestionIndicator(markerElement, suggestion, index, sidebar, colorClass) {
+         console.log('createSuggestionIndicator called with:', suggestion, index, sidebar, colorClass);
+         
+         const indicator = document.createElement('div');
+         indicator.className = `suggestion-indicator ${colorClass}`;
+         indicator.id = `indicator-${index}`;
+         indicator.dataset.suggestionIndex = index;
+        
+        // Position indicator at same height as marked text
+        const rect = markerElement.getBoundingClientRect();
+        const wrapperRect = document.querySelector('.doc-editor-content-wrapper').getBoundingClientRect();
+        const scrollTop = document.querySelector('.doc-editor-content-wrapper').scrollTop;
+        
+        // Calculate position relative to wrapper including scroll
+        const relativeTop = rect.top - wrapperRect.top + scrollTop;
+        
+        // Check for other indicators on the same line (within 5px tolerance)
+        const existingIndicators = sidebar.querySelectorAll('.suggestion-indicator');
+        let horizontalOffset = 0;
+        const lineTolerance = 5; // pixels
+        
+        existingIndicators.forEach(existingIndicator => {
+            const existingTop = parseFloat(existingIndicator.style.top) || 0;
+            if (Math.abs(existingTop - relativeTop) <= lineTolerance) {
+                // Found another indicator on the same line, offset horizontally
+                horizontalOffset += 25; // 25px spacing between dots
+            }
+        });
+        
+        indicator.style.top = `${relativeTop}px`;
+        indicator.style.left = `${10 + horizontalOffset}px`;
+        indicator.innerHTML = `<div class="indicator-dot"></div>`;
+        
+        sidebar.appendChild(indicator);
+        
+        // Update position on scroll
+        const wrapper = document.querySelector('.doc-editor-content-wrapper');
+        const updatePosition = () => {
+            const newRect = markerElement.getBoundingClientRect();
+            const newScrollTop = wrapper.scrollTop;
+            const newRelativeTop = newRect.top - wrapperRect.top + newScrollTop;
+            
+            // Recalculate horizontal offset for this line
+            let newHorizontalOffset = 0;
+            const existingIndicators = sidebar.querySelectorAll('.suggestion-indicator');
+            existingIndicators.forEach(existingIndicator => {
+                if (existingIndicator !== indicator) {
+                    const existingTop = parseFloat(existingIndicator.style.top) || 0;
+                    if (Math.abs(existingTop - newRelativeTop) <= lineTolerance) {
+                        newHorizontalOffset += 25;
+                    }
+                }
+            });
+            
+            indicator.style.top = `${newRelativeTop}px`;
+            indicator.style.left = `${10 + newHorizontalOffset}px`;
+        };
+        
+        wrapper.addEventListener('scroll', updatePosition);
+        
+        // Click on indicator or marked text shows popup
+        const showPopup = () => {
+            // Remove any existing popups
+            document.querySelectorAll('.suggestion-popup').forEach(p => p.remove());
+            
+            // Highlight this indicator
+            document.querySelectorAll('.suggestion-indicator').forEach(i => i.classList.remove('active'));
+            indicator.classList.add('active');
+            
+            // Create and show popup
+            createSuggestionPopup(markerElement, suggestion, index);
+        };
+        
+        indicator.addEventListener('click', showPopup);
+        markerElement.addEventListener('click', showPopup);
+    }
+    
+    function createSuggestionPopup(markerElement, suggestion, index) {
+        const popup = document.createElement('div');
+        popup.className = 'suggestion-popup';
+        popup.id = `popup-${index}`;
+        
+        popup.innerHTML = `
+            <div class="popup-header">
+                <img src="assets/darkgenius.png" class="popup-icon">
+                <span class="popup-title">Genius AI</span>
+                <button class="popup-close" data-index="${index}">✕</button>
+            </div>
+            <div class="popup-content">
+                <div class="popup-suggestion">${suggestion.suggestion}</div>
+                <div class="popup-reason">${suggestion.reason}</div>
+            </div>
+            <div class="popup-actions">
+                <button class="popup-btn popup-accept" data-index="${index}">Accept</button>
+                <button class="popup-btn popup-reject" data-index="${index}">Ignore</button>
+            </div>
+        `;
+        
+        // Position popup near marked text
+        const rect = markerElement.getBoundingClientRect();
+        popup.style.position = 'fixed';
+        popup.style.left = `${rect.left}px`;
+        popup.style.top = `${rect.bottom + 10}px`;
+        
+        document.body.appendChild(popup);
+        
+        // Event listeners
+        popup.querySelector('.popup-close').addEventListener('click', () => {
+            popup.remove();
+            document.querySelectorAll('.suggestion-indicator').forEach(i => i.classList.remove('active'));
+        });
+        
+        popup.querySelector('.popup-accept').addEventListener('click', () => {
+            // Get classData and existingDoc from the current context
+            const currentUserData = localStorage.getItem('currentUser');
+            const currentUser = currentUserData ? JSON.parse(currentUserData) : null;
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            const classData = classes.find(c => c.userId === currentUser?.uid);
+            const existingDoc = { id: 'current-document' }; // Use current document context
+            
+            acceptSuggestion(markerElement, suggestion.suggestion, index, classData, existingDoc);
+        });
+        
+        popup.querySelector('.popup-reject').addEventListener('click', () => {
+            // Get classData and existingDoc from the current context
+            const currentUserData = localStorage.getItem('currentUser');
+            const currentUser = currentUserData ? JSON.parse(currentUserData) : null;
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            const classData = classes.find(c => c.userId === currentUser?.uid);
+            const existingDoc = { id: 'current-document' }; // Use current document context
+            
+            rejectSuggestion(index, classData, existingDoc);
+        });
+        
+        // Close popup when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', function closePopup(e) {
+                if (!popup.contains(e.target) && 
+                    !e.target.classList.contains('suggestion-marker') &&
+                    !e.target.classList.contains('suggestion-indicator')) {
+                    popup.remove();
+                    document.querySelectorAll('.suggestion-indicator').forEach(i => i.classList.remove('active'));
+                    document.removeEventListener('click', closePopup);
+                }
+            });
+        }, 100);
+    }
+    
+     function acceptSuggestion(markerElement, newText, index, classData = null, existingDoc = null) {
+         console.log('Accepting suggestion:', newText, 'for index:', index);
+         
+         // Replace the marked text with the new text
+         const textNode = document.createTextNode(newText);
+         markerElement.parentNode.replaceChild(textNode, markerElement);
+         
+         // Remove indicator from sidebar
+         const indicator = document.getElementById(`indicator-${index}`);
+         if (indicator) {
+             console.log('Removing indicator:', indicator.id);
+             indicator.remove();
+         }
+         
+         // Remove popup
+         const popup = document.getElementById(`popup-${index}`);
+         if (popup) {
+             console.log('Removing popup:', popup.id);
+             popup.remove();
+         }
+         
+         // Remove from localStorage
+         removeSuggestionFromStorage(index);
+         
+         // Update current suggestions state
+         window.saveCurrentSuggestions();
+         
+         // Clear all suggestion storage to prevent reappearing
+         clearAllSuggestionStorage();
+         
+         // Auto-save document after accepting suggestion
+         setTimeout(() => {
+             window.autoSaveDocument(classData, existingDoc);
+         }, 500);
+         
+         console.log('Suggestion accepted and cleaned up');
+     }
+    
+    function rejectSuggestion(index, classData = null, existingDoc = null) {
+        console.log('Rejecting suggestion for index:', index);
+        
+        // Remove marker highlight
+        const marker = document.getElementById(`suggestion-${index}`);
+        if (marker) {
+            console.log('Removing marker highlight:', marker.id);
+            const text = marker.textContent;
+            marker.replaceWith(document.createTextNode(text));
+        }
+        
+        // Remove indicator from sidebar
+        const indicator = document.getElementById(`indicator-${index}`);
+        if (indicator) {
+            console.log('Removing indicator:', indicator.id);
+            indicator.remove();
+        }
+        
+        // Remove popup
+        const popup = document.getElementById(`popup-${index}`);
+        if (popup) {
+            console.log('Removing popup:', popup.id);
+            popup.remove();
+        }
+        
+        // Remove from localStorage
+        removeSuggestionFromStorage(index);
+        
+        // Update current suggestions state
+        window.saveCurrentSuggestions();
+        
+        // Clear all suggestion storage to prevent reappearing
+        clearAllSuggestionStorage();
+        
+        // Auto-save document after rejecting suggestion
+        setTimeout(() => {
+            window.autoSaveDocument(classData, existingDoc);
+        }, 500);
+        
+        console.log('Suggestion rejected and cleaned up');
+    }
+    
+    window.clearSuggestionStorageOnly = function() {
+        console.log('Clearing suggestion storage only (preserving DOM)...');
+        
+        try {
+            // Clear ONLY suggestion-related keys from localStorage
+            const keysToRemove = [];
+            
+            // Find all suggestion-related keys
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.includes('suggestions_') || 
+                    key.includes('current_suggestions_') ||
+                    key.includes('genius_chats_')
+                )) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            // Remove all suggestion keys
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log('Removed suggestion key:', key);
+            });
+            
+            console.log('Storage cleanup complete: Removed', keysToRemove.length, 'suggestion keys');
+            
+        } catch (error) {
+            console.error('Error clearing suggestion storage:', error);
+        }
+    }
+    
+// Global function to enable text selection
+window.enableTextSelection = function() {
+    console.log('Enabling text selection...');
+    
+    // Remove any existing selection restrictions
+    document.body.style.userSelect = 'text';
+    document.body.style.webkitUserSelect = 'text';
+    document.body.style.mozUserSelect = 'text';
+    document.body.style.msUserSelect = 'text';
+    
+    // Ensure all content elements allow text selection
+    const contentElements = document.querySelectorAll('.doc-editor-content');
+    contentElements.forEach(content => {
+        content.style.userSelect = 'text';
+        content.style.webkitUserSelect = 'text';
+        content.style.mozUserSelect = 'text';
+        content.style.msUserSelect = 'text';
+        content.style.cursor = 'text';
+        
+        // Remove any event listeners that might prevent selection
+        content.addEventListener('mousedown', (e) => {
+            // Allow default behavior for text selection
+            if (e.target === content || content.contains(e.target)) {
+                e.stopPropagation();
+            }
+        }, true);
+        
+        content.addEventListener('selectstart', (e) => {
+            // Allow text selection
+            if (e.target === content || content.contains(e.target)) {
+                e.stopPropagation();
+            }
+        }, true);
+    });
+    
+    console.log('Text selection enabled');
+};
+
+// Undo/Redo functionality
+let undoStack = [];
+let redoStack = [];
+let isUndoRedoOperation = false;
+
+
+function saveState() {
+    const content = document.getElementById('docEditorContent');
+    const title = document.getElementById('docEditorTitle');
+    
+    if (content) {
+        const state = {
+            content: content.innerHTML,
+            title: title ? title.value : '',
+            timestamp: Date.now()
+        };
+        
+        undoStack.push(state);
+        
+        // Limit undo stack size
+        if (undoStack.length > 50) {
+            undoStack.shift();
+        }
+        
+        // Clear redo stack when new changes are made
+        redoStack = [];
+        
+        console.log('State saved. Undo stack size:', undoStack.length);
+    }
+}
+
+// Initialize undo/redo functionality
+function initializeUndoRedo() {
+    // Save initial state
+    saveState();
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey) {
+            if (e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            } else if (e.key === 'z' && e.shiftKey) {
+                e.preventDefault();
+                redo();
+            } else if (e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        }
+    });
+    
+    // Monitor content changes for undo/redo
+    const content = document.getElementById('docEditorContent');
+    if (content) {
+        content.addEventListener('input', () => {
+            if (!isUndoRedoOperation) {
+                saveState();
+            }
+        });
+    }
+}
+
+function undo() {
+    if (undoStack.length <= 1) {
+        showNotification('Nothing to undo', 'info');
+        return;
+    }
+    
+    // Move current state to redo stack
+    const currentState = undoStack.pop();
+    redoStack.push(currentState);
+    
+    // Get previous state
+    const previousState = undoStack[undoStack.length - 1];
+    
+    if (previousState) {
+        isUndoRedoOperation = true;
+        
+        const content = document.getElementById('docEditorContent');
+        const title = document.getElementById('docEditorTitle');
+        
+        if (content) {
+            content.innerHTML = previousState.content;
+        }
+        if (title) {
+            title.value = previousState.title;
+        }
+        
+        // Update stats and placeholder
+        updateDocumentStats();
+        updatePlaceholderVisibility();
+        
+        isUndoRedoOperation = false;
+        
+        showNotification('Undo successful', 'success');
+        console.log('Undo performed. Undo stack size:', undoStack.length, 'Redo stack size:', redoStack.length);
+    }
+}
+
+function redo() {
+    if (redoStack.length === 0) {
+        showNotification('Nothing to redo', 'info');
+        return;
+    }
+    
+    // Get state from redo stack
+    const state = redoStack.pop();
+    undoStack.push(state);
+    
+    isUndoRedoOperation = true;
+    
+    const content = document.getElementById('docEditorContent');
+    const title = document.getElementById('docEditorTitle');
+    
+    if (content) {
+        content.innerHTML = state.content;
+    }
+    if (title) {
+        title.value = state.title;
+    }
+    
+    // Update stats and placeholder
+    updateDocumentStats();
+    updatePlaceholderVisibility();
+    
+    isUndoRedoOperation = false;
+    
+    showNotification('Redo successful', 'success');
+    console.log('Redo performed. Undo stack size:', undoStack.length, 'Redo stack size:', redoStack.length);
+}
+
+// Global function to type out content with animation (like geniusChat.js)
+window.typeOutContent = function(contentElement, text) {
+    console.log('Starting type-out animation for content...');
+    console.log('Original text:', text);
+    
+    // Clean up the text by removing unwanted HTML/markdown tags at the beginning
+    let cleanText = text;
+    
+    // Remove common unwanted prefixes
+    cleanText = cleanText
+        .replace(/^```html\s*/i, '') // Remove ```html at start
+        .replace(/^```\s*/i, '') // Remove ``` at start
+        .replace(/^<html[^>]*>/i, '') // Remove <html> tags
+        .replace(/^<body[^>]*>/i, '') // Remove <body> tags
+        .replace(/^<div[^>]*>/i, '') // Remove <div> tags at start
+        .replace(/^<p[^>]*>/i, '') // Remove <p> tags at start
+        .replace(/^<h[1-6][^>]*>/i, '') // Remove heading tags at start
+        .replace(/^<br\s*\/?>/i, '') // Remove <br> at start
+        .replace(/^<[^>]*>/g, '') // Remove any other opening tags at start
+        .replace(/^\s+/, '') // Remove leading whitespace
+        .trim();
+    
+    console.log('Cleaned text:', cleanText);
+    
+    // Clear existing content and add typing class
+    contentElement.innerHTML = '';
+    contentElement.classList.add('typing');
+    
+    let currentText = '';
+    let index = 0;
+    
+    // Type out the response character by character
+    const typeWriter = () => {
+        if (index < cleanText.length) {
+            currentText += cleanText[index];
+            contentElement.innerHTML = currentText;
+            index++;
+            
+            // Auto-scroll to bottom as content is being typed
+            const contentWrapper = document.querySelector('.doc-editor-content-wrapper');
+            if (contentWrapper) {
+                // Smooth scroll to bottom
+                contentWrapper.scrollTo({
+                    top: contentWrapper.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // Variable speed - faster for spaces, slower for punctuation
+            const char = cleanText[index - 1];
+            let delay = 20; // Base delay
+            if (char === ' ') delay = 10;
+            if (char === '.' || char === '!' || char === '?') delay = 100;
+            if (char === '\n') delay = 50;
+            if (char === '<') delay = 5; // Faster for HTML tags
+            
+            setTimeout(typeWriter, delay);
+        } else {
+            // Remove typing class when complete
+            contentElement.classList.remove('typing');
+            console.log('Type-out animation complete');
+            
+            // Final scroll to ensure we're at the bottom
+            const contentWrapper = document.querySelector('.doc-editor-content-wrapper');
+            if (contentWrapper) {
+                contentWrapper.scrollTo({
+                    top: contentWrapper.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    };
+    
+    // Start typing
+    typeWriter();
+    
+    // Save state after AI content is added
+    setTimeout(() => {
+        saveState();
+    }, 100);
+};
+    
+    function clearAllSuggestionData() {
+        console.log('NUCLEAR OPTION: Clearing ALL suggestion data...');
+        
+        try {
+            // Clear ALL suggestion-related keys from localStorage
+            const keysToRemove = [];
+            
+            // Find all suggestion-related keys
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.includes('suggestions_') || 
+                    key.includes('current_suggestions_') ||
+                    key.includes('genius_chats_')
+                )) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            // Remove all suggestion keys
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log('Removed suggestion key:', key);
+            });
+            
+            // Also clear any existing suggestions from the DOM
+            const markers = document.querySelectorAll('.suggestion-marker');
+            markers.forEach(marker => {
+                const textNode = document.createTextNode(marker.textContent);
+                marker.replaceWith(textNode);
+            });
+            
+            const indicators = document.querySelectorAll('.suggestion-indicator');
+            indicators.forEach(indicator => {
+                indicator.remove();
+            });
+            
+            const popups = document.querySelectorAll('.suggestion-popup');
+            popups.forEach(popup => {
+                popup.remove();
+            });
+            
+            console.log('NUCLEAR CLEANUP COMPLETE: Removed', keysToRemove.length, 'suggestion keys and all DOM elements');
+            
+        } catch (error) {
+            console.error('Error in nuclear cleanup:', error);
+        }
+    }
+    
+    function clearAllSuggestionStorage() {
+        console.log('Clearing all suggestion storage...');
+        
+        try {
+            const currentUserData = localStorage.getItem('currentUser');
+            if (!currentUserData) return;
+            
+            const currentUser = JSON.parse(currentUserData);
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            
+            classes.forEach(classData => {
+                if (classData.userId === currentUser.uid) {
+                    // Clear all suggestion keys for this user
+                    const docId = 'current-document';
+                    const suggestionsKey = `suggestions_${classData.userId}_${classData.name}_${docId}`;
+                    const currentSuggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_${docId}`;
+                    
+                    // Clear current suggestions
+                    localStorage.removeItem(suggestionsKey);
+                    localStorage.removeItem(currentSuggestionsKey);
+                    console.log('Cleared suggestion storage keys:', suggestionsKey, currentSuggestionsKey);
+                    
+                    // Clear all document-specific suggestions
+                    const documents = JSON.parse(classData.documents || '[]');
+                    documents.forEach(doc => {
+                        const docSuggestionsKey = `suggestions_${classData.userId}_${classData.name}_${doc.id}`;
+                        localStorage.removeItem(docSuggestionsKey);
+                        console.log('Cleared document suggestion key:', docSuggestionsKey);
+                    });
+                }
+            });
+            
+            console.log('All suggestion storage cleared');
+        } catch (error) {
+            console.error('Error clearing suggestion storage:', error);
+        }
+    }
+    
+    function removeSuggestionFromStorage(index) {
+        console.log('Removing suggestion from storage, index:', index);
+        
+        // Get current user and class data
+        const currentUserData = localStorage.getItem('currentUser');
+        if (!currentUserData) {
+            console.log('No current user found');
+            return;
+        }
+        
+        const currentUser = JSON.parse(currentUserData);
+        const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+        let removed = false;
+        
+        // Get the original text of the suggestion being removed
+        const marker = document.getElementById(`suggestion-${index}`);
+        const originalText = marker ? marker.textContent : null;
+        
+        console.log('Removing suggestion with original text:', originalText);
+        
+        // Remove from all relevant storage keys
+        classes.forEach(classData => {
+            if (classData.userId === currentUser.uid) {
+                // Remove from document-specific suggestions
+                const docId = 'current-document';
+                const suggestionsKey = `suggestions_${classData.userId}_${classData.name}_${docId}`;
+                const currentSuggestionsKey = `current_suggestions_${classData.userId}_${classData.name}_${docId}`;
+                
+                // Remove from suggestions storage by matching original text
+                try {
+                    const suggestions = JSON.parse(localStorage.getItem(suggestionsKey) || '[]');
+                    const filteredSuggestions = suggestions.filter(suggestion => {
+                        if (originalText) {
+                            return suggestion.original !== originalText;
+                        }
+                        return true; // If no original text, keep all
+                    });
+                    if (filteredSuggestions.length !== suggestions.length) {
+                        localStorage.setItem(suggestionsKey, JSON.stringify(filteredSuggestions));
+                        console.log('Removed suggestion from suggestions storage:', suggestionsKey);
+                        removed = true;
+                    }
+                } catch (error) {
+                    console.error('Error updating suggestions storage:', error);
+                }
+                
+                // Remove from current suggestions storage
+                try {
+                    const currentSuggestions = JSON.parse(localStorage.getItem(currentSuggestionsKey) || '[]');
+                    const filteredCurrentSuggestions = currentSuggestions.filter(s => {
+                        if (originalText) {
+                            return s.original !== originalText;
+                        }
+                        return s.index !== index.toString();
+                    });
+                    if (filteredCurrentSuggestions.length !== currentSuggestions.length) {
+                        localStorage.setItem(currentSuggestionsKey, JSON.stringify(filteredCurrentSuggestions));
+                        console.log('Removed suggestion from current suggestions storage:', currentSuggestionsKey);
+                        removed = true;
+                    }
+                } catch (error) {
+                    console.error('Error updating current suggestions storage:', error);
+                }
+                
+                // Also remove from all document-specific keys
+                const documents = JSON.parse(classData.documents || '[]');
+                documents.forEach(doc => {
+                    const docSuggestionsKey = `suggestions_${classData.userId}_${classData.name}_${doc.id}`;
+                    try {
+                        const docSuggestions = JSON.parse(localStorage.getItem(docSuggestionsKey) || '[]');
+                        const filteredDocSuggestions = docSuggestions.filter(suggestion => {
+                            if (originalText) {
+                                return suggestion.original !== originalText;
+                            }
+                            return true;
+                        });
+                        if (filteredDocSuggestions.length !== docSuggestions.length) {
+                            localStorage.setItem(docSuggestionsKey, JSON.stringify(filteredDocSuggestions));
+                            console.log('Removed suggestion from document storage:', docSuggestionsKey);
+                            removed = true;
+                        }
+                    } catch (error) {
+                        console.error('Error updating document suggestions storage:', error);
+                    }
+                });
+            }
+        });
+        
+        if (!removed) {
+            console.log('No suggestion found to remove at index:', index);
+        } else {
+            console.log('Successfully removed suggestion from all storage locations');
+        }
+    }
+}
+
+// Make functions globally available
+window.openDocumentEditor = openDocumentEditor;
+window.closeDocumentEditor = closeDocumentEditor;
+
+// Check for suggestions on page load (handles browser refresh)
+// DISABLED: Don't load suggestions on page refresh to prevent multiplying
+// document.addEventListener('DOMContentLoaded', () => {
+//     // Check if we're in a document editor
+//     const editorScreen = document.getElementById('documentEditorScreen');
+//     if (editorScreen) {
+//         console.log('Document editor detected on page load, checking for suggestions...');
+//         
+//         // Try to get class data from localStorage or URL parameters
+//         const currentUserData = localStorage.getItem('currentUser');
+//         if (currentUserData) {
+//             const currentUser = JSON.parse(currentUserData);
+//             const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+//             
+//             // Find the most recent class (this is a fallback)
+//             if (classes.length > 0) {
+//                 const classData = classes[0];
+//                 console.log('Loading suggestions for class:', classData.name);
+//                 
+//                 // Try to load suggestions for new documents
+//                 setTimeout(() => {
+//                     loadSavedSuggestions(classData, null);
+//                 }, 1000);
+//             }
+//         }
+//     }
+// });
+
+// Instead, clear only suggestion storage on page load (preserve DOM)
+document.addEventListener('DOMContentLoaded', () => {
+    const editorScreen = document.getElementById('documentEditorScreen');
+    if (editorScreen) {
+        console.log('Document editor detected on page load - clearing suggestion storage only');
+        clearSuggestionStorageOnly();
+    }
+});
+
+// AI Checker functionality using ZeroGPT API
+async function runAIChecker() {
+    console.log('🤖 Starting AI Checker...');
+    
+    // Get selected text or entire document
+    const selection = window.getSelection();
+    let textToCheck = '';
+    
+    if (selection.toString().trim()) {
+        // Use selected text
+        textToCheck = selection.toString().trim();
+        console.log('📝 Checking selected text:', textToCheck.substring(0, 100) + '...');
+    } else {
+        // Use entire document
+        const contentElement = document.querySelector('.doc-editor-content');
+        if (contentElement) {
+            textToCheck = contentElement.innerText || contentElement.textContent || '';
+            console.log('📄 Checking entire document:', textToCheck.substring(0, 100) + '...');
+        }
+    }
+    
+    if (!textToCheck.trim()) {
+        alert('No text to check. Please select some text or ensure the document has content.');
+        return;
+    }
+    
+    // Show loading state
+    const aiCheckerBtn = document.getElementById('aiCheckerBtn');
+    const originalText = aiCheckerBtn.innerHTML;
+    aiCheckerBtn.innerHTML = '⏳';
+    aiCheckerBtn.disabled = true;
+    
+    try {
+        // Call ZeroGPT API
+        const result = await checkTextWithZeroGPT(textToCheck);
+        
+        if (result.success) {
+            console.log('✅ AI Check completed:', result);
+            
+            // Show results summary
+            showAICheckerResults(result);
+            
+            // Highlight AI-detected text
+            if (result.highlighted_sentences && result.highlighted_sentences.length > 0) {
+                highlightAIText(result.highlighted_sentences);
+            }
+        } else {
+            console.error('❌ AI Check failed:', result.error);
+            alert('AI Check failed: ' + result.error);
+        }
+    } catch (error) {
+        console.error('❌ AI Check error:', error);
+        alert('AI Check error: ' + error.message);
+    } finally {
+        // Restore button state
+        aiCheckerBtn.innerHTML = originalText;
+        aiCheckerBtn.disabled = false;
+    }
+}
+
+// ZeroGPT API integration
+async function checkTextWithZeroGPT(text) {
+    // Try multiple CORS proxies for better reliability
+    const proxies = [
+        'https://cors-anywhere.herokuapp.com/https://api.zerogpt.com/api/detect/detectText',
+        'https://api.allorigins.win/raw?url=https://api.zerogpt.com/api/detect/detectText',
+        'https://corsproxy.io/?https://api.zerogpt.com/api/detect/detectText'
+    ];
+    
+    const headers = {
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json',
+        'DNT': '1',
+        'Origin': 'https://www.zerogpt.com',
+        'Referer': 'https://www.zerogpt.com/',
+        'Sec-Ch-Ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"macOS"',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
+    };
+    
+    const payload = { "input_text": text };
+    
+    // Try each proxy until one works
+    for (let i = 0; i < proxies.length; i++) {
+        try {
+            console.log(`🔄 Trying CORS proxy ${i + 1}/${proxies.length}:`, proxies[i]);
+            
+            const response = await fetch(proxies[i], {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(payload)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                const data = result.data || {};
+                
+                console.log('✅ CORS proxy successful:', proxies[i]);
+                
+                return {
+                    success: true,
+                    is_ai: data.isHuman === 0,
+                    is_human: data.isHuman === 1,
+                    ai_percentage: data.fakePercentage || 0,
+                    feedback: data.feedback || '',
+                    language: data.detected_language || '',
+                    text_words: data.textWords || 0,
+                    ai_words: data.aiWords || 0,
+                    highlighted_sentences: data.h || []
+                };
+            } else {
+                console.log(`❌ CORS proxy ${i + 1} failed:`, response.status, response.statusText);
+            }
+        } catch (error) {
+            console.log(`❌ CORS proxy ${i + 1} error:`, error.message);
+        }
+    }
+    
+    // If all proxies fail, return error
+    return {
+        success: false,
+        error: 'All CORS proxies failed. Please try again later or use a different network.'
+    };
+}
+
+// Show AI Checker results in a floating summary
+function showAICheckerResults(result) {
+    // Remove existing summary if any
+    const existingSummary = document.getElementById('aiCheckerSummary');
+    if (existingSummary) {
+        existingSummary.remove();
+    }
+    
+    // Create floating summary
+    const summary = document.createElement('div');
+    summary.id = 'aiCheckerSummary';
+    summary.className = 'ai-checker-summary';
+    
+    const aiPercentage = result.ai_percentage || 0;
+    const isAI = result.is_ai;
+    const statusColor = isAI ? '#ff4444' : '#44ff44';
+    const statusText = isAI ? 'AI Generated' : 'Human Written';
+    const statusIcon = isAI ? '🤖' : '👤';
+    
+    summary.innerHTML = `
+        <div class="ai-summary-header">
+            <span class="ai-summary-icon">${statusIcon}</span>
+            <span class="ai-summary-title">AI Detection Results</span>
+            <button class="ai-summary-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+        <div class="ai-summary-content">
+            <div class="ai-summary-status" style="color: ${statusColor}">
+                ${statusText} (${aiPercentage}% AI)
+            </div>
+            <div class="ai-summary-details">
+                <div class="ai-detail-item">
+                    <span class="ai-detail-label">Total Words:</span>
+                    <span class="ai-detail-value">${result.text_words}</span>
+                </div>
+                <div class="ai-detail-item">
+                    <span class="ai-detail-label">AI Words:</span>
+                    <span class="ai-detail-value">${result.ai_words}</span>
+                </div>
+                <div class="ai-detail-item">
+                    <span class="ai-detail-label">Language:</span>
+                    <span class="ai-detail-value">${result.language}</span>
+                </div>
+            </div>
+            ${result.feedback ? `<div class="ai-summary-feedback">${result.feedback}</div>` : ''}
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(summary);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (summary.parentNode) {
+            summary.remove();
+        }
+    }, 10000);
+}
+
+// Highlight AI-detected text
+function highlightAIText(highlightedSentences) {
+    console.log('🎨 Highlighting AI-detected text:', highlightedSentences);
+    
+    // Remove existing highlights
+    const existingHighlights = document.querySelectorAll('.ai-highlighted');
+    existingHighlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+        parent.normalize();
+    });
+    
+    // Highlight each sentence
+    highlightedSentences.forEach(sentence => {
+        if (sentence && sentence.trim()) {
+            highlightTextInDocument(sentence.trim());
+        }
+    });
+}
+
+// Helper function to highlight specific text in the document
+function highlightTextInDocument(text) {
+    const contentElement = document.querySelector('.doc-editor-content');
+    if (!contentElement) return;
+    
+    const walker = document.createTreeWalker(
+        contentElement,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    const textNodes = [];
+    let node;
+    
+    while (node = walker.nextNode()) {
+        if (node.textContent.includes(text)) {
+            textNodes.push(node);
+        }
+    }
+    
+    textNodes.forEach(textNode => {
+        const parent = textNode.parentNode;
+        const content = textNode.textContent;
+        const index = content.indexOf(text);
+        
+        if (index !== -1) {
+            const beforeText = content.substring(0, index);
+            const highlightedText = content.substring(index, index + text.length);
+            const afterText = content.substring(index + text.length);
+            
+            const fragment = document.createDocumentFragment();
+            
+            if (beforeText) {
+                fragment.appendChild(document.createTextNode(beforeText));
+            }
+            
+            const highlightSpan = document.createElement('span');
+            highlightSpan.className = 'ai-highlighted';
+            highlightSpan.textContent = highlightedText;
+            fragment.appendChild(highlightSpan);
+            
+            if (afterText) {
+                fragment.appendChild(document.createTextNode(afterText));
+            }
+            
+            parent.replaceChild(fragment, textNode);
+        }
+    });
+}
+
+
+
+// Test functions for debugging
+window.testAutoSave = function() {
+    console.log('Testing auto-save...');
+    if (window.autoSave) {
+        window.hasChanges = true;
+        window.autoSave();
+    }
+};
+

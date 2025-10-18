@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius - Setup</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-card">
+            <div class="onboarding-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">Step 1 of 3</span>
+            </div>
+            
+            <!-- Step 1 -->
+            <div class="onboarding-step" id="step1">
+                <div class="step-header">
+                    <h1 class="step-title">Welcome to Genius!</h1>
+                    <p class="step-subtitle">Let's set up your profile</p>
+                </div>
+                <div class="step-content">
+                    <div class="form-group">
+                        <label for="userName">What's your name?</label>
+                        <input type="text" id="userName" placeholder="Enter your full name" required>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-primary" id="nextBtn1">Next</button>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="onboarding-step" id="step2" style="display: none;">
+                <div class="step-header">
+                    <h1 class="step-title">Tell us about your school</h1>
+                    <p class="step-subtitle">This helps us personalize your experience</p>
+                </div>
+                <div class="step-content">
+                    <div class="form-group">
+                        <label for="collegeName">College/University Name</label>
+                        <div class="ghost-input-wrapper">
+                            <input type="text" class="ghost-background" id="collegeGhost" disabled>
+                            <input type="text" id="collegeName" class="ghost-input" placeholder="Start typing..." required autocomplete="off">
+                        </div>
+                        <span class="ghost-hint">Press Tab or Enter to autocomplete</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="major">What's your major?</label>
+                        <div class="ghost-input-wrapper">
+                            <input type="text" class="ghost-background" id="majorGhost" disabled>
+                            <input type="text" id="major" class="ghost-input" placeholder="Start typing..." required autocomplete="off">
+                        </div>
+                        <span class="ghost-hint">Press Tab or Enter to autocomplete</span>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-secondary" id="backBtn2">Back</button>
+                    <button class="btn btn-primary" id="nextBtn2">Next</button>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="onboarding-step" id="step3" style="display: none;">
+                <div class="step-header">
+                    <h1 class="step-title">Academic Information</h1>
+                    <p class="step-subtitle">Help us understand your level</p>
+                </div>
+                <div class="step-content">
+                    <div class="form-group">
+                        <label for="academicLevel">Current academic level</label>
+                        <div class="ghost-input-wrapper">
+                            <input type="text" class="ghost-background" id="levelGhost" disabled>
+                            <input type="text" id="academicLevel" class="ghost-input" placeholder="Start typing..." required autocomplete="off">
+                        </div>
+                        <span class="ghost-hint">Press Tab or Enter to autocomplete</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="graduationYear">Expected graduation year</label>
+                        <input type="number" id="graduationYear" placeholder="2025" min="2020" max="2035" required>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn btn-secondary" id="backBtn3">Back</button>
+                    <button class="btn btn-primary" id="nextBtn3">Next</button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script type="module" src="onboarding.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure OpenAI Configuration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-card">
+            <div class="step-header">
+                <h1 class="step-title">Azure OpenAI Configuration</h1>
+                <p class="step-subtitle">Configure your Azure OpenAI settings for flashcard generation</p>
+            </div>
+            <div class="step-content">
+                <div class="form-group">
+                    <label for="azureEndpoint">Azure OpenAI Endpoint</label>
+                    <input type="url" id="azureEndpoint" placeholder="https://your-deployment.openai.azure.com/" autocomplete="off">
+                    <small class="form-hint">Your Azure OpenAI service endpoint URL</small>
+                </div>
+                <div class="form-group">
+                    <label for="azureApiKey">Azure OpenAI API Key</label>
+                    <input type="password" id="azureApiKey" placeholder="Enter your API key" autocomplete="off">
+                    <small class="form-hint">Your Azure OpenAI API key for authentication</small>
+                </div>
+                <div class="form-group">
+                    <label for="azureDeploymentName">Deployment Name</label>
+                    <input type="text" id="azureDeploymentName" placeholder="gpt-4o-mini" autocomplete="off">
+                    <small class="form-hint">The name of your Azure OpenAI deployment</small>
+                </div>
+                <div class="info-box">
+                    <p><strong>Note:</strong> You can get these values from your Azure OpenAI resource in the Azure portal.</p>
+                </div>
+            </div>
+            <div class="step-actions">
+                <button class="btn btn-primary" onclick="saveAzureConfig()">Save Configuration</button>
+                <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function saveAzureConfig() {
+            const endpoint = document.getElementById('azureEndpoint').value;
+            const apiKey = document.getElementById('azureApiKey').value;
+            const deploymentName = document.getElementById('azureDeploymentName').value;
+
+            if (!endpoint || !apiKey || !deploymentName) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Get current user data
+            const currentUserData = localStorage.getItem('currentUser');
+            if (!currentUserData) {
+                alert('Please log in first');
+                return;
+            }
+
+            const currentUser = JSON.parse(currentUserData);
+            
+            // Update with Azure config
+            const updatedUser = {
+                ...currentUser,
+                azureEndpoint: endpoint,
+                azureApiKey: apiKey,
+                azureDeploymentName: deploymentName
+            };
+
+            // Save back to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+            
+            alert('Azure configuration saved successfully!');
+            window.location.href = 'dashboard.html';
+        }
+
+        // Load existing config if available
+        window.onload = function() {
+            const currentUserData = localStorage.getItem('currentUser');
+            if (currentUserData) {
+                const currentUser = JSON.parse(currentUserData);
+                if (currentUser.azureEndpoint) {
+                    document.getElementById('azureEndpoint').value = currentUser.azureEndpoint;
+                }
+                if (currentUser.azureApiKey) {
+                    document.getElementById('azureApiKey').value = currentUser.azureApiKey;
+                }
+                if (currentUser.azureDeploymentName) {
+                    document.getElementById('azureDeploymentName').value = currentUser.azureDeploymentName;
+                }
+            }
+        };
+    </script>
+</body>
+</html>
