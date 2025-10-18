@@ -19,7 +19,7 @@ initFirebaseServices();
 let uploadedImageUrl = null;
 
 // Class creation functions
-export function addClass() {
+function addClass() {
     console.log('Add Class clicked - function called!');
     
     // Reset uploaded image
@@ -508,7 +508,7 @@ export function handleImageUpload(event) {
 }
 
 // Update preview
-export function updatePreview() {
+function updatePreview() {
     console.log('Updating preview...');
     
     // Get form values
@@ -620,7 +620,7 @@ export function updatePreview() {
 }
 
 // Create class
-export async function createClass(event) {
+async function createClass(event) {
     console.log('Create Class button clicked!');
     
     if (event) {
@@ -752,7 +752,7 @@ export async function createClass(event) {
 }
 
 // Cancel class creation
-export function cancelClassCreation() {
+function cancelClassCreation() {
     const formContainer = document.querySelector('.class-form-container');
     if (formContainer) {
         formContainer.remove();
