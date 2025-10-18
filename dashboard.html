@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genius - Dashboard</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -105,38 +109,97 @@
         </div>
     </div>
 
-    <script type="module">
-        import { auth, signOut, onAuthStateChanged } from './firebase-init.js';
-        import { addClass } from './js/classForm.js';
-        import { showClassView, closeClassView } from './js/classView.js';
+    <script>
+        // Wait for Firebase to initialize
+        let auth, signOut, onAuthStateChanged;
         
-        // Preload document editor to ensure it's available
-        import './js/documentEditor.js';
+        async function initDashboard() {
+            try {
+                console.log('Waiting for Firebase to load...');
+                
+                // Wait for Firebase to be available
+                while (!window.firebase) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                // Initialize Firebase
+                const firebaseConfig = {
+                    apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+                    authDomain: "genius-b5656.firebaseapp.com",
+                    projectId: "genius-b5656",
+                    storageBucket: "genius-b5656.firebasestorage.app",
+                    messagingSenderId: "567988128391",
+                    appId: "1:567988128391:web:8a48294d736ec4013f8622",
+                    measurementId: "G-3SEG2XJQMP"
+                };
+                
+                // Initialize Firebase
+                window.firebase.initializeApp(firebaseConfig);
+                auth = window.firebase.auth();
+                signOut = window.firebase.auth().signOut;
+                onAuthStateChanged = window.firebase.auth().onAuthStateChanged;
+                
+                console.log('Firebase initialized successfully');
+                
+            } catch (error) {
+                console.error('Error initializing Firebase:', error);
+                alert('Failed to load Firebase. Please refresh the page.');
+            }
+        }
 
         console.log('Dashboard loaded');
 
         let currentUser = null;
 
         // Check authentication state
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('User authenticated:', user.uid);
-                currentUser = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL
-                };
+        function checkAuthState() {
+            onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('User authenticated:', user.uid);
+                    currentUser = {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        photoURL: user.photoURL
+                    };
+                    
+                    // Save to localStorage for compatibility
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // Initialize dashboard after user is set
+                    setTimeout(() => {
+                        initializeDashboard();
+                    }, 100);
+                } else {
+                    console.log('No user authenticated, redirecting to login');
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initDashboard().then(() => {
+                // Check if user is already in localStorage
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    try {
+                        currentUser = JSON.parse(savedUser);
+                        console.log('Loaded user from localStorage:', currentUser.email);
+                        // Initialize dashboard immediately if user is already saved
+                        setTimeout(() => {
+                            initializeDashboard();
+                        }, 100);
+                    } catch (error) {
+                        console.error('Error parsing saved user:', error);
+                    }
+                }
                 
-                // Save to localStorage for compatibility
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                // Initialize dashboard
-                initializeDashboard();
-            } else {
-                console.log('No user authenticated, redirecting to login');
-                window.location.href = 'login.html';
-            }
+                // Wait a bit for Firebase to fully initialize
+                setTimeout(() => {
+                    checkAuthState();
+                }, 200);
+            });
         });
 
         function initializeDashboard() {
@@ -160,12 +223,21 @@
 
         // Load profile info
         async function loadProfileInfo() {
+            if (!currentUser || !currentUser.uid) {
+                console.log('No current user available for profile loading');
+                return;
+            }
+            
             let profile = {};
             
             // Try to load from Firebase first
             try {
-                const { userService } = await import('./firebase-service.js');
-                profile = await userService.getProfile(currentUser.uid);
+                const db = window.firebase.firestore();
+                const userRef = db.collection('users').doc(currentUser.uid);
+                const userDoc = await userRef.get();
+                if (userDoc.exists()) {
+                    profile = userDoc.data();
+                }
                 console.log('Loaded profile from Firebase:', profile);
                 
                 // If no profile in Firebase, try to migrate from localStorage
@@ -184,7 +256,11 @@
                             year: localProfile.year
                         };
                         // Migrate to Firebase
-                        await userService.saveProfile(currentUser.uid, fixedProfile);
+                        await db.collection('users').doc(currentUser.uid).set({
+                            ...fixedProfile,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        }, { merge: true });
                         profile = fixedProfile;
                         console.log('Profile migrated successfully!');
                     }
@@ -314,8 +390,11 @@
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
                     // Also save to Firebase profile
-                    const { userService } = await import('./firebase-service.js');
-                    await userService.saveProfile(currentUser.uid, { openaiApiKey: apiKey });
+                    const db = window.firebase.firestore();
+                    await db.collection('users').doc(currentUser.uid).set({
+                        openaiApiKey: apiKey,
+                        updatedAt: new Date()
+                    }, { merge: true });
                     
                     console.log('API key saved successfully');
                     closeSettingsModal();
@@ -331,12 +410,25 @@
 
         // Load and display classes
         async function loadClasses() {
+            if (!currentUser || !currentUser.uid) {
+                console.log('No current user available for class loading');
+                return;
+            }
+            
             let classes = [];
             
             // Try to load from Firebase first
             try {
-                const { classService } = await import('./firebase-service.js');
-                classes = await classService.getClasses(currentUser.uid);
+                const db = window.firebase.firestore();
+                const classesRef = db.collection('users').doc(currentUser.uid).collection('classes');
+                const querySnapshot = await classesRef.orderBy('createdAt', 'desc').get();
+                classes = [];
+                querySnapshot.forEach((doc) => {
+                    classes.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
                 console.log('Loaded classes from Firebase:', classes);
                 
                 // If no classes in Firebase, try to migrate from localStorage
@@ -350,13 +442,24 @@
                         console.log('Migrating classes to Firebase...');
                         for (const classData of classesToMigrate) {
                             try {
-                                await classService.addClass(currentUser.uid, classData);
+                                await db.collection('users').doc(currentUser.uid).collection('classes').add({
+                                    ...classData,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                });
                             } catch (err) {
                                 console.log('Error migrating class:', err);
                             }
                         }
                         // Reload from Firebase after migration
-                        classes = await classService.getClasses(currentUser.uid);
+                        const newQuerySnapshot = await classesRef.orderBy('createdAt', 'desc').get();
+                        classes = [];
+                        newQuerySnapshot.forEach((doc) => {
+                            classes.push({
+                                id: doc.id,
+                                ...doc.data()
+                            });
+                        });
                         console.log('Classes migrated successfully!');
                     }
                 }
@@ -472,28 +575,33 @@
 
         // Load class statistics
         async function loadClassStats(classes) {
+            if (!currentUser || !currentUser.uid) {
+                console.log('No current user available for class stats loading');
+                return;
+            }
+            
             for (const classData of classes) {
                 try {
-                    // Import services
-                    const { documentService, studyGuideService } = await import('./firebase-service.js');
+                    const db = window.firebase.firestore();
                     
                     // Load documents count
-                    const documents = await documentService.getDocuments(classData.userId, classData.id);
-                    const docsCount = documents ? documents.length : 0;
+                    const documentsRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('documents');
+                    const documentsSnapshot = await documentsRef.get();
+                    const docsCount = documentsSnapshot.size;
                     
                     // Load study guides count
-                    const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
-                    const guidesCount = studyGuides ? studyGuides.length : 0;
+                    const studyGuidesRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides');
+                    const studyGuidesSnapshot = await studyGuidesRef.get();
+                    const guidesCount = studyGuidesSnapshot.size;
                     
                     // Load flashcards count (from study guides that are flashcard sets)
                     let cardsCount = 0;
-                    if (studyGuides) {
-                        studyGuides.forEach(guide => {
-                            if (guide.type === 'flashcards' && guide.totalCards) {
-                                cardsCount += guide.totalCards;
-                            }
-                        });
-                    }
+                    studyGuidesSnapshot.forEach(doc => {
+                        const guide = doc.data();
+                        if (guide.type === 'flashcards' && guide.totalCards) {
+                            cardsCount += guide.totalCards;
+                        }
+                    });
                     
                     // Update the stats display
                     const statsContainer = document.querySelector(`[data-class-id="${classData.id}"]`);
@@ -2198,6 +2306,28 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
         }
 
         } // End of initializeDashboard function
+
+        // Import class form and view functions
+        async function loadClassModules() {
+            try {
+                const classFormModule = await import('./js/classForm.js');
+                const classViewModule = await import('./js/classView.js');
+                
+                // Make functions available globally
+                window.addClass = classFormModule.addClass;
+                window.showClassView = classViewModule.showClassView;
+                window.closeClassView = classViewModule.closeClassView;
+                
+                console.log('Class modules loaded successfully');
+            } catch (error) {
+                console.error('Error loading class modules:', error);
+            }
+        }
+
+        // Load class modules when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadClassModules();
+        });
     </script>
     
     <!-- Import Configuration -->
