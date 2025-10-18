@@ -1,6 +1,6 @@
 // Firebase services using global Firebase SDK
 // Wait for Firebase to be available
-let db, auth, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, orderBy, where;
+let db, firebaseAuth, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, orderBy, where;
 
 async function initFirebaseServices() {
     // Wait for Firebase to be available
@@ -25,7 +25,7 @@ async function initFirebaseServices() {
     
     // Get Firebase services
     db = window.firebase.firestore();
-    auth = window.firebase.auth();
+    firebaseAuth = window.firebase.auth();
     
     // Get Firestore functions
     collection = window.firebase.firestore().collection;
