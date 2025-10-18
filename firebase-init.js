@@ -63,21 +63,6 @@ export {
     firebaseApp, 
     firebaseAuth as auth, 
     firebaseDb as db, 
-    googleProvider,
-    // Firebase functions
-    createUserWithEmailAndPassword: () => window.firebase.auth().createUserWithEmailAndPassword,
-    signInWithEmailAndPassword: () => window.firebase.auth().signInWithEmailAndPassword,
-    signInWithPopup: () => window.firebase.auth().signInWithPopup,
-    GoogleAuthProvider: () => window.firebase.auth.GoogleAuthProvider,
-    signOut: () => window.firebase.auth().signOut,
-    onAuthStateChanged: () => window.firebase.auth().onAuthStateChanged,
-    collection: () => window.firebase.firestore().collection,
-    addDoc: () => window.firebase.firestore().addDoc,
-    query: () => window.firebase.firestore().query,
-    where: () => window.firebase.firestore().where,
-    getDocs: () => window.firebase.firestore().getDocs,
-    doc: () => window.firebase.firestore().doc,
-    setDoc: () => window.firebase.firestore().setDoc,
-    getDoc: () => window.firebase.firestore().getDoc
+    googleProvider
 };
 

@@ -1,24 +1,51 @@
-// Import Firebase services from CDN
-import { db, auth } from './firebase-config.js';
-import { 
-    collection, 
-    addDoc, 
-    getDocs,
-    getDoc, 
-    doc, 
-    setDoc,
-    updateDoc, 
-    deleteDoc, 
-    query, 
-    orderBy, 
-    where 
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged 
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+// Firebase services using global Firebase SDK
+// Wait for Firebase to be available
+let db, auth, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, orderBy, where;
+
+async function initFirebaseServices() {
+    // Wait for Firebase to be available
+    while (!window.firebase) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Initialize Firebase if not already initialized
+    if (!window.firebase.apps || window.firebase.apps.length === 0) {
+        const firebaseConfig = {
+            apiKey: window.FIREBASE_API_KEY || "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+            authDomain: window.FIREBASE_AUTH_DOMAIN || "genius-b5656.firebaseapp.com",
+            projectId: window.FIREBASE_PROJECT_ID || "genius-b5656",
+            storageBucket: window.FIREBASE_STORAGE_BUCKET || "genius-b5656.firebasestorage.app",
+            messagingSenderId: window.FIREBASE_MESSAGING_SENDER_ID || "567988128391",
+            appId: window.FIREBASE_APP_ID || "1:567988128391:web:8a48294d736ec4013f8622",
+            measurementId: window.FIREBASE_MEASUREMENT_ID || "G-3SEG2XJQMP"
+        };
+        
+        window.firebase.initializeApp(firebaseConfig);
+    }
+    
+    // Get Firebase services
+    db = window.firebase.firestore();
+    auth = window.firebase.auth();
+    
+    // Get Firestore functions
+    collection = window.firebase.firestore().collection;
+    addDoc = window.firebase.firestore().addDoc;
+    getDocs = window.firebase.firestore().getDocs;
+    getDoc = window.firebase.firestore().getDoc;
+    doc = window.firebase.firestore().doc;
+    setDoc = window.firebase.firestore().setDoc;
+    updateDoc = window.firebase.firestore().updateDoc;
+    deleteDoc = window.firebase.firestore().deleteDoc;
+    query = window.firebase.firestore().query;
+    orderBy = window.firebase.firestore().orderBy;
+    where = window.firebase.firestore().where;
+    
+    console.log('Firebase services initialized in firebase-service.js');
+}
+
+// Initialize Firebase services
+initFirebaseServices();
+// Auth functions will be accessed through window.firebase.auth()
 
 // User Profile Service
 export class UserService {
@@ -125,13 +152,13 @@ export class ClassService {
 // Authentication service
 export class AuthService {
     constructor() {
-        this.auth = auth;
+        // Auth is accessed through window.firebase.auth()
     }
 
     async signUp(email, password) {
         try {
             console.log('AuthService.signUp called');
-            const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+            const userCredential = await window.firebase.auth().createUserWithEmailAndPassword(email, password);
             console.log('User created:', userCredential.user);
             return userCredential.user;
         } catch (error) {
@@ -143,7 +170,7 @@ export class AuthService {
     async signIn(email, password) {
         try {
             console.log('AuthService.signIn called');
-            const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+            const userCredential = await window.firebase.auth().signInWithEmailAndPassword(email, password);
             console.log('User signed in:', userCredential.user);
             return userCredential.user;
         } catch (error) {
@@ -154,7 +181,7 @@ export class AuthService {
 
     async signOut() {
         try {
-            await signOut(this.auth);
+            await window.firebase.auth().signOut();
             console.log('User signed out');
         } catch (error) {
             console.error('Error signing out:', error);
@@ -163,11 +190,11 @@ export class AuthService {
     }
 
     onAuthStateChanged(callback) {
-        return onAuthStateChanged(this.auth, callback);
+        return window.firebase.auth().onAuthStateChanged(callback);
     }
 
     getCurrentUser() {
-        return this.auth.currentUser;
+        return window.firebase.auth().currentUser;
     }
 }
 

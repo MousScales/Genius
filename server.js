@@ -63,6 +63,21 @@ app.get('/onboarding.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'onboarding.js'));
 });
 
+// Serve assets directory
+app.get('/assets/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const ext = path.extname(filename).toLowerCase();
+    let contentType = 'application/octet-stream';
+    
+    if (ext === '.png') contentType = 'image/png';
+    else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+    else if (ext === '.gif') contentType = 'image/gif';
+    else if (ext === '.svg') contentType = 'image/svg+xml';
+    
+    res.setHeader('Content-Type', contentType);
+    res.sendFile(path.join(__dirname, 'assets', filename));
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
