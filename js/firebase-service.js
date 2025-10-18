@@ -27,18 +27,18 @@ async function initFirebaseServices() {
     db = window.firebase.firestore();
     firebaseAuth = window.firebase.auth();
     
-    // Get Firestore functions
-    collection = window.firebase.firestore().collection;
-    addDoc = window.firebase.firestore().addDoc;
-    getDocs = window.firebase.firestore().getDocs;
-    getDoc = window.firebase.firestore().getDoc;
-    doc = window.firebase.firestore().doc;
-    setDoc = window.firebase.firestore().setDoc;
-    updateDoc = window.firebase.firestore().updateDoc;
-    deleteDoc = window.firebase.firestore().deleteDoc;
-    query = window.firebase.firestore().query;
-    orderBy = window.firebase.firestore().orderBy;
-    where = window.firebase.firestore().where;
+    // Get Firestore functions - use the proper API
+    collection = (path) => db.collection(path);
+    addDoc = (ref, data) => ref.add(data);
+    getDocs = (ref) => ref.get();
+    getDoc = (ref) => ref.get();
+    doc = (ref, path) => ref.doc(path);
+    setDoc = (ref, data) => ref.set(data);
+    updateDoc = (ref, data) => ref.update(data);
+    deleteDoc = (ref) => ref.delete();
+    query = (ref) => ref;
+    orderBy = (ref, field) => ref.orderBy(field);
+    where = (ref, field, op, value) => ref.where(field, op, value);
     
     console.log('Firebase services initialized in firebase-service.js');
 }
@@ -411,8 +411,8 @@ const studyGuideService = new StudyGuideService();
 class ChatService {
     async getGeniusChats(userId) {
         try {
-            const chatsRef = collection(db, 'users', userId, 'geniusChats');
-            const snapshot = await getDocs(chatsRef);
+            const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
+            const snapshot = await chatsRef.get();
             return snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -424,8 +424,8 @@ class ChatService {
                 console.log('Permission denied for genius chats, trying to initialize...');
                 try {
                     // Try to create an empty chat to initialize the collection
-                    const chatsRef = collection(db, 'users', userId, 'geniusChats');
-                    await addDoc(chatsRef, {
+                    const chatsRef = db.collection('users').doc(userId).collection('geniusChats');
+                    await chatsRef.add({
                         title: 'Welcome to Genius Chat',
                         messages: [],
                         createdAt: new Date(),
