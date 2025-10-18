@@ -55,10 +55,31 @@
     </div>
 
     <script type="module">
-        import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, googleProvider } from './firebase-init.js';
-
-        console.log('Login page loaded');
-        console.log('Auth object:', auth);
+        // Try to import with fallback for different export names
+        let auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, googleProvider;
+        
+        try {
+            const firebaseModule = await import('./firebase-init.js');
+            console.log('Firebase module loaded:', firebaseModule);
+            
+            // Try different possible export names
+            auth = firebaseModule.auth || firebaseModule.firebaseAuth;
+            createUserWithEmailAndPassword = firebaseModule.createUserWithEmailAndPassword;
+            signInWithEmailAndPassword = firebaseModule.signInWithEmailAndPassword;
+            signInWithPopup = firebaseModule.signInWithPopup;
+            googleProvider = firebaseModule.googleProvider || firebaseModule.googleAuthProvider;
+            
+            console.log('Login page loaded');
+            console.log('Auth object:', auth);
+            console.log('Google provider:', googleProvider);
+            
+            if (!auth) {
+                throw new Error('Auth object not found in Firebase module');
+            }
+        } catch (error) {
+            console.error('Error loading Firebase module:', error);
+            alert('Failed to load Firebase. Please refresh the page.');
+        }
 
         // Check if user is already logged in
         const currentUser = localStorage.getItem('currentUser');

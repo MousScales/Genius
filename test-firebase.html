@@ -16,13 +16,18 @@
             console.log('Firebase module loaded successfully:', firebaseModule);
             
             const output = document.getElementById('output');
+            const authPresent = firebaseModule.auth || firebaseModule.firebaseAuth;
+            const authType = firebaseModule.auth ? 'auth' : (firebaseModule.firebaseAuth ? 'firebaseAuth' : 'none');
+            
             output.innerHTML = `
                 <h2>✅ Firebase Module Loaded Successfully!</h2>
                 <p><strong>Available exports:</strong></p>
                 <ul>
                     ${Object.keys(firebaseModule).map(key => `<li>${key}: ${typeof firebaseModule[key]}</li>`).join('')}
                 </ul>
-                <p><strong>Auth object:</strong> ${firebaseModule.auth ? '✅ Present' : '❌ Missing'}</p>
+                <p><strong>Auth object:</strong> ${authPresent ? '✅ Present' : '❌ Missing'}</p>
+                <p><strong>Auth export name:</strong> ${authType}</p>
+                <p><strong>Auth value:</strong> ${authPresent ? JSON.stringify(authPresent) : 'N/A'}</p>
             `;
         } catch (error) {
             console.error('Error loading Firebase module:', error);

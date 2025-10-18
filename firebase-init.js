@@ -21,21 +21,22 @@ const db = getFirestore(app);
 
 console.log('Firebase initialized');
 console.log('Auth object created:', auth);
-console.log('Available exports:', { app, auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, googleProvider, signOut, onAuthStateChanged });
 
 // Create Google Auth Provider instance
 const googleProvider = new GoogleAuthProvider();
 
-// Export everything
+// Export everything individually to ensure proper module resolution
+export const firebaseApp = app;
+export const firebaseAuth = auth;
+export const firebaseDb = db;
+export const googleAuthProvider = googleProvider;
+
+// Re-export Firebase functions
 export { 
-    app, 
-    auth, 
-    db, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
     signInWithPopup,
     GoogleAuthProvider,
-    googleProvider,
     signOut, 
     onAuthStateChanged,
     collection,
@@ -47,4 +48,7 @@ export {
     setDoc,
     getDoc
 };
+
+// Also export with the expected names for backward compatibility
+export { auth, db, googleProvider };
 
