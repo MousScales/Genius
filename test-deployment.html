@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius - Deployment Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+        .info { background: rgba(33, 150, 243, 0.3); }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #45a049; }
+    </style>
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Genius Web App - Deployment Test</h1>
+        <p>Testing all components of your deployed application...</p>
+        
+        <div id="test-results">
+            <div class="status info">🔄 Running tests...</div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <button onclick="runTests()">🔄 Run Tests Again</button>
+            <button onclick="window.location.href='/dashboard'">📱 Go to Dashboard</button>
+            <button onclick="window.location.href='/login'">🔐 Go to Login</button>
+        </div>
+    </div>
+
+    <script>
+        async function runTests() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="status info">🔄 Running tests...</div>';
+            
+            const tests = [];
+            
+            // Test 1: Check if we're on Vercel
+            tests.push({
+                name: 'Vercel Deployment',
+                test: () => window.location.hostname.includes('vercel.app'),
+                message: 'Running on Vercel domain'
+            });
+            
+            // Test 2: Check API endpoint
+            tests.push({
+                name: 'API Endpoint',
+                test: async () => {
+                    try {
+                        const response = await fetch('/api/env');
+                        return response.ok;
+                    } catch (e) {
+                        return false;
+                    }
+                },
+                message: 'Server API is responding'
+            });
+            
+            // Test 3: Check environment variables
+            tests.push({
+                name: 'Environment Variables',
+                test: async () => {
+                    try {
+                        const response = await fetch('/api/env');
+                        const data = await response.json();
+                        return data.hasOpenAI && data.hasFirebase;
+                    } catch (e) {
+                        return false;
+                    }
+                },
+                message: 'Environment variables are loaded'
+            });
+            
+            // Test 4: Check Firebase config
+            tests.push({
+                name: 'Firebase Configuration',
+                test: async () => {
+                    try {
+                        const response = await fetch('/api/env');
+                        const data = await response.json();
+                        return data.firebaseApiKey && data.firebaseProjectId;
+                    } catch (e) {
+                        return false;
+                    }
+                },
+                message: 'Firebase configuration is available'
+            });
+            
+            // Run all tests
+            let passed = 0;
+            let total = tests.length;
+            
+            for (const test of tests) {
+                try {
+                    const result = await test.test();
+                    const statusClass = result ? 'success' : 'error';
+                    const statusIcon = result ? '✅' : '❌';
+                    results.innerHTML += `<div class="status ${statusClass}">${statusIcon} ${test.name}: ${test.message}</div>`;
+                    if (result) passed++;
+                } catch (error) {
+                    results.innerHTML += `<div class="status error">❌ ${test.name}: Error - ${error.message}</div>`;
+                }
+            }
+            
+            // Summary
+            const summaryClass = passed === total ? 'success' : 'error';
+            const summaryIcon = passed === total ? '🎉' : '⚠️';
+            results.innerHTML += `<div class="status ${summaryClass}">${summaryIcon} Tests completed: ${passed}/${total} passed</div>`;
+            
+            if (passed === total) {
+                results.innerHTML += '<div class="status success">🚀 All systems operational! Your Genius Web App is ready to use.</div>';
+            } else {
+                results.innerHTML += '<div class="status error">⚠️ Some tests failed. Check the configuration.</div>';
+            }
+        }
+        
+        // Run tests on page load
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

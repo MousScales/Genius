@@ -8,8 +8,11 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 if (!OPENAI_API_KEY) {
     console.error('❌ OPENAI_API_KEY not found in environment variables');
-    console.error('Please create a .env file with your OpenAI API key');
-    process.exit(1);
+    console.error('Please set OPENAI_API_KEY in your environment variables');
+    // Don't exit in production - let Vercel handle it
+    if (process.env.NODE_ENV !== 'production') {
+        process.exit(1);
+    }
 }
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -109,7 +112,14 @@ app.get('/api/env', (req, res) => {
         hasOpenAI: !!OPENAI_API_KEY,
         hasFirebase: true,
         hasAzure: false,
-        nodeEnv: NODE_ENV
+        nodeEnv: NODE_ENV,
+        firebaseApiKey: process.env.FIREBASE_API_KEY || "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+        firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN || "genius-b5656.firebaseapp.com",
+        firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "genius-b5656",
+        firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET || "genius-b5656.firebasestorage.app",
+        firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "567988128391",
+        firebaseAppId: process.env.FIREBASE_APP_ID || "1:567988128391:web:8a48294d736ec4013f8622",
+        firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-3SEG2XJQMP"
     });
 });
 
