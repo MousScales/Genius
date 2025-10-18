@@ -23,11 +23,6 @@
                     <span class="nav-icon">🏠</span>
                     <span class="nav-text">Dashboard</span>
                 </a>
-                <a href="#" class="nav-item" id="chatWithGenius">
-                    <span class="nav-icon genius-icon"></span>
-                    <span class="nav-text">Chat with Genius</span>
-                    <span class="nav-shortcut">⌘/</span>
-                </a>
                 <a href="#" class="nav-item" id="calculatorNav">
                     <span class="nav-icon">🧮</span>
                     <span class="nav-text">Calculator</span>
@@ -186,11 +181,18 @@
         async function loadProfileInfo() {
             let profile = {};
             
+            // Wait for Firebase services to be available
+            let attempts = 0;
+            while (!window.userService && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
             // Try to load from Firebase first
             try {
                 const userService = window.userService;
                 if (!userService) {
-                    throw new Error('UserService not available');
+                    throw new Error('UserService not available after waiting');
                 }
                 profile = await userService.getProfile(currentUser.uid);
                 console.log('Loaded profile from Firebase:', profile);
@@ -403,11 +405,18 @@
         async function loadClasses() {
             let classes = [];
             
+            // Wait for Firebase services to be available
+            let attempts = 0;
+            while (!window.classService && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
             // Try to load from Firebase first
             try {
                 const classService = window.classService;
                 if (!classService) {
-                    throw new Error('ClassService not available');
+                    throw new Error('ClassService not available after waiting');
                 }
                 classes = await classService.getClasses(currentUser.uid);
                 console.log('Loaded classes from Firebase:', classes);
@@ -545,6 +554,13 @@
 
         // Load class statistics
         async function loadClassStats(classes) {
+            // Wait for Firebase services to be available
+            let attempts = 0;
+            while ((!window.documentService || !window.studyGuideService) && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
             for (const classData of classes) {
                 try {
                     // Import services
@@ -621,17 +637,6 @@
             loadClasses();
         });
 
-        // Chat with Genius functionality
-        document.getElementById('chatWithGenius').addEventListener('click', (e) => {
-            e.preventDefault();
-            // Open the Genius Chat interface
-            if (window.geniusChat) {
-                window.geniusChat.openChat();
-            } else {
-                console.error('Genius Chat not initialized');
-                alert('Chat feature is loading. Please try again in a moment.');
-            }
-        });
 
         // Calculator functionality
         document.getElementById('calculatorNav').addEventListener('click', (e) => {
