@@ -924,28 +924,6 @@ body {
     margin-top: 4px;
 }
 
-.class-card-stats {
-    display: flex;
-    gap: 16px;
-    margin: 8px 0;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: #aaaaaa;
-}
-
-.stat-icon {
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-.stat-text {
-    font-weight: 500;
-}
 
 .class-card-title {
     font-size: 24px;
@@ -4441,11 +4419,6 @@ body {
     box-sizing: border-box;
 }
 
-.stat-item {
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 500;
-}
 
 .stat-divider {
     color: #666666;
@@ -7974,14 +7947,6 @@ body {
     margin-bottom: 20px;
 }
 
-.stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-}
 
 .stat-label {
     color: #ccc;
@@ -8993,13 +8958,6 @@ body {
         font-size: 20px;
     }
     
-    .class-card-stats {
-        gap: 12px;
-    }
-    
-    .stat-item {
-        font-size: 12px;
-    }
     
     .meta-tag {
         font-size: 11px;

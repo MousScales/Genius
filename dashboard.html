@@ -554,20 +554,6 @@
                                 ${classData.instructor ? 
                                     `<p class="class-card-instructor">${classData.instructor}</p>` : 
                                     ''}
-                                <div class="class-card-stats" data-class-id="${classData.id}">
-                                    <div class="stat-item">
-                                        <span class="stat-icon">📄</span>
-                                        <span class="stat-text docs-count">Loading...</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-icon">📚</span>
-                                        <span class="stat-text guides-count">Loading...</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-icon">🎯</span>
-                                        <span class="stat-text cards-count">Loading...</span>
-                                    </div>
-                                </div>
                                 <div class="class-card-meta">
                                     ${classData.term ? `<span class="meta-tag term">${classData.term} ${classData.year || ''}</span>` : ''}
                                     ${classData.level ? `<span class="meta-tag level">${classData.level}</span>` : ''}
@@ -604,55 +590,7 @@
                 return;
             }
             
-            for (const classData of classes) {
-                try {
-                    const db = window.firebase.firestore();
-                    
-                    // Load documents count
-                    const documentsRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('documents');
-                    const documentsSnapshot = await documentsRef.get();
-                    const docsCount = documentsSnapshot.size;
-                    
-                    // Load study guides count
-                    const studyGuidesRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides');
-                    const studyGuidesSnapshot = await studyGuidesRef.get();
-                    const guidesCount = studyGuidesSnapshot.size;
-                    
-                    // Load flashcards count (from study guides that are flashcard sets)
-                    let cardsCount = 0;
-                    studyGuidesSnapshot.forEach(doc => {
-                        const guide = doc.data();
-                        if (guide.type === 'flashcards' && guide.totalCards) {
-                            cardsCount += guide.totalCards;
-                        }
-                    });
-                    
-                    // Update the stats display
-                    const statsContainer = document.querySelector(`[data-class-id="${classData.id}"]`);
-                    if (statsContainer) {
-                        const docsElement = statsContainer.querySelector('.docs-count');
-                        const guidesElement = statsContainer.querySelector('.guides-count');
-                        const cardsElement = statsContainer.querySelector('.cards-count');
-                        
-                        if (docsElement) docsElement.textContent = `${docsCount} docs`;
-                        if (guidesElement) guidesElement.textContent = `${guidesCount} guides`;
-                        if (cardsElement) cardsElement.textContent = `${cardsCount} cards`;
-                    }
-                } catch (error) {
-                    console.error(`Error loading stats for class ${classData.name}:`, error);
-                    // Set to 0 if there's an error
-                    const statsContainer = document.querySelector(`[data-class-id="${classData.id}"]`);
-                    if (statsContainer) {
-                        const docsElement = statsContainer.querySelector('.docs-count');
-                        const guidesElement = statsContainer.querySelector('.guides-count');
-                        const cardsElement = statsContainer.querySelector('.cards-count');
-                        
-                        if (docsElement) docsElement.textContent = '0 docs';
-                        if (guidesElement) guidesElement.textContent = '0 guides';
-                        if (cardsElement) cardsElement.textContent = '0 cards';
-                    }
-                }
-            }
+            // Counters removed - no longer loading document, study guide, and flashcard counts
         }
 
         // Load classes on page load

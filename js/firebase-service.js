@@ -43,8 +43,18 @@ async function initFirebaseServices() {
     addDoc = (ref, data) => ref.add(data);
     getDocs = (ref) => ref.get();
     getDoc = (ref) => ref.get();
-    doc = (ref, path) => ref.doc(path);
-    setDoc = (ref, data) => ref.set(data);
+    doc = (db, ...pathSegments) => {
+        let ref = db;
+        for (let i = 0; i < pathSegments.length; i += 2) {
+            if (i + 1 < pathSegments.length) {
+                ref = ref.collection(pathSegments[i]).doc(pathSegments[i + 1]);
+            } else {
+                ref = ref.collection(pathSegments[i]);
+            }
+        }
+        return ref;
+    };
+    setDoc = (ref, data, options) => ref.set(data, options);
     updateDoc = (ref, data) => ref.update(data);
     deleteDoc = (ref) => ref.delete();
     query = (ref) => ref;
@@ -606,6 +616,59 @@ const chatService = {
     },
     async deleteGeniusChat(userId, chatId) {
         return this.instance.deleteGeniusChat(userId, chatId);
+    },
+    // Add the missing methods that documentEditor.js expects
+    async getChats(userId, classId, docId) {
+        try {
+            console.log('Getting chats for user:', userId, 'class:', classId, 'doc:', docId);
+            
+            // Wait for Firebase to be ready
+            if (!db) {
+                console.log('Firebase not ready, waiting...');
+                await this.instance.waitForFirebase();
+            }
+            
+            const chatsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc(docId).collection('chats');
+            const snapshot = await getDocs(chatsRef);
+            const chats = {};
+            snapshot.docs.forEach(doc => {
+                chats[doc.id] = {
+                    id: doc.id,
+                    ...doc.data()
+                };
+            });
+            return chats;
+        } catch (error) {
+            console.error('Error getting chats:', error);
+            return {};
+        }
+    },
+    async saveChats(userId, classId, docId, chats) {
+        try {
+            console.log('Saving chats for user:', userId, 'class:', classId, 'doc:', docId);
+            
+            // Wait for Firebase to be ready
+            if (!db) {
+                console.log('Firebase not ready, waiting...');
+                await this.instance.waitForFirebase();
+            }
+            
+            const chatsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc(docId).collection('chats');
+            
+            // Save each chat
+            for (const [chatId, chatData] of Object.entries(chats)) {
+                const chatDocRef = chatsRef.doc(chatId);
+                await setDoc(chatDocRef, {
+                    ...chatData,
+                    updatedAt: new Date()
+                }, { merge: true });
+            }
+            
+            console.log('Chats saved successfully');
+        } catch (error) {
+            console.error('Error saving chats:', error);
+            throw error;
+        }
     }
 };
 
