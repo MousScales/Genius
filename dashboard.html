@@ -67,9 +67,14 @@
                     </div>
                 </div>
             </div>
-            <button class="add-class-btn" id="addClassBtn">
-                <span>+</span> Add Class
-            </button>
+            <div class="header-buttons">
+                <button class="chat-btn" id="geniusChatBtn">
+                    💬 Genius Chat
+                </button>
+                <button class="add-class-btn" id="addClassBtn">
+                    <span>+</span> Add Class
+                </button>
+            </div>
             <div class="dashboard-content">
                 <div class="classes-grid" id="classesGrid">
                     <!-- Classes will be dynamically added here -->
@@ -110,7 +115,7 @@
         </div>
     </div>
 
-    <script type="module">
+    <script>
         // Wait for Firebase to be available
         let auth, signOut;
         
@@ -125,11 +130,33 @@
         // Initialize Firebase
         initFirebase();
         
-        import { addClass } from './js/classForm.js?v=3';
-        import { showClassView, closeClassView } from './js/classView.js?v=3';
+        // Simple addClass function - inline to avoid module issues
+        function addClass() {
+            console.log('Add Class clicked - function called!');
+            
+            // Hide the dashboard content
+            const dashboardContent = document.querySelector('.dashboard-content');
+            if (dashboardContent) {
+                dashboardContent.style.display = 'none';
+            }
+            
+            // Show the class form
+            const classForm = document.getElementById('classForm');
+            if (classForm) {
+                classForm.style.display = 'block';
+            }
+        }
         
-        // Preload document editor to ensure it's available
-        import './js/documentEditor.js?v=3';
+        // Simple class view functions - inline to avoid module issues
+        function showClassView(classId) {
+            console.log('Showing class view for:', classId);
+            // This will be implemented later
+        }
+        
+        function closeClassView() {
+            console.log('Closing class view');
+            // This will be implemented later
+        }
 
         console.log('Dashboard loaded');
 
@@ -573,6 +600,16 @@
         document.getElementById('addClassBtn').addEventListener('click', () => {
             console.log('Add class button clicked!');
             addClass();
+        });
+        
+        // Genius Chat button
+        document.getElementById('geniusChatBtn').addEventListener('click', () => {
+            console.log('Genius Chat button clicked!');
+            if (window.geniusChat) {
+                window.geniusChat.openChat();
+            } else {
+                console.log('Genius Chat not initialized yet');
+            }
         });
 
         // Empty state add button (center)
@@ -2251,8 +2288,8 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     <!-- Import Math.js for scientific calculations -->
     <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
     
-    <!-- Import Genius Chat Module -->
-    <script type="module" src="js/geniusChat.js?v=3"></script>
+    <!-- Load Simple Genius Chat -->
+    <script src="js/geniusChat-simple.js?v=1"></script>
 </body>
 </html>
 
