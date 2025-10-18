@@ -1,8 +1,5 @@
-// Firebase initialization module
-// Load Firebase SDKs dynamically to avoid module conflicts
-let firebaseApp, firebaseAuth, firebaseDb, googleProvider;
-let createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged;
-let collection, addDoc, query, where, getDocs, doc, setDoc, getDoc;
+// Firebase initialization module using global Firebase SDK
+// This avoids ES6 module conflicts with Firebase CDN
 
 // Firebase configuration
 const firebaseConfig = {
@@ -15,43 +12,40 @@ const firebaseConfig = {
     measurementId: "G-3SEG2XJQMP"
 };
 
-// Initialize Firebase when the module loads
-(async function initFirebase() {
+// Wait for Firebase to load from global scripts
+function waitForFirebase() {
+    return new Promise((resolve) => {
+        if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+            resolve();
+        } else {
+            const checkFirebase = setInterval(() => {
+                if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+                    clearInterval(checkFirebase);
+                    resolve();
+                }
+            }, 100);
+        }
+    });
+}
+
+// Initialize Firebase
+let firebaseApp, firebaseAuth, firebaseDb, googleProvider;
+
+async function initFirebase() {
     try {
-        console.log('Loading Firebase modules...');
+        console.log('Waiting for Firebase to load...');
+        await waitForFirebase();
         
-        // Import Firebase modules
-        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-        const { getAuth, createUserWithEmailAndPassword: createUser, signInWithEmailAndPassword: signInEmail, signInWithPopup: signInPopup, GoogleAuthProvider: GoogleProvider, signOut: signOutFunc, onAuthStateChanged: onAuthState } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-        const { getFirestore, collection: collectionFunc, addDoc: addDocFunc, query: queryFunc, where: whereFunc, getDocs: getDocsFunc, doc: docFunc, setDoc: setDocFunc, getDoc: getDocFunc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-
         // Initialize Firebase
-        firebaseApp = initializeApp(firebaseConfig);
-        firebaseAuth = getAuth(firebaseApp);
-        firebaseDb = getFirestore(firebaseApp);
-        googleProvider = new GoogleProvider();
-
-        // Assign functions
-        createUserWithEmailAndPassword = createUser;
-        signInWithEmailAndPassword = signInEmail;
-        signInWithPopup = signInPopup;
-        GoogleAuthProvider = GoogleProvider;
-        signOut = signOutFunc;
-        onAuthStateChanged = onAuthState;
-        
-        collection = collectionFunc;
-        addDoc = addDocFunc;
-        query = queryFunc;
-        where = whereFunc;
-        getDocs = getDocsFunc;
-        doc = docFunc;
-        setDoc = setDocFunc;
-        getDoc = getDocFunc;
+        firebaseApp = window.firebase.initializeApp(firebaseConfig);
+        firebaseAuth = window.firebase.auth();
+        firebaseDb = window.firebase.firestore();
+        googleProvider = new window.firebase.auth.GoogleAuthProvider();
 
         console.log('Firebase initialized successfully');
         console.log('Auth object created:', firebaseAuth);
         
-        // Set global variables for immediate access
+        // Set global variables
         window.firebaseAuth = firebaseAuth;
         window.firebaseDb = firebaseDb;
         window.googleProvider = googleProvider;
@@ -59,7 +53,10 @@ const firebaseConfig = {
     } catch (error) {
         console.error('Error initializing Firebase:', error);
     }
-})();
+}
+
+// Initialize Firebase
+initFirebase();
 
 // Export everything
 export { 
@@ -67,19 +64,20 @@ export {
     firebaseAuth as auth, 
     firebaseDb as db, 
     googleProvider,
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    signOut, 
-    onAuthStateChanged,
-    collection,
-    addDoc,
-    query,
-    where,
-    getDocs,
-    doc,
-    setDoc,
-    getDoc
+    // Firebase functions
+    createUserWithEmailAndPassword: () => window.firebase.auth().createUserWithEmailAndPassword,
+    signInWithEmailAndPassword: () => window.firebase.auth().signInWithEmailAndPassword,
+    signInWithPopup: () => window.firebase.auth().signInWithPopup,
+    GoogleAuthProvider: () => window.firebase.auth.GoogleAuthProvider,
+    signOut: () => window.firebase.auth().signOut,
+    onAuthStateChanged: () => window.firebase.auth().onAuthStateChanged,
+    collection: () => window.firebase.firestore().collection,
+    addDoc: () => window.firebase.firestore().addDoc,
+    query: () => window.firebase.firestore().query,
+    where: () => window.firebase.firestore().where,
+    getDocs: () => window.firebase.firestore().getDocs,
+    doc: () => window.firebase.firestore().doc,
+    setDoc: () => window.firebase.firestore().setDoc,
+    getDoc: () => window.firebase.firestore().getDoc
 };
 
