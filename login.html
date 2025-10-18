@@ -102,11 +102,77 @@
             }
         }
         
+        // Function to check onboarding status and redirect appropriately
+        async function checkOnboardingAndRedirect(userId) {
+            try {
+                // First check localStorage for quick access
+                const onboardingComplete = localStorage.getItem(`onboarding_${userId}`);
+                if (onboardingComplete) {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+                
+                // Check Firebase for more reliable data
+                const userProfileRef = window.firebase.firestore().collection('users').doc(userId);
+                const userProfileDoc = await userProfileRef.get();
+                
+                if (userProfileDoc.exists) {
+                    const userData = userProfileDoc.data();
+                    
+                    // Check if onboarding is marked as complete
+                    if (userData.onboardingComplete) {
+                        console.log('User has completed onboarding, redirecting to dashboard');
+                        window.location.href = 'dashboard.html';
+                        return;
+                    }
+                    
+                    // Check if user has basic profile data (name, email, etc.)
+                    if (userData.name && userData.email && userData.collegeName) {
+                        console.log('User has existing profile data, marking onboarding complete and redirecting to dashboard');
+                        // Mark onboarding as complete and redirect
+                        await userProfileRef.update({
+                            onboardingComplete: true,
+                            lastLogin: new Date().toISOString()
+                        });
+                        window.location.href = 'dashboard.html';
+                        return;
+                    }
+                }
+                
+                // Check localStorage for existing profile data
+                const existingProfile = localStorage.getItem('userData');
+                if (existingProfile) {
+                    const profileData = JSON.parse(existingProfile);
+                    if (profileData.name && profileData.email && profileData.collegeName) {
+                        console.log('User has existing profile data in localStorage, redirecting to dashboard');
+                        // Save to Firebase and mark onboarding complete
+                        await window.firebase.firestore().collection('users').doc(userId).set({
+                            ...profileData,
+                            onboardingComplete: true,
+                            lastLogin: new Date().toISOString()
+                        }, { merge: true });
+                        window.location.href = 'dashboard.html';
+                        return;
+                    }
+                }
+                
+                // If no existing data found, redirect to onboarding
+                console.log('User needs to complete onboarding');
+                window.location.href = 'onboarding.html';
+                
+            } catch (error) {
+                console.error('Error checking onboarding status:', error);
+                // If there's an error, redirect to onboarding to be safe
+                window.location.href = 'onboarding.html';
+            }
+        }
+
         function initializeLogin() {
             // Check if user is already logged in
             const currentUser = localStorage.getItem('currentUser');
             if (currentUser) {
-                window.location.href = 'dashboard.html';
+                const userData = JSON.parse(currentUser);
+                checkOnboardingAndRedirect(userData.uid);
             }
 
         // Login button
@@ -135,12 +201,7 @@
                 }));
                 
                 // Check if onboarding completed
-                const onboardingComplete = localStorage.getItem(`onboarding_${userCredential.user.uid}`);
-                if (onboardingComplete) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    window.location.href = 'onboarding.html';
-                }
+                await checkOnboardingAndRedirect(userCredential.user.uid);
             } catch (error) {
                 console.error('Login error:', error);
                 alert('Login failed: ' + error.message);
@@ -223,12 +284,7 @@
                 }));
                 
                 // Check if onboarding completed
-                const onboardingComplete = localStorage.getItem(`onboarding_${user.uid}`);
-                if (onboardingComplete) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    window.location.href = 'onboarding.html';
-                }
+                await checkOnboardingAndRedirect(user.uid);
             } catch (error) {
                 console.error('Google sign-in error:', error);
                 let errorMessage = error.message;

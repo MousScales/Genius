@@ -44,6 +44,72 @@ if (!currentUserData) {
 }
 
 const currentUser = JSON.parse(currentUserData);
+
+// Check if user has already completed onboarding
+async function checkOnboardingStatus() {
+    try {
+        // Wait for Firebase to be initialized
+        while (!db) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Check if user profile exists in Firebase
+        const userProfileRef = window.firebase.firestore().collection('users').doc(currentUser.uid);
+        const userProfileDoc = await userProfileRef.get();
+        
+        if (userProfileDoc.exists) {
+            const userData = userProfileDoc.data();
+            console.log('User profile found:', userData);
+            
+            // Check if onboarding is marked as complete
+            if (userData.onboardingComplete) {
+                console.log('User has already completed onboarding, redirecting to dashboard');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            
+            // Check if user has basic profile data (name, email, etc.)
+            if (userData.name && userData.email && userData.collegeName) {
+                console.log('User has existing profile data, redirecting to dashboard');
+                // Mark onboarding as complete and redirect
+                await userProfileRef.update({
+                    onboardingComplete: true,
+                    lastLogin: new Date().toISOString()
+                });
+                window.location.href = 'dashboard.html';
+                return;
+            }
+        }
+        
+        // Check localStorage for existing profile data
+        const existingProfile = localStorage.getItem('userData');
+        if (existingProfile) {
+            const profileData = JSON.parse(existingProfile);
+            if (profileData.name && profileData.email && profileData.collegeName) {
+                console.log('User has existing profile data in localStorage, redirecting to dashboard');
+                // Save to Firebase and mark onboarding complete
+                if (db) {
+                    await window.firebase.firestore().collection('users').doc(currentUser.uid).set({
+                        ...profileData,
+                        onboardingComplete: true,
+                        lastLogin: new Date().toISOString()
+                    }, { merge: true });
+                }
+                window.location.href = 'dashboard.html';
+                return;
+            }
+        }
+        
+        console.log('User needs to complete onboarding');
+        
+    } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        // If there's an error, continue with onboarding
+    }
+}
+
+// Check onboarding status when page loads
+checkOnboardingStatus();
 let currentStep = 1;
 let onboardingData = {};
 let universityCache = [];
@@ -264,6 +330,7 @@ async function completeOnboarding() {
             level: onboardingData.level,
             year: onboardingData.year,
             // API keys are now handled globally, not per user
+            onboardingComplete: true,
             createdAt: new Date(),
             updatedAt: new Date()
         }, { merge: true });
@@ -277,9 +344,11 @@ async function completeOnboarding() {
             major: onboardingData.major,
             level: onboardingData.level,
             year: onboardingData.year,
+            onboardingComplete: true,
             // API keys are now handled globally, not per user
         };
         localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(profileData));
+        localStorage.setItem('userData', JSON.stringify(profileData));
         
         // Mark as completed
         localStorage.setItem(`onboarding_${currentUser.uid}`, 'true');
