@@ -60,7 +60,7 @@
 
     <script>
         // Wait for Firebase to initialize
-        let auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, googleProvider;
+        let auth, googleProvider;
         
         async function initLogin() {
             try {
@@ -87,10 +87,7 @@
                 auth = window.firebase.auth();
                 googleProvider = new window.firebase.auth.GoogleAuthProvider();
                 
-                // Get Firebase functions
-                createUserWithEmailAndPassword = window.firebase.auth().createUserWithEmailAndPassword;
-                signInWithEmailAndPassword = window.firebase.auth().signInWithEmailAndPassword;
-                signInWithPopup = window.firebase.auth().signInWithPopup;
+                // Firebase functions will be called directly from window.firebase.auth()
                 
                 console.log('Firebase initialized successfully');
                 console.log('Auth object:', auth);
@@ -129,7 +126,7 @@
 
             try {
                 console.log('Attempting login with:', email);
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const userCredential = await window.firebase.auth().signInWithEmailAndPassword(email, password);
                 console.log('Login successful:', userCredential.user.uid);
                 
                 localStorage.setItem('currentUser', JSON.stringify({
@@ -174,7 +171,7 @@
 
             try {
                 console.log('Attempting signup with:', email);
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await window.firebase.auth().createUserWithEmailAndPassword(email, password);
                 console.log('Signup successful:', userCredential.user.uid);
                 
                 localStorage.setItem('currentUser', JSON.stringify({
@@ -213,7 +210,7 @@
             
             try {
                 console.log('Attempting Google sign-in...');
-                const result = await signInWithPopup(auth, googleProvider);
+                const result = await window.firebase.auth().signInWithPopup(googleProvider);
                 const user = result.user;
                 
                 console.log('Google sign-in successful:', user.uid);
