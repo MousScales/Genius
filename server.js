@@ -127,12 +127,14 @@ app.get('/api/env', (req, res) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Genius server running on http://localhost:${PORT}`);
-    console.log(`📱 Dashboard: http://localhost:${PORT}/dashboard`);
-    console.log(`🔐 Login: http://localhost:${PORT}/login`);
-    console.log(`⚙️  Onboarding: http://localhost:${PORT}/onboarding`);
-});
+// Start server only if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Genius server running on http://localhost:${PORT}`);
+        console.log(`📱 Dashboard: http://localhost:${PORT}/dashboard`);
+        console.log(`🔐 Login: http://localhost:${PORT}/login`);
+        console.log(`⚙️  Onboarding: http://localhost:${PORT}/onboarding`);
+    });
+}
 
 module.exports = app;
