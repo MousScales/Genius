@@ -227,7 +227,11 @@
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', async () => {
             // Load class modules first
-            await loadClassModules();
+            const modulesLoaded = await loadClassModules();
+            if (!modulesLoaded) {
+                console.error('Failed to load class modules');
+                return;
+            }
             
             initDashboard().then(() => {
                 // Check Firebase authentication state
@@ -557,6 +561,21 @@
                 console.log('No current user available for class loading');
                 return;
             }
+
+            // Wait for class modules to be loaded
+            if (typeof window.showClassView !== 'function') {
+                console.log('Class modules not loaded yet, waiting...');
+                await new Promise(resolve => {
+                    const checkModules = () => {
+                        if (typeof window.showClassView === 'function') {
+                            resolve();
+                        } else {
+                            setTimeout(checkModules, 100);
+                        }
+                    };
+                    checkModules();
+                });
+            }
             
             let classes = [];
             
@@ -693,17 +712,11 @@
                             const classIndex = parseInt(card.dataset.classIndex);
                             const selectedClass = classes[classIndex];
                             
-                            // Check if showClassView function is available
+                            // showClassView should be available since we waited for modules
                             if (typeof window.showClassView === 'function') {
                                 window.showClassView(selectedClass);
                             } else {
-                                console.error('showClassView function not available yet');
-                                // Retry after a short delay
-                                setTimeout(() => {
-                                    if (typeof window.showClassView === 'function') {
-                                        window.showClassView(selectedClass);
-                                    }
-                                }, 100);
+                                console.error('showClassView function still not available');
                             }
                         });
                     });
@@ -2412,8 +2425,10 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 window.closeClassView = classViewModule.closeClassView;
                 
                 console.log('Class modules loaded successfully');
+                return true;
             } catch (error) {
                 console.error('Error loading class modules:', error);
+                return false;
             }
         }
 
