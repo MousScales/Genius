@@ -781,5 +781,4 @@ window.addClass = addClass;
 window.createClass = createClass;
 window.cancelClassCreation = cancelClassCreation;
 
-// ES6 Module Exports
-export { addClass, createClass, cancelClassCreation, createClassForm, setupLivePreview, updatePreview, handleImageUpload };
+// Functions are already available on window object

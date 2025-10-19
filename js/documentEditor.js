@@ -1,8 +1,7 @@
-// Import Firebase services
-import { documentService } from './firebase-service.js';
+// Firebase services will be available globally
 
 // Document Editor Module - Google Docs style
-export function openDocumentEditor(classData, existingDoc = null) {
+function openDocumentEditor(classData, existingDoc = null) {
     console.log('Opening document editor', { classData, existingDoc });
     
     // Set global variables for manual save functionality
@@ -1253,7 +1252,7 @@ async function saveDocument(classData, existingDoc) {
         
         if (isValidFirebaseId) {
             // Update existing document in Firebase
-            await documentService.updateDocument(classData.userId, classData.id, existingDoc.id, doc);
+            await window.documentService.updateDocument(classData.userId, classData.id, existingDoc.id, doc);
             console.log('Document updated in Firebase:', doc.title);
             
             // Also update localStorage for immediate visibility
@@ -1279,7 +1278,7 @@ async function saveDocument(classData, existingDoc) {
             }
         } else {
             // Create new document in Firebase
-            documentId = await documentService.saveDocument(classData.userId, classData.id, doc);
+            documentId = await window.documentService.saveDocument(classData.userId, classData.id, doc);
             console.log('New document created in Firebase:', doc.title, 'with ID:', documentId);
             
             // Update the existingDoc object with the new ID for future operations
@@ -1362,7 +1361,7 @@ async function saveDocument(classData, existingDoc) {
     }
 }
 
-export function closeDocumentEditor() {
+function closeDocumentEditor() {
     console.log('closeDocumentEditor called');
     const editorScreen = document.getElementById('documentEditorScreen');
     console.log('Editor screen found:', editorScreen);
@@ -1430,7 +1429,7 @@ window.autoSaveDocument = function(classData, existingDoc) {
         
         if (isValidFirebaseId) {
             // Update existing document in both Firebase and localStorage
-            documentService.updateDocument(classData.userId, classData.id, existingDoc.id, doc)
+            window.documentService.updateDocument(classData.userId, classData.id, existingDoc.id, doc)
                 .then(() => {
                     console.log('Auto-saved existing document in Firebase:', title);
                     
@@ -1450,7 +1449,7 @@ window.autoSaveDocument = function(classData, existingDoc) {
                 });
         } else {
             // Create new document in Firebase first, then update localStorage
-            documentService.saveDocument(classData.userId, classData.id, doc)
+            window.documentService.saveDocument(classData.userId, classData.id, doc)
                 .then(newDocId => {
                     console.log('Auto-saved new document in Firebase:', title, 'with ID:', newDocId);
                     
@@ -5231,4 +5230,8 @@ window.testAutoSave = function() {
         window.autoSave();
     }
 };
+
+// Make main functions globally available
+window.openDocumentEditor = openDocumentEditor;
+window.closeDocumentEditor = closeDocumentEditor;
 

@@ -3,16 +3,26 @@ let documentService, folderService, studyGuideService;
 
 async function getFirebaseServices() {
     if (!documentService) {
-        const services = await import('./firebase-service.js');
-        documentService = services.documentService;
-        folderService = services.folderService;
-        studyGuideService = services.studyGuideService;
+        // Wait for firebase-service.js to load
+        await new Promise(resolve => {
+            const checkServices = () => {
+                if (window.documentService && window.folderService && window.studyGuideService) {
+                    documentService = window.documentService;
+                    folderService = window.folderService;
+                    studyGuideService = window.studyGuideService;
+                    resolve();
+                } else {
+                    setTimeout(checkServices, 100);
+                }
+            };
+            checkServices();
+        });
     }
     return { documentService, folderService, studyGuideService };
 }
 
 // Class view module
-export function showClassView(classData) {
+function showClassView(classData) {
     console.log('Opening class view:', classData);
     
     // Hide dashboard content
@@ -350,29 +360,13 @@ function setupDocumentActions(classData) {
                 return;
             }
             
-            try {
-                // Try importing with the new export name first
-                const { initDocumentEditor } = await import('./documentEditor.js');
-                console.log('Document editor imported successfully with new name');
-                initDocumentEditor(classData);
-            } catch (error) {
-                console.log('Failed to import with new name, trying original name...', error);
-                try {
-                    // Try the original export name
-                    const { openDocumentEditor } = await import('./documentEditor.js');
-                    console.log('Document editor imported successfully with original name');
-                    openDocumentEditor(classData);
-                } catch (error2) {
-                    console.log('Failed to import with original name, trying global function...', error2);
-                    // Fallback: try to use global function
-                    if (window.openDocumentEditor) {
-                        console.log('Using global function');
-                        window.openDocumentEditor(classData);
-                    } else {
-                        console.error('All methods failed');
-                        alert('Document editor could not be loaded. Please try again.');
-                    }
-                }
+            // Use global function
+            if (typeof window.openDocumentEditor === 'function') {
+                console.log('Using global openDocumentEditor function');
+                window.openDocumentEditor(classData);
+            } else {
+                console.error('openDocumentEditor function not available');
+                alert('Document editor could not be loaded. Please try again.');
             }
         });
     }
@@ -653,19 +647,13 @@ async function loadDocuments(classData, viewMode = 'list') {
                     const doc = documents.find(d => d.id === docId);
                     if (doc) {
                         try {
-                            const { initDocumentEditor } = await import('./documentEditor.js');
-                            initDocumentEditor(classData, doc);
-                        } catch (error) {
-                            try {
-                                const { openDocumentEditor } = await import('./documentEditor.js');
-                                openDocumentEditor(classData, doc);
-                            } catch (error2) {
-                                if (window.openDocumentEditor) {
-                                    window.openDocumentEditor(classData, doc);
-                                } else {
-                                    alert('Document editor could not be loaded. Please try again.');
-                                }
+                            if (typeof window.openDocumentEditor === 'function') {
+                                window.openDocumentEditor(classData, doc);
+                            } else {
+                                console.error('openDocumentEditor function not available');
                             }
+                        } catch (error) {
+                            console.error('Failed to load document editor:', error);
                         }
                     }
                 });
@@ -743,12 +731,18 @@ async function loadDocuments(classData, viewMode = 'list') {
                     if (doc) {
                         if (doc.type === 'text') {
                             try {
-                                const { initDocumentEditor } = await import('./documentEditor.js');
-                                initDocumentEditor(classData, doc);
+                                if (typeof window.openDocumentEditor === 'function') {
+                                    window.openDocumentEditor(classData, doc);
+                                } else {
+                                    console.error('openDocumentEditor function not available');
+                                }
                             } catch (error) {
                                 try {
-                                    const { openDocumentEditor } = await import('./documentEditor.js');
-                                    openDocumentEditor(classData, doc);
+                                    if (typeof window.openDocumentEditor === 'function') {
+                                        window.openDocumentEditor(classData, doc);
+                                    } else {
+                                        console.error('openDocumentEditor function not available');
+                                    }
                                 } catch (error2) {
                                     if (window.openDocumentEditor) {
                                         window.openDocumentEditor(classData, doc);
@@ -779,12 +773,18 @@ async function loadDocuments(classData, viewMode = 'list') {
                     if (doc) {
                         if (doc.type === 'text') {
                             try {
-                                const { initDocumentEditor } = await import('./documentEditor.js');
-                                initDocumentEditor(classData, doc);
+                                if (typeof window.openDocumentEditor === 'function') {
+                                    window.openDocumentEditor(classData, doc);
+                                } else {
+                                    console.error('openDocumentEditor function not available');
+                                }
                             } catch (error) {
                                 try {
-                                    const { openDocumentEditor } = await import('./documentEditor.js');
-                                    openDocumentEditor(classData, doc);
+                                    if (typeof window.openDocumentEditor === 'function') {
+                                        window.openDocumentEditor(classData, doc);
+                                    } else {
+                                        console.error('openDocumentEditor function not available');
+                                    }
                                 } catch (error2) {
                                     if (window.openDocumentEditor) {
                                         window.openDocumentEditor(classData, doc);
@@ -923,7 +923,7 @@ function formatMaterials(materials) {
     }).join('');
 }
 
-export function closeClassView() {
+function closeClassView() {
     // Save suggestions before closing class view
     if (window.saveCurrentSuggestions) {
         window.saveCurrentSuggestions();
@@ -4323,7 +4323,8 @@ function initializeCalendar(classData) {
 async function loadEvents(classData) {
     try {
         // Try Firebase first
-        const { eventService } = await import('./firebase-service.js');
+        // Use global eventService
+        const eventService = window.eventService;
         const events = await eventService.getEvents(classData.userId, classData.id);
         
         if (events.length > 0) {
@@ -4363,7 +4364,8 @@ async function loadEvents(classData) {
 async function saveEvents(classData) {
     try {
         // Save to Firebase
-        const { eventService } = await import('./firebase-service.js');
+        // Use global eventService
+        const eventService = window.eventService;
         await eventService.saveEvents(classData.userId, classData.id, classEvents);
         console.log('Events saved to Firebase');
     } catch (error) {
