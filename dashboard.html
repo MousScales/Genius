@@ -2416,6 +2416,9 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
         // Import class form and view functions
         async function loadClassModules() {
             try {
+                // Add a small delay to ensure the page is fully loaded
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 const classFormModule = await import('./js/classForm.js');
                 const classViewModule = await import('./js/classView.js');
                 
@@ -2428,6 +2431,37 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 return true;
             } catch (error) {
                 console.error('Error loading class modules:', error);
+                console.error('Error details:', error.message);
+                
+                // Try loading as regular scripts instead
+                try {
+                    console.log('Attempting to load modules as regular scripts...');
+                    
+                    // Load classForm.js
+                    const script1 = document.createElement('script');
+                    script1.src = './js/classForm.js';
+                    script1.onload = () => console.log('classForm.js loaded as script');
+                    script1.onerror = (e) => console.error('Failed to load classForm.js:', e);
+                    document.head.appendChild(script1);
+                    
+                    // Load classView.js
+                    const script2 = document.createElement('script');
+                    script2.src = './js/classView.js';
+                    script2.onload = () => console.log('classView.js loaded as script');
+                    script2.onerror = (e) => console.error('Failed to load classView.js:', e);
+                    document.head.appendChild(script2);
+                    
+                    // Wait for scripts to load
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    if (typeof window.addClass === 'function' && typeof window.showClassView === 'function') {
+                        console.log('Script loading successful');
+                        return true;
+                    }
+                } catch (altError) {
+                    console.error('Script loading also failed:', altError);
+                }
+                
                 return false;
             }
         }
