@@ -582,7 +582,9 @@ async function loadDocuments(classData, viewMode = 'list') {
     }
     
     // Update list class based on view mode
-    documentsList.className = viewMode === 'grid' ? 'documents-grid' : 'documents-list';
+    const className = viewMode === 'grid' ? 'documents-grid' : 'documents-list';
+    documentsList.className = className;
+    console.log('🎨 Set documentsList className to:', className);
     
     if (documents.length === 0 && folders.length === 0) {
         documentsList.innerHTML = '';
@@ -646,9 +648,20 @@ async function loadDocuments(classData, viewMode = 'list') {
         const documentItems = documentsList.querySelectorAll('.document-item, .document-card, .folder-section');
         console.log('🎨 Found document items in DOM:', documentItems.length);
         
+        // Check computed styles
+        const computedStyle = window.getComputedStyle(documentsList);
+        console.log('🎨 documentsList computed styles:', {
+            display: computedStyle.display,
+            visibility: computedStyle.visibility,
+            opacity: computedStyle.opacity,
+            height: computedStyle.height,
+            width: computedStyle.width
+        });
+        
         if (documentItems.length === 0 && documents.length > 0) {
             console.error('❌ CRITICAL: Documents loaded but not rendered in DOM!');
             console.error('❌ HTML that was supposed to be inserted:', html);
+            console.error('❌ documentsList innerHTML:', documentsList.innerHTML);
         }
         
         console.log('✅ Documents rendered successfully');
