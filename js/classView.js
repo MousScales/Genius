@@ -26,6 +26,10 @@ async function getFirebaseServices() {
 function showClassView(classData) {
     console.log('Opening class view:', classData);
     
+    // Start loading documents immediately, before UI changes
+    console.log('🚀 Pre-loading documents for:', classData.name);
+    preloadClassContent(classData);
+    
     // Hide dashboard content
     const dashboardContent = document.querySelector('.dashboard-content');
     if (dashboardContent) {
@@ -526,10 +530,62 @@ function readFileAsDataURL(file) {
 }
 
 
+// PRELOAD SYSTEM - Start loading before UI is ready
+let preloadedData = new Map(); // Store preloaded data by class ID
+
+async function preloadClassContent(classData) {
+    console.log('🚀 Pre-loading content for:', classData.name);
+    
+    try {
+        // Load documents and study guides in parallel
+        const [documents, folders, studyGuides] = await Promise.all([
+            loadDocumentsFromFirebase(classData),
+            loadFoldersFromFirebase(classData),
+            loadStudyGuidesFromFirebase(classData)
+        ]);
+        
+        // Store preloaded data
+        preloadedData.set(classData.id, {
+            documents,
+            folders,
+            studyGuides,
+            loadedAt: Date.now()
+        });
+        
+        console.log('✅ Pre-loaded content:', {
+            documents: documents.length,
+            folders: folders.length,
+            studyGuides: studyGuides.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Error pre-loading content:', error);
+        // Store empty data so we don't retry
+        preloadedData.set(classData.id, {
+            documents: [],
+            folders: [],
+            studyGuides: [],
+            error: error.message
+        });
+    }
+}
+
 // SIMPLE AND RELIABLE DOCUMENT LOADING SYSTEM
 async function loadClassContent(classData) {
     console.log('🚀 Loading class content for:', classData.name);
     
+    // Check if we have preloaded data
+    const preloaded = preloadedData.get(classData.id);
+    if (preloaded) {
+        console.log('📦 Using preloaded data');
+        // Use preloaded data
+        renderPreloadedContent(preloaded, classData);
+        // Setup event listeners
+        setupDocumentUpdateListener(classData);
+        return;
+    }
+    
+    // Fallback to normal loading if no preloaded data
     try {
         // Load documents
         await loadDocuments(classData);
@@ -541,6 +597,37 @@ async function loadClassContent(classData) {
     } catch (error) {
         console.error('❌ Error loading class content:', error);
     }
+}
+
+// Helper functions for preloading
+async function loadDocumentsFromFirebase(classData) {
+    const { documentService } = await getFirebaseServices();
+    return await documentService.getDocuments(classData.userId, classData.id);
+}
+
+async function loadFoldersFromFirebase(classData) {
+    return await getFolders(classData);
+}
+
+async function loadStudyGuidesFromFirebase(classData) {
+    const { studyGuideService } = await getFirebaseServices();
+    return await studyGuideService.getStudyGuides(classData.userId, classData.id);
+}
+
+// Render preloaded content
+function renderPreloadedContent(preloaded, classData) {
+    console.log('🎨 Rendering preloaded content...');
+    
+    // Render documents
+    const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
+    const viewMode = localStorage.getItem(viewModeKey) || 'list';
+    
+    renderDocuments(preloaded.documents, preloaded.folders, viewMode, classData);
+    
+    // Render study guides
+    renderStudyGuides(preloaded.studyGuides, classData, viewMode);
+    
+    console.log('✅ Preloaded content rendered');
 }
 
 async function loadDocuments(classData) {
@@ -759,7 +846,10 @@ function setupDocumentUpdateListener(classData) {
     window.addEventListener('documentsUpdated', handleDocumentsUpdated);
     
     function handleDocumentsUpdated() {
-        console.log('🔄 Documents updated, reloading...');
+        console.log('🔄 Documents updated, clearing cache and reloading...');
+        // Clear preloaded data for this class
+        preloadedData.delete(classData.id);
+        // Reload documents
         loadDocuments(classData);
     }
 }
