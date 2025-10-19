@@ -1807,10 +1807,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .status-label {
@@ -1828,27 +1829,37 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #333333, #555555);
-    color: white;
-    border: none;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .settings-action-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.settings-action-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .settings-action-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    background: linear-gradient(135deg, #1a1a1a, #1a1a1a);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 
 .coming-soon-badge {
