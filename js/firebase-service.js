@@ -679,6 +679,7 @@ window.authService = authService;
 window.documentService = documentService;
 window.folderService = folderService;
 window.studyGuideService = studyGuideService;
+window.eventService = eventService;
 window.chatService = chatService;
 
 console.log('Global services set immediately:', {
