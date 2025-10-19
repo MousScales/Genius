@@ -2556,7 +2556,103 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
         // Initialize mobile features when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             initializeMobileFeatures();
+            initializeMobileTouchHandling();
         });
+
+        // Mobile touch handling for better UX
+        function initializeMobileTouchHandling() {
+            // Add touch feedback to buttons
+            const buttons = document.querySelectorAll('button, .btn, .action-btn, .nav-item');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.98)';
+                    this.style.transition = 'transform 0.1s ease';
+                });
+                
+                button.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+
+            // Handle swipe gestures for sidebar
+            let startX = 0;
+            let startY = 0;
+            let currentX = 0;
+            let currentY = 0;
+            let isSwipe = false;
+
+            document.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isSwipe = false;
+            });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!startX || !startY) return;
+                
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+                
+                const diffX = startX - currentX;
+                const diffY = startY - currentY;
+                
+                // Check if it's a horizontal swipe
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                    isSwipe = true;
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener('touchend', function(e) {
+                if (!isSwipe) return;
+                
+                const diffX = startX - currentX;
+                const sidebar = document.getElementById('sidebar');
+                
+                if (diffX > 50) {
+                    // Swipe left - close sidebar
+                    if (sidebar && sidebar.classList.contains('open')) {
+                        sidebar.classList.remove('open');
+                    }
+                } else if (diffX < -50) {
+                    // Swipe right - open sidebar
+                    if (sidebar && !sidebar.classList.contains('open')) {
+                        sidebar.classList.add('open');
+                    }
+                }
+                
+                startX = 0;
+                startY = 0;
+                isSwipe = false;
+            });
+
+            // Prevent zoom on double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // Handle orientation change
+            window.addEventListener('orientationchange', function() {
+                setTimeout(function() {
+                    // Close sidebar on orientation change
+                    const sidebar = document.getElementById('sidebar');
+                    if (sidebar) {
+                        sidebar.classList.remove('open');
+                    }
+                }, 100);
+            });
+
+            // Improve scrolling performance
+            const scrollableElements = document.querySelectorAll('.scrollable, .genius-chat-messages, .dashboard-content');
+            scrollableElements.forEach(element => {
+                element.style.webkitOverflowScrolling = 'touch';
+            });
+        }
 
     </script>
     

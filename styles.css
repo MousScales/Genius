@@ -3995,6 +3995,788 @@ body {
     }
 }
 
+/* ===== MOBILE RESPONSIVENESS FOR SPECIFIC COMPONENTS ===== */
+
+/* Mobile Calculator */
+@media (max-width: 768px) {
+    .calculator-overlay {
+        padding: 10px;
+    }
+    
+    .calculator-container {
+        width: 100%;
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .calculator-header {
+        padding: 15px;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .calculator-title {
+        font-size: 18px;
+    }
+    
+    .calculator-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .calculator-wrapper {
+        flex-direction: column;
+        height: calc(100vh - 120px);
+    }
+    
+    .calculator-screen {
+        height: 120px;
+        padding: 15px;
+    }
+    
+    .calculator-display {
+        font-size: 24px;
+        height: 40px;
+    }
+    
+    .calculator-expression {
+        font-size: 14px;
+        height: 30px;
+    }
+    
+    .calculator-mode {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .calculator-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 15px;
+        height: calc(100vh - 240px);
+        overflow-y: auto;
+    }
+    
+    .calculator-row {
+        display: contents;
+    }
+    
+    .calc-btn {
+        min-height: 50px;
+        font-size: 16px;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .calc-btn-zero {
+        grid-column: span 2;
+    }
+    
+    .calc-btn-equals {
+        grid-column: span 2;
+    }
+    
+    .calculator-ai-controls-floating {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1000;
+    }
+    
+    .calc-ai-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 25px;
+        font-size: 18px;
+    }
+    
+    .calculator-chat-floating {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 300px;
+        max-width: calc(100vw - 40px);
+        height: 400px;
+        max-height: calc(100vh - 100px);
+    }
+    
+    .calculator-chat-header {
+        padding: 10px 15px;
+    }
+    
+    .calculator-chat-title {
+        font-size: 14px;
+    }
+    
+    .calculator-chat-messages {
+        height: 300px;
+        padding: 10px;
+    }
+    
+    .calculator-chat-input-container {
+        padding: 10px;
+    }
+    
+    .calculator-chat-input {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+    
+    .calculator-chat-send {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* Mobile Flashcards */
+@media (max-width: 768px) {
+    .flashcard-container {
+        padding: 15px;
+    }
+    
+    .flashcard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .flashcard-title {
+        font-size: 20px;
+    }
+    
+    .flashcard-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .flashcard-action-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .flashcard-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .flashcard-item {
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .flashcard-question,
+    .flashcard-answer {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    .flashcard-meta {
+        font-size: 12px;
+        margin-top: 10px;
+    }
+    
+    .flashcard-actions {
+        margin-top: 15px;
+        gap: 8px;
+    }
+    
+    .flashcard-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+    
+    .file-upload-area {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .upload-prompt {
+        font-size: 14px;
+    }
+    
+    .upload-info {
+        font-size: 12px;
+    }
+    
+    .ai-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .ai-action-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .response-area {
+        padding: 15px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+}
+
+/* Mobile Document Editor Enhanced */
+@media (max-width: 768px) {
+    .document-editor-container {
+        padding: 10px;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .document-editor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+    }
+    
+    .document-editor-title {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+    
+    .document-editor-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .editor-action-btn {
+        flex: 1;
+        min-width: 100px;
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+    
+    .document-editor-content {
+        padding: 15px;
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    .document-editor-textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+        line-height: 1.5;
+        min-height: calc(100vh - 250px);
+        padding: 15px;
+        border-radius: 8px;
+    }
+    
+    .document-editor-toolbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(26, 26, 26, 0.95);
+        padding: 10px 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 1000;
+    }
+    
+    .toolbar-actions {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .toolbar-btn {
+        min-width: 44px;
+        height: 44px;
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+}
+
+/* Mobile Class View Enhanced */
+@media (max-width: 768px) {
+    .class-view-container {
+        padding: 15px;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .class-view-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+    }
+    
+    .class-view-title {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+    
+    .class-view-subtitle {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .class-view-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .class-action-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px 16px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+    
+    .class-view-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .class-view-main {
+        order: 1;
+    }
+    
+    .class-view-sidebar {
+        order: 2;
+    }
+    
+    .documents-section,
+    .study-guides-section,
+    .flashcards-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+    }
+    
+    .section-header {
+        font-size: 18px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-icon {
+        font-size: 20px;
+    }
+    
+    .document-item,
+    .study-guide-item,
+    .flashcard-item {
+        padding: 12px;
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .item-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .item-meta {
+        font-size: 12px;
+        color: #aaaaaa;
+        margin-bottom: 10px;
+    }
+    
+    .item-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .item-action-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        border-radius: 4px;
+        min-height: 32px;
+    }
+    
+    .calendar-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+    }
+    
+    .calendar-container {
+        height: 300px;
+        overflow-y: auto;
+    }
+    
+    .event-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+    
+    .event-title {
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .event-time {
+        font-size: 11px;
+        color: #aaaaaa;
+    }
+}
+
+/* Mobile Genius Chat Enhanced */
+@media (max-width: 768px) {
+    .genius-chat-overlay {
+        padding: 0;
+    }
+    
+    .genius-chat-modal {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .genius-chat-header {
+        padding: 15px 20px;
+        flex-shrink: 0;
+    }
+    
+    .genius-chat-header-left {
+        flex: 1;
+    }
+    
+    .genius-logo {
+        font-size: 16px;
+    }
+    
+    .genius-logo-image {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .genius-chat-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .genius-chat-shortcut {
+        font-size: 12px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+    
+    .genius-chat-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .genius-chat-sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(26, 26, 26, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .genius-chat-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .genius-chat-sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .genius-chat-new-chat-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+    
+    .genius-chat-history {
+        padding: 20px;
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .genius-chat-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .genius-chat-item.active {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .genius-chat-item-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .genius-chat-item-date {
+        font-size: 12px;
+        color: #aaaaaa;
+    }
+    
+    .genius-chat-item-delete {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+    
+    .genius-chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .genius-chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .genius-chat-message {
+        margin-bottom: 15px;
+    }
+    
+    .genius-message-content {
+        max-width: 85%;
+        padding: 12px 16px;
+        border-radius: 18px;
+    }
+    
+    .genius-message-text {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    .genius-ai-response {
+        margin-bottom: 15px;
+    }
+    
+    .genius-ai-content {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+    }
+    
+    .genius-ai-text {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .genius-ai-actions {
+        margin-top: 10px;
+    }
+    
+    .genius-ai-action {
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+    
+    .genius-chat-welcome {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .genius-welcome-icon {
+        margin-bottom: 20px;
+    }
+    
+    .genius-welcome-logo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .genius-chat-welcome h2 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    
+    .genius-chat-welcome p {
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #aaaaaa;
+    }
+    
+    .genius-suggestions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .suggestion-chip {
+        padding: 12px 16px;
+        font-size: 14px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .suggestion-chip:active {
+        transform: scale(0.98);
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .genius-chat-input-container {
+        padding: 15px;
+        background: rgba(26, 26, 26, 0.95);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .genius-chat-files-floating {
+        margin-bottom: 10px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+    }
+    
+    .genius-chat-file-item {
+        padding: 8px 12px;
+        margin-bottom: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+    }
+    
+    .genius-file-name {
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    .genius-file-size {
+        font-size: 11px;
+        color: #aaaaaa;
+    }
+    
+    .genius-file-remove {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+        border-radius: 3px;
+    }
+    
+    .genius-chat-input-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+    
+    .genius-chat-attach-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    
+    .genius-chat-input {
+        flex: 1;
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 44px;
+        max-height: 120px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        resize: none;
+    }
+    
+    .genius-chat-send-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    
+    .genius-chat-footer {
+        padding: 10px 15px;
+        text-align: center;
+    }
+    
+    .genius-chat-footer p {
+        font-size: 12px;
+        color: #aaaaaa;
+    }
+    
+    .genius-typing-simple {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .genius-typing-dots {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+    }
+    
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        background: #aaaaaa;
+        border-radius: 50%;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+}
+
 /* Mobile Responsiveness for Chat */
 @media (max-width: 768px) {
     .genius-chat-modal {
