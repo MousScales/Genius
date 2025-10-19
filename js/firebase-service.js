@@ -251,19 +251,36 @@ class DocumentService {
     // Get all documents for a class
     async getDocuments(userId, classId) {
         try {
+            console.log('🔍 DocumentService.getDocuments called with:', { userId, classId });
+            console.log('🔍 Firebase db object:', !!db);
+            console.log('🔍 Current user:', window.firebase.auth().currentUser?.uid);
+            
             const documentsRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents');
+            console.log('🔍 Documents ref path:', documentsRef.path);
+            
             const q = documentsRef.orderBy('createdAt', 'desc');
+            console.log('🔍 About to execute query...');
+            
             const querySnapshot = await getDocs(q);
+            console.log('🔍 Query executed successfully! Snapshot size:', querySnapshot.size);
+            
             const documents = [];
             querySnapshot.forEach((doc) => {
-                documents.push({
+                const docData = {
                     id: doc.id,
                     ...doc.data()
-                });
+                };
+                console.log('🔍 Document found:', doc.id, docData.title || 'No title');
+                documents.push(docData);
             });
+            
+            console.log('🔍 Total documents returned:', documents.length);
             return documents;
         } catch (error) {
-            console.error('Error getting documents:', error);
+            console.error('❌ Error getting documents:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
+            console.error('❌ Full error:', error);
             throw error;
         }
     }

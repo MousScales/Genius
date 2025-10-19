@@ -14,6 +14,9 @@ function openDocumentEditor(classData, existingDoc = null) {
         classView.style.display = 'none';
     }
     
+    // Prevent body scroll when document editor is open
+    document.body.classList.add('document-editor-open');
+    
     // Create editor screen
     const editorScreen = createEditorScreen(classData, existingDoc);
     const mainWrapper = document.querySelector('.main-wrapper');
@@ -1381,6 +1384,9 @@ function closeDocumentEditor() {
         classView.style.display = 'flex';
         console.log('Class view shown');
     }
+    
+    // Re-enable body scroll when document editor is closed
+    document.body.classList.remove('document-editor-open');
     
     // Reload documents to show updated list
     const event = new CustomEvent('documentsUpdated');

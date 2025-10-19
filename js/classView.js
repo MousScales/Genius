@@ -1,15 +1,16 @@
 // Import Firebase services dynamically to avoid timing issues
-let documentService, folderService, studyGuideService;
+let documentService, folderService, studyGuideService, eventService;
 
 async function getFirebaseServices() {
     if (!documentService) {
         // Wait for firebase-service.js to load
         await new Promise(resolve => {
             const checkServices = () => {
-                if (window.documentService && window.folderService && window.studyGuideService) {
+                if (window.documentService && window.folderService && window.studyGuideService && window.eventService) {
                     documentService = window.documentService;
                     folderService = window.folderService;
                     studyGuideService = window.studyGuideService;
+                    eventService = window.eventService;
                     resolve();
                 } else {
                     setTimeout(checkServices, 100);
@@ -18,7 +19,7 @@ async function getFirebaseServices() {
             checkServices();
         });
     }
-    return { documentService, folderService, studyGuideService };
+    return { documentService, folderService, studyGuideService, eventService };
 }
 
 // Class view module
@@ -539,15 +540,37 @@ function readFileAsDataURL(file) {
 
 
 async function loadDocuments(classData, viewMode = 'list') {
+    console.log('🚀 loadDocuments function called with:', { classData: classData.name, viewMode });
     try {
+        console.log('🔄 Loading documents for class:', classData.name, 'User:', classData.userId);
         const { documentService } = await getFirebaseServices();
+        
+        if (!documentService) {
+            console.error('❌ DocumentService not available!');
+            return;
+        }
+        
+        console.log('🔍 About to call documentService.getDocuments...');
         const documents = await documentService.getDocuments(classData.userId, classData.id);
+        console.log('📄 Documents loaded from Firebase:', documents.length, documents);
+        
+        console.log('🔍 About to call getFolders...');
         const folders = await getFolders(classData);
+        console.log('📁 Folders loaded:', folders.length, folders);
     
     const documentsList = document.getElementById('documentsList');
     const emptyDocuments = document.getElementById('emptyDocuments');
     
-    if (!documentsList) return;
+    console.log('🎯 DOM elements found:', {
+        documentsList: !!documentsList,
+        emptyDocuments: !!emptyDocuments,
+        documentsListId: documentsList?.id
+    });
+    
+    if (!documentsList) {
+        console.error('❌ documentsList element not found!');
+        return;
+    }
     
     // Update list class based on view mode
     documentsList.className = viewMode === 'grid' ? 'documents-grid' : 'documents-list';
@@ -566,20 +589,42 @@ async function loadDocuments(classData, viewMode = 'list') {
         
         console.log('Loading documents - All documents:', documents);
         console.log('Loading documents - Folder groups:', folderGroups);
+        console.log('🔍 Documents array details:', {
+            length: documents.length,
+            isArray: Array.isArray(documents),
+            type: typeof documents,
+            firstDoc: documents[0]
+        });
         
         let html = '';
         
         // Always render "All Documents" section with ALL documents
+        console.log('🔍 Checking documents.length > 0:', documents.length > 0);
         if (documents.length > 0) {
-            html += renderDocumentGroup(documents, viewMode, classData, 'All Documents');
+            console.log('🎨 Rendering All Documents section with', documents.length, 'documents');
+            const allDocsHtml = renderDocumentGroup(documents, viewMode, classData, 'All Documents');
+            console.log('📝 All Documents HTML length:', allDocsHtml.length);
+            console.log('📝 All Documents HTML preview:', allDocsHtml.substring(0, 500));
+            html += allDocsHtml;
+        } else {
+            console.log('⚠️ No documents to render in All Documents section');
         }
         
         // Render folders and their documents
         folderGroups.forEach(({ folder, documents: folderDocs }) => {
-            html += renderFolder(folder, folderDocs, viewMode, classData);
+            console.log('🎨 Rendering folder:', folder.name, 'with', folderDocs.length, 'documents');
+            const folderHtml = renderFolder(folder, folderDocs, viewMode, classData);
+            html += folderHtml;
         });
         
+        console.log('🎨 Final HTML length:', html.length);
+        console.log('🎨 Final HTML preview:', html.substring(0, 1000));
+        console.log('🎨 Setting innerHTML to documentsList');
+        console.log('🎨 documentsList before update:', documentsList.innerHTML.length, 'characters');
         documentsList.innerHTML = html;
+        console.log('🎨 documentsList after update:', documentsList.innerHTML.length, 'characters');
+        console.log('🎨 documentsList children count:', documentsList.children.length);
+        console.log('✅ Documents rendered successfully');
         
         // Setup drag and drop
         setupDragAndDrop(classData);
@@ -802,8 +847,31 @@ async function loadDocuments(classData, viewMode = 'list') {
         }, 100);
         }
     } catch (error) {
-        console.error('Error loading documents:', error);
-        alert('Error loading documents. Please try again.');
+        console.error('❌ Error loading documents:', error);
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        
+        // Show user-friendly error message
+        const documentsList = document.getElementById('documentsList');
+        if (documentsList) {
+            documentsList.innerHTML = `
+                <div class="error-message">
+                    <h3>⚠️ Error Loading Documents</h3>
+                    <p>There was an error loading your documents. This might be due to:</p>
+                    <ul>
+                        <li>Firebase permissions issue</li>
+                        <li>Network connectivity problem</li>
+                        <li>Authentication issue</li>
+                    </ul>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <button onclick="location.reload()" class="btn">Retry</button>
+                </div>
+            `;
+        }
     }
 }
 
@@ -1066,7 +1134,17 @@ function getDocumentViewerContent(doc) {
 
 // Document Rendering Helper Functions
 function renderDocumentGroup(documents, viewMode, classData, groupTitle = null) {
-    if (documents.length === 0) return '';
+    console.log('🎨 renderDocumentGroup called with:', {
+        documentsCount: documents.length,
+        viewMode,
+        groupTitle,
+        classDataName: classData.name
+    });
+    
+    if (documents.length === 0) {
+        console.log('⚠️ No documents to render in group');
+        return '';
+    }
     
     let html = '';
     
@@ -1116,6 +1194,9 @@ function renderDocumentGroup(documents, viewMode, classData, groupTitle = null) 
             </div>
         </div>`;
     }
+    
+    console.log('🎨 renderDocumentGroup returning HTML length:', html.length);
+    console.log('🎨 renderDocumentGroup HTML preview:', html.substring(0, 200) + '...');
     
     return html;
 }
@@ -1734,6 +1815,11 @@ function showFlashcardCreationOptions(classData) {
                         <h4>Use Documents from Folder</h4>
                         <p>Select a folder with your documents and Genius AI will create flashcards based on that content</p>
                     </div>
+                    <div class="flashcard-option" data-option="manual">
+                        <div class="option-icon">✏️</div>
+                        <h4>Create Manually</h4>
+                        <p>Create your own flashcards by typing in the questions and answers yourself</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1763,6 +1849,8 @@ function showFlashcardCreationOptions(classData) {
                 showFlashcardExplanationDialog(classData);
             } else if (optionType === 'folder') {
                 await showFolderSelectionDialog(classData, 'flashcards');
+            } else if (optionType === 'manual') {
+                showManualFlashcardCreator(classData);
             }
         });
     });
@@ -1872,6 +1960,370 @@ async function createFlashcardsFromExplanation(classData, explanation) {
         flashcardService.hideThinkingEffect();
         
         alert('Error creating flashcards. Please check your OpenAI API key and try again.');
+    }
+}
+
+function showManualFlashcardCreator(classData) {
+    // Create modal for manual flashcard creation
+    const modal = document.createElement('div');
+    modal.className = 'manual-flashcard-modal';
+    modal.innerHTML = `
+        <div class="manual-flashcard-modal-content">
+            <div class="manual-flashcard-modal-header">
+                <h3>Create Flashcards Manually</h3>
+                <button class="close-modal-btn" id="closeManualFlashcardModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="manual-flashcard-modal-body">
+                <div class="flashcard-set-info">
+                    <div class="input-group">
+                        <label for="flashcardSetTitle">Set Title:</label>
+                        <input type="text" id="flashcardSetTitle" placeholder="Enter flashcard set title" value="Manual Flashcards - ${new Date().toLocaleDateString()}">
+                    </div>
+                </div>
+                <div class="flashcards-container" id="flashcardsContainer">
+                    <div class="flashcard-item" data-index="0">
+                        <div class="flashcard-inputs">
+                            <div class="flashcard-card front">
+                                <div class="flashcard-card-header front">
+                                    <div class="card-icon">?</div>
+                                    <span>Question</span>
+                                </div>
+                                <textarea class="flashcard-question-input" placeholder="Enter your question here..." rows="3"></textarea>
+                            </div>
+                            <div class="flashcard-card back">
+                                <div class="flashcard-card-header back">
+                                    <div class="card-icon">!</div>
+                                    <span>Answer</span>
+                                </div>
+                                <textarea class="flashcard-answer-input" placeholder="Enter your answer here..." rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="flashcard-actions">
+                            <button class="remove-flashcard-btn" onclick="removeFlashcard(this)" style="display: none;">Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="manual-flashcard-actions">
+                    <button class="add-flashcard-btn" id="addFlashcardBtn">+ Add Another Card</button>
+                    <div class="modal-actions">
+                        <button class="modal-btn secondary" id="cancelManualFlashcards">Cancel</button>
+                        <button class="modal-btn primary" id="saveManualFlashcards">Create Flashcards</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('closeManualFlashcardModal').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    document.getElementById('cancelManualFlashcards').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    document.getElementById('addFlashcardBtn').addEventListener('click', () => {
+        addFlashcardItem();
+    });
+    
+    document.getElementById('saveManualFlashcards').addEventListener('click', async () => {
+        await saveManualFlashcards(classData);
+    });
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+function addFlashcardItem() {
+    // Check if we're in edit mode or create mode
+    const editContainer = document.getElementById('editFlashcardsContainer');
+    const createContainer = document.getElementById('flashcardsContainer');
+    const container = editContainer || createContainer;
+    const index = container.children.length;
+    
+    const flashcardItem = document.createElement('div');
+    flashcardItem.className = 'flashcard-item';
+    flashcardItem.setAttribute('data-index', index);
+    flashcardItem.innerHTML = `
+        <div class="flashcard-inputs">
+            <div class="flashcard-card front">
+                <div class="flashcard-card-header front">
+                    <div class="card-icon">?</div>
+                    <span>Question</span>
+                </div>
+                <textarea class="flashcard-question-input" placeholder="Enter your question here..." rows="3"></textarea>
+            </div>
+            <div class="flashcard-card back">
+                <div class="flashcard-card-header back">
+                    <div class="card-icon">!</div>
+                    <span>Answer</span>
+                </div>
+                <textarea class="flashcard-answer-input" placeholder="Enter your answer here..." rows="3"></textarea>
+            </div>
+        </div>
+        <div class="flashcard-actions">
+            <button class="remove-flashcard-btn" onclick="removeFlashcard(this)">Remove</button>
+        </div>
+    `;
+    
+    container.appendChild(flashcardItem);
+    
+    // Show remove buttons for all items if more than one
+    if (container.children.length > 1) {
+        container.querySelectorAll('.remove-flashcard-btn').forEach(btn => {
+            btn.style.display = 'block';
+        });
+    }
+}
+
+function removeFlashcard(button) {
+    const flashcardItem = button.closest('.flashcard-item');
+    const editContainer = document.getElementById('editFlashcardsContainer');
+    const createContainer = document.getElementById('flashcardsContainer');
+    const container = editContainer || createContainer;
+    
+    flashcardItem.remove();
+    
+    // Hide remove buttons if only one item left
+    if (container.children.length === 1) {
+        container.querySelectorAll('.remove-flashcard-btn').forEach(btn => {
+            btn.style.display = 'none';
+        });
+    }
+}
+
+async function saveManualFlashcards(classData) {
+    const title = document.getElementById('flashcardSetTitle').value.trim();
+    if (!title) {
+        alert('Please enter a title for your flashcard set.');
+        return;
+    }
+    
+    const flashcardItems = document.querySelectorAll('#flashcardsContainer .flashcard-item');
+    const flashcards = [];
+    
+    for (let item of flashcardItems) {
+        const question = item.querySelector('.flashcard-question-input').value.trim();
+        const answer = item.querySelector('.flashcard-answer-input').value.trim();
+        
+        if (question && answer) {
+            flashcards.push({
+                question: question,
+                answer: answer
+            });
+        }
+    }
+    
+    if (flashcards.length === 0) {
+        alert('Please add at least one flashcard with both question and answer.');
+        return;
+    }
+    
+    try {
+        // Create flashcard set
+        const flashcardSet = {
+            title: title,
+            type: 'flashcards',
+            isFlashcardSet: true,
+            sourceDocuments: [],
+            flashcards: flashcards,
+            currentCardIndex: 0,
+            correctAnswers: 0,
+            totalCards: flashcards.length,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Save to Firebase
+        const { studyGuideService } = await getFirebaseServices();
+        await studyGuideService.saveStudyGuide(classData.userId, classData.id, flashcardSet);
+        
+        // Reload study guides
+        loadStudyGuides(classData);
+        
+        // Close modal
+        document.body.removeChild(document.querySelector('.manual-flashcard-modal'));
+        
+        console.log('Manual flashcards created successfully');
+        
+    } catch (error) {
+        console.error('Error creating manual flashcards:', error);
+        alert('Error creating flashcards. Please try again.');
+    }
+}
+
+async function showFlashcardEditor(guideId, classData) {
+    try {
+        // Load the flashcard set
+        const { studyGuideService } = await getFirebaseServices();
+        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
+        const guide = studyGuides.find(g => g.id === guideId);
+        
+        if (!guide || !guide.flashcards) {
+            alert('Flashcard set not found.');
+            return;
+        }
+        
+        // Create modal for flashcard editor
+        const modal = document.createElement('div');
+        modal.className = 'flashcard-editor-modal';
+        modal.innerHTML = `
+            <div class="flashcard-editor-modal-content">
+                <div class="flashcard-editor-modal-header">
+                    <h3>Edit Flashcard Set: ${guide.title}</h3>
+                    <button class="close-modal-btn" id="closeFlashcardEditorModal">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flashcard-editor-modal-body">
+                    <div class="flashcard-set-info">
+                        <div class="input-group">
+                            <label for="editFlashcardSetTitle">Set Title:</label>
+                            <input type="text" id="editFlashcardSetTitle" value="${guide.title}">
+                        </div>
+                    </div>
+                    <div class="flashcards-container" id="editFlashcardsContainer">
+                        ${guide.flashcards.map((card, index) => `
+                            <div class="flashcard-item" data-index="${index}">
+                                <div class="flashcard-inputs">
+                                    <div class="flashcard-card front">
+                                        <div class="flashcard-card-header front">
+                                            <div class="card-icon">?</div>
+                                            <span>Question</span>
+                                        </div>
+                                        <textarea class="flashcard-question-input" rows="3">${card.question}</textarea>
+                                    </div>
+                                    <div class="flashcard-card back">
+                                        <div class="flashcard-card-header back">
+                                            <div class="card-icon">!</div>
+                                            <span>Answer</span>
+                                        </div>
+                                        <textarea class="flashcard-answer-input" rows="3">${card.answer}</textarea>
+                                    </div>
+                                </div>
+                                <div class="flashcard-actions">
+                                    <button class="remove-flashcard-btn" onclick="removeFlashcard(this)">Remove</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="flashcard-editor-actions">
+                        <button class="add-flashcard-btn" id="addEditFlashcardBtn">+ Add Another Card</button>
+                        <div class="modal-actions">
+                            <button class="modal-btn secondary" id="cancelEditFlashcards">Cancel</button>
+                            <button class="modal-btn primary" id="saveEditFlashcards">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show remove buttons if more than one card
+        if (guide.flashcards.length > 1) {
+            modal.querySelectorAll('.remove-flashcard-btn').forEach(btn => {
+                btn.style.display = 'block';
+            });
+        }
+        
+        // Add event listeners
+        document.getElementById('closeFlashcardEditorModal').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        document.getElementById('cancelEditFlashcards').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        document.getElementById('addEditFlashcardBtn').addEventListener('click', () => {
+            addFlashcardItem();
+        });
+        
+        document.getElementById('saveEditFlashcards').addEventListener('click', async () => {
+            await saveEditedFlashcards(guideId, classData);
+        });
+        
+        // Close on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error opening flashcard editor:', error);
+        alert('Error loading flashcard editor. Please try again.');
+    }
+}
+
+async function saveEditedFlashcards(guideId, classData) {
+    const title = document.getElementById('editFlashcardSetTitle').value.trim();
+    if (!title) {
+        alert('Please enter a title for your flashcard set.');
+        return;
+    }
+    
+    const flashcardItems = document.querySelectorAll('#editFlashcardsContainer .flashcard-item');
+    const flashcards = [];
+    
+    for (let item of flashcardItems) {
+        const question = item.querySelector('.flashcard-question-input').value.trim();
+        const answer = item.querySelector('.flashcard-answer-input').value.trim();
+        
+        if (question && answer) {
+            flashcards.push({
+                question: question,
+                answer: answer
+            });
+        }
+    }
+    
+    if (flashcards.length === 0) {
+        alert('Please add at least one flashcard with both question and answer.');
+        return;
+    }
+    
+    try {
+        // Update the flashcard set
+        const { studyGuideService } = await getFirebaseServices();
+        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
+        const guide = studyGuides.find(g => g.id === guideId);
+        
+        if (guide) {
+            guide.title = title;
+            guide.flashcards = flashcards;
+            guide.totalCards = flashcards.length;
+            
+            // Save updated guide
+            await studyGuideService.saveStudyGuide(classData.userId, classData.id, guide);
+            
+            // Reload study guides
+            loadStudyGuides(classData);
+            
+            // Close modal
+            document.body.removeChild(document.querySelector('.flashcard-editor-modal'));
+            
+            console.log('Flashcards updated successfully');
+        }
+        
+    } catch (error) {
+        console.error('Error updating flashcards:', error);
+        alert('Error updating flashcards. Please try again.');
     }
 }
 
@@ -1992,6 +2444,66 @@ function setupStudyGuideActions(classData) {
             loadStudyGuides(classData, 'grid');
         });
     }
+    
+    // Setup flashcard menu functionality
+    setupFlashcardMenuActions(classData);
+}
+
+function setupFlashcardMenuActions(classData) {
+    // Use event delegation for dynamically created elements
+    document.addEventListener('click', (e) => {
+        // Handle 3-dot menu button clicks
+        if (e.target.closest('.flashcard-menu-btn')) {
+            const button = e.target.closest('.flashcard-menu-btn');
+            const guideId = button.dataset.guideId;
+            const dropdown = document.getElementById(`menu-${guideId}`);
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.flashcard-menu-dropdown').forEach(menu => {
+                if (menu.id !== `menu-${guideId}`) {
+                    menu.style.display = 'none';
+                }
+            });
+            
+            // Toggle current dropdown
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+        
+        // Handle edit flashcard button clicks
+        if (e.target.closest('.edit-flashcard-btn')) {
+            const button = e.target.closest('.edit-flashcard-btn');
+            const guideId = button.dataset.guideId;
+            showFlashcardEditor(guideId, classData);
+            
+            // Close dropdown
+            const dropdown = document.getElementById(`menu-${guideId}`);
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+        }
+        
+        // Handle delete study guide button clicks (existing functionality)
+        if (e.target.closest('.delete-study-guide-btn')) {
+            const button = e.target.closest('.delete-study-guide-btn');
+            const guideId = button.dataset.guideId;
+            deleteStudyGuide(guideId, classData);
+            
+            // Close dropdown
+            const dropdown = document.getElementById(`menu-${guideId}`);
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+        }
+        
+        // Close dropdowns when clicking outside
+        if (!e.target.closest('.flashcard-menu-container')) {
+            document.querySelectorAll('.flashcard-menu-dropdown').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+    });
 }
 
 function showStudyGuideFormatDialog(classData) {
@@ -2923,9 +3435,19 @@ function renderStudyGuideCard(guide, classData, viewMode = 'list') {
                     <button class="study-guide-action-btn view-study-guide-btn" data-guide-id="${guide.id}">
                         <span>👁️</span> View
                     </button>
-                    <button class="study-guide-action-btn delete-study-guide-btn" data-guide-id="${guide.id}">
-                        <span>✕</span> Delete
-                    </button>
+                    <div class="flashcard-menu-container">
+                        <button class="flashcard-menu-btn" data-guide-id="${guide.id}" title="More options">
+                            <span>⋯</span>
+                        </button>
+                        <div class="flashcard-menu-dropdown" id="menu-${guide.id}">
+                            <button class="flashcard-menu-item edit-flashcard-btn" data-guide-id="${guide.id}">
+                                <span>✏️</span> Edit
+                            </button>
+                            <button class="flashcard-menu-item delete-study-guide-btn" data-guide-id="${guide.id}">
+                                <span>🗑️</span> Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -2965,9 +3487,19 @@ function renderFlashcardSetCard(guide, classData, viewMode = 'list') {
                     </div>
                     <div class="flashcard-info-right">
                         <div class="flashcard-set-grid-actions">
-                            <button class="flashcard-set-grid-action-btn delete-study-guide-btn" data-guide-id="${guide.id}" title="Delete">
-                                <span>✕</span>
-                            </button>
+                            <div class="flashcard-menu-container">
+                                <button class="flashcard-menu-btn" data-guide-id="${guide.id}" title="More options">
+                                    <span>⋯</span>
+                                </button>
+                                <div class="flashcard-menu-dropdown" id="menu-${guide.id}">
+                                    <button class="flashcard-menu-item edit-flashcard-btn" data-guide-id="${guide.id}">
+                                        <span>✏️</span> Edit
+                                    </button>
+                                    <button class="flashcard-menu-item delete-study-guide-btn" data-guide-id="${guide.id}">
+                                        <span>🗑️</span> Delete
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4323,8 +4855,12 @@ function initializeCalendar(classData) {
 async function loadEvents(classData) {
     try {
         // Try Firebase first
-        // Use global eventService
-        const eventService = window.eventService;
+        // Use the same pattern as other services
+        const { eventService } = await getFirebaseServices();
+        if (!eventService) {
+            console.log('EventService not available, using localStorage fallback');
+            throw new Error('EventService not available');
+        }
         const events = await eventService.getEvents(classData.userId, classData.id);
         
         if (events.length > 0) {
@@ -4364,8 +4900,12 @@ async function loadEvents(classData) {
 async function saveEvents(classData) {
     try {
         // Save to Firebase
-        // Use global eventService
-        const eventService = window.eventService;
+        // Use the same pattern as other services
+        const { eventService } = await getFirebaseServices();
+        if (!eventService) {
+            console.log('EventService not available, using localStorage fallback');
+            throw new Error('EventService not available');
+        }
         await eventService.saveEvents(classData.userId, classData.id, classEvents);
         console.log('Events saved to Firebase');
     } catch (error) {
