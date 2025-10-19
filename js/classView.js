@@ -544,374 +544,271 @@ function readFileAsDataURL(file) {
 }
 
 
+// COMPLETELY REBUILT DOCUMENT LOADING SYSTEM
 async function loadDocuments(classData, viewMode = 'list') {
-    console.log('🚀 loadDocuments function called with:', { classData: classData.name, viewMode });
-    try {
-        console.log('🔄 Loading documents for class:', classData.name, 'User:', classData.userId);
-        const { documentService } = await getFirebaseServices();
-        
-        if (!documentService) {
-            console.error('❌ DocumentService not available!');
-            return;
-        }
-        
-        console.log('🔍 About to call documentService.getDocuments...');
-        const documents = await documentService.getDocuments(classData.userId, classData.id);
-        console.log('📄 Documents loaded from Firebase:', documents.length, documents);
-        
-        console.log('🔍 About to call getFolders...');
-        const folders = await getFolders(classData);
-        console.log('📁 Folders loaded:', folders.length, folders);
+    console.log('🚀 NEW loadDocuments called with:', { classData: classData.name, viewMode });
     
+    // Step 1: Ensure DOM is ready
     const documentsList = document.getElementById('documentsList');
     const emptyDocuments = document.getElementById('emptyDocuments');
     
-    console.log('🎯 DOM elements found:', {
-        documentsList: !!documentsList,
-        emptyDocuments: !!emptyDocuments,
-        documentsListId: documentsList?.id,
-        documentsListParent: documentsList?.parentElement?.id,
-        documentsListVisible: documentsList ? window.getComputedStyle(documentsList).display : 'N/A'
-    });
-    
     if (!documentsList) {
         console.error('❌ documentsList element not found!');
-        console.error('❌ Available elements with "documents" in ID:', 
-            Array.from(document.querySelectorAll('[id*="documents"]')).map(el => el.id));
         return;
     }
     
-    // Update list class based on view mode
-    const className = viewMode === 'grid' ? 'documents-grid' : 'documents-list';
-    documentsList.className = className;
-    console.log('🎨 Set documentsList className to:', className);
+    // Step 2: Show loading state
+    documentsList.innerHTML = '<div class="loading-documents">🔄 Loading documents...</div>';
+    if (emptyDocuments) emptyDocuments.style.display = 'none';
     
+    try {
+        // Step 3: Load documents from Firebase with retry logic
+        const documents = await loadDocumentsWithRetry(classData);
+        console.log('📄 Documents loaded successfully:', documents.length);
+        
+        // Step 4: Load folders
+        const folders = await getFolders(classData);
+        console.log('📁 Folders loaded:', folders.length);
+        
+        // Step 5: Render documents
+        await renderDocumentsToDOM(documents, folders, viewMode, classData);
+        
+        console.log('✅ Document loading completed successfully');
+        
+    } catch (error) {
+        console.error('❌ Error in loadDocuments:', error);
+        showDocumentError(error);
+    }
+}
+
+// Retry logic for document loading
+async function loadDocumentsWithRetry(classData, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`🔄 Attempt ${attempt}/${maxRetries} to load documents...`);
+            
+            const { documentService } = await getFirebaseServices();
+            if (!documentService) {
+                throw new Error('DocumentService not available');
+            }
+            
+            const documents = await documentService.getDocuments(classData.userId, classData.id);
+            
+            if (Array.isArray(documents)) {
+                console.log(`✅ Documents loaded successfully on attempt ${attempt}:`, documents.length);
+                return documents;
+            } else {
+                throw new Error('Documents is not an array');
+            }
+            
+        } catch (error) {
+            console.error(`❌ Attempt ${attempt} failed:`, error.message);
+            
+            if (attempt === maxRetries) {
+                throw new Error(`Failed to load documents after ${maxRetries} attempts: ${error.message}`);
+            }
+            
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+    }
+}
+
+// Render documents to DOM
+async function renderDocumentsToDOM(documents, folders, viewMode, classData) {
+    const documentsList = document.getElementById('documentsList');
+    const emptyDocuments = document.getElementById('emptyDocuments');
+    
+    // Set view mode class
+    documentsList.className = viewMode === 'grid' ? 'documents-grid' : 'documents-list';
+    
+    // Check if we have any content
     if (documents.length === 0 && folders.length === 0) {
         documentsList.innerHTML = '';
         if (emptyDocuments) emptyDocuments.style.display = 'block';
-    } else {
-        if (emptyDocuments) emptyDocuments.style.display = 'none';
-        
-        // Separate documents by folder
-        const folderGroups = folders.map(folder => ({
-            folder,
-            documents: documents.filter(doc => doc.folderId === folder.id)
-        }));
-        
-        console.log('Loading documents - All documents:', documents);
-        console.log('Loading documents - Folder groups:', folderGroups);
-        console.log('🔍 Documents array details:', {
-            length: documents.length,
-            isArray: Array.isArray(documents),
-            type: typeof documents,
-            firstDoc: documents[0]
-        });
-        
-        let html = '';
-        
-        // Always render "All Documents" section with ALL documents
-        console.log('🔍 Checking documents.length > 0:', documents.length > 0);
-        if (documents.length > 0) {
-            console.log('🎨 Rendering All Documents section with', documents.length, 'documents');
-            const allDocsHtml = renderDocumentGroup(documents, viewMode, classData, 'All Documents');
-            console.log('📝 All Documents HTML length:', allDocsHtml.length);
-            console.log('📝 All Documents HTML preview:', allDocsHtml.substring(0, 500));
-            html += allDocsHtml;
-        } else {
-            console.log('⚠️ No documents to render in All Documents section');
-        }
-        
-        // Render folders and their documents
-        folderGroups.forEach(({ folder, documents: folderDocs }) => {
-            console.log('🎨 Rendering folder:', folder.name, 'with', folderDocs.length, 'documents');
-            const folderHtml = renderFolder(folder, folderDocs, viewMode, classData);
-            html += folderHtml;
-        });
-        
-        console.log('🎨 Final HTML length:', html.length);
-        console.log('🎨 Final HTML preview:', html.substring(0, 1000));
-        console.log('🎨 Setting innerHTML to documentsList');
-        console.log('🎨 documentsList before update:', documentsList.innerHTML.length, 'characters');
-        
-        // Clear any existing content first
-        documentsList.innerHTML = '';
-        
-        // Set the new content
-        documentsList.innerHTML = html;
-        
-        console.log('🎨 documentsList after update:', documentsList.innerHTML.length, 'characters');
-        console.log('🎨 documentsList children count:', documentsList.children.length);
-        console.log('🎨 documentsList visible:', window.getComputedStyle(documentsList).display);
-        console.log('🎨 documentsList parent visible:', window.getComputedStyle(documentsList.parentElement).display);
-        
-        // Verify the content was actually added
-        const documentItems = documentsList.querySelectorAll('.document-item, .document-card, .folder-section');
-        console.log('🎨 Found document items in DOM:', documentItems.length);
-        
-        // Check computed styles
-        const computedStyle = window.getComputedStyle(documentsList);
-        console.log('🎨 documentsList computed styles:', {
-            display: computedStyle.display,
-            visibility: computedStyle.visibility,
-            opacity: computedStyle.opacity,
-            height: computedStyle.height,
-            width: computedStyle.width
-        });
-        
-        if (documentItems.length === 0 && documents.length > 0) {
-            console.error('❌ CRITICAL: Documents loaded but not rendered in DOM!');
-            console.error('❌ HTML that was supposed to be inserted:', html);
-            console.error('❌ documentsList innerHTML:', documentsList.innerHTML);
-        }
-        
-        console.log('✅ Documents rendered successfully');
-        
-        // Setup drag and drop
-        setupDragAndDrop(classData);
-        
-        // Setup folder functionality
-        setupFolderFunctionality(classData);
-        
-        // Add event listeners to document cards
-        setTimeout(() => {
-            // Menu button toggle
-            document.querySelectorAll('.doc-menu-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const docId = btn.dataset.docId;
-                    const folderId = btn.dataset.folderId || 'root';
-                    const menu = document.getElementById(`menu-${docId}-${folderId}`) || document.getElementById(`grid-menu-${docId}-${folderId}`);
-                    
-                    console.log('Menu button clicked for docId:', docId, 'folderId:', folderId, 'Menu found:', !!menu);
-                    
-                    // Close all other menus
-                    closeAllMenus();
-                    
-                    // Toggle this menu
-                    if (menu) {
-                        // Check if this is a grid view menu
-                        const isGridMenu = menu.id.startsWith('grid-menu-');
-                        if (isGridMenu) {
-                            menu.classList.add('grid-popup');
-                        } else {
-                            menu.classList.remove('grid-popup');
-                        }
-                        
+        return;
+    }
+    
+    // Hide empty state
+    if (emptyDocuments) emptyDocuments.style.display = 'none';
+    
+    // Generate HTML
+    let html = '';
+    
+    // Render all documents section
+    if (documents.length > 0) {
+        html += renderDocumentGroup(documents, viewMode, classData, 'All Documents');
+    }
+    
+    // Render folders
+    folders.forEach(folder => {
+        const folderDocs = documents.filter(doc => doc.folderId === folder.id);
+        html += renderFolder(folder, folderDocs, viewMode, classData);
+    });
+    
+    // Update DOM
+    documentsList.innerHTML = html;
+    
+    // Verify rendering
+    const documentItems = documentsList.querySelectorAll('.document-card, .folder-section');
+    console.log('🎨 Rendered document items:', documentItems.length);
+    
+    if (documentItems.length === 0 && documents.length > 0) {
+        console.error('❌ CRITICAL: Documents not rendered!');
+        throw new Error('Documents loaded but not rendered in DOM');
+    }
+    
+    // Setup interactions
+    setupDragAndDrop(classData);
+    setupFolderFunctionality(classData);
+    setupDocumentInteractions(documents, classData);
+}
+
+// Setup document interactions
+function setupDocumentInteractions(documents, classData) {
+    setTimeout(() => {
+        // Menu button toggle
+        document.querySelectorAll('.doc-menu-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const docId = btn.dataset.docId;
+                const folderId = btn.dataset.folderId || 'root';
+                const menu = document.getElementById(`menu-${docId}-${folderId}`) || document.getElementById(`grid-menu-${docId}-${folderId}`);
+                
+                // Close all other menus
+                closeAllMenus();
+                
+                // Toggle this menu
+                if (menu) {
+                    const isGridMenu = menu.id.startsWith('grid-menu-');
+                    if (isGridMenu) {
+                        menu.classList.add('grid-popup');
+                    } else {
                         menu.classList.toggle('show');
-                        
-                        // Position popup over the document card for grid view
-                        if (isGridMenu && menu.classList.contains('show')) {
-                            const documentCard = btn.closest('.document-grid-card');
-                            if (documentCard) {
-                                const cardRect = documentCard.getBoundingClientRect();
-                                const centerX = cardRect.left + (cardRect.width / 2);
-                                const centerY = cardRect.top + (cardRect.height / 2);
-                                
-                                menu.style.left = `${centerX}px`;
-                                menu.style.top = `${centerY}px`;
-                                menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
-                            }
-                        }
                     }
-                });
-            });
-            
-            // Close menus when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.doc-card-actions') && !e.target.closest('.doc-info-right')) {
-                    closeAllMenus();
                 }
             });
-            
-            // Edit buttons
-            document.querySelectorAll('.edit-doc-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    closeAllMenus();
-                    const docId = btn.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        try {
-                            if (typeof window.openDocumentEditor === 'function') {
-                                window.openDocumentEditor(classData, doc);
-                            } else {
-                                console.error('openDocumentEditor function not available');
-                            }
-                        } catch (error) {
-                            console.error('Failed to load document editor:', error);
-                        }
-                    }
-                });
-            });
-            
-            // Download buttons
-            document.querySelectorAll('.download-doc-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    closeAllMenus();
-                    const docId = btn.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        downloadDocument(doc);
-                    }
-                });
-            });
-            
-            // Share buttons
-            document.querySelectorAll('.share-doc-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    closeAllMenus();
-                    const docId = btn.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        shareDocument(doc);
-                    }
-                });
-            });
-            
-            // Rename buttons
-            document.querySelectorAll('.rename-doc-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    closeAllMenus();
-                    const docId = btn.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        renameDocument(classData, doc);
-                    }
-                });
-            });
-            
-            // Move to folder buttons
-            document.querySelectorAll('.move-to-folder-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    closeAllMenus();
-                    const docId = btn.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        showMoveToFolderDialog(classData, doc);
-                    }
-                });
-            });
-            
-            // Delete buttons
-            document.querySelectorAll('.delete-doc-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    closeAllMenus();
-                    const docId = btn.dataset.docId;
-                    if (confirm('Are you sure you want to delete this document?')) {
-                        deleteDocument(classData, docId);
-                    }
-                });
-            });
-            
-            // Click on list view cards to open/view
-            document.querySelectorAll('.document-card').forEach(card => {
-                card.addEventListener('click', async () => {
-                    const docId = card.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        if (doc.type === 'text') {
-                            try {
-                                if (typeof window.openDocumentEditor === 'function') {
-                                    window.openDocumentEditor(classData, doc);
-                                } else {
-                                    console.error('openDocumentEditor function not available');
-                                }
-                            } catch (error) {
-                                try {
-                                    if (typeof window.openDocumentEditor === 'function') {
-                                        window.openDocumentEditor(classData, doc);
-                                    } else {
-                                        console.error('openDocumentEditor function not available');
-                                    }
-                                } catch (error2) {
-                                    if (window.openDocumentEditor) {
-                                        window.openDocumentEditor(classData, doc);
-                                    } else {
-                                        alert('Document editor could not be loaded. Please try again.');
-                                    }
-                                }
-                            }
-                        } else {
-                            openDocumentViewer(doc);
-                        }
-                    }
-                });
-            });
-            
-            // Click on grid view cards to open/view
-            document.querySelectorAll('.document-grid-card').forEach(card => {
-                card.addEventListener('click', async (e) => {
-                    // Don't trigger if clicking menu button or info section
-                    if (e.target.closest('.doc-menu-btn') || 
-                        e.target.closest('.doc-menu-dropdown') || 
-                        e.target.closest('.doc-info-right')) {
-                        return;
-                    }
-                    
-                    const docId = card.dataset.docId;
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        if (doc.type === 'text') {
-                            try {
-                                if (typeof window.openDocumentEditor === 'function') {
-                                    window.openDocumentEditor(classData, doc);
-                                } else {
-                                    console.error('openDocumentEditor function not available');
-                                }
-                            } catch (error) {
-                                try {
-                                    if (typeof window.openDocumentEditor === 'function') {
-                                        window.openDocumentEditor(classData, doc);
-                                    } else {
-                                        console.error('openDocumentEditor function not available');
-                                    }
-                                } catch (error2) {
-                                    if (window.openDocumentEditor) {
-                                        window.openDocumentEditor(classData, doc);
-                                    } else {
-                                        alert('Document editor could not be loaded. Please try again.');
-                                    }
-                                }
-                            }
-                        } else {
-                            openDocumentViewer(doc);
-                        }
-                    }
-                });
-            });
-        }, 100);
-        }
-    } catch (error) {
-        console.error('❌ Error loading documents:', error);
-        console.error('❌ Error details:', {
-            name: error.name,
-            message: error.message,
-            code: error.code,
-            stack: error.stack
         });
         
-        // Show user-friendly error message
-        const documentsList = document.getElementById('documentsList');
-        if (documentsList) {
-            documentsList.innerHTML = `
-                <div class="error-message">
-                    <h3>⚠️ Error Loading Documents</h3>
-                    <p>There was an error loading your documents. This might be due to:</p>
-                    <ul>
-                        <li>Firebase permissions issue</li>
-                        <li>Network connectivity problem</li>
-                        <li>Authentication issue</li>
-                    </ul>
-                    <p><strong>Error:</strong> ${error.message}</p>
-                    <button onclick="location.reload()" class="btn">Retry</button>
-                </div>
-            `;
-        }
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.doc-card-actions') && !e.target.closest('.doc-info-right')) {
+                closeAllMenus();
+            }
+        });
+        
+        // Edit buttons
+        document.querySelectorAll('.edit-doc-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                const docId = btn.dataset.docId;
+                const doc = documents.find(d => d.id === docId);
+                if (doc && typeof window.openDocumentEditor === 'function') {
+                    window.openDocumentEditor(classData, doc);
+                }
+            });
+        });
+        
+        // Download buttons
+        document.querySelectorAll('.download-doc-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                const docId = btn.dataset.docId;
+                const doc = documents.find(d => d.id === docId);
+                if (doc) downloadDocument(doc);
+            });
+        });
+        
+        // Rename buttons
+        document.querySelectorAll('.rename-doc-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                const docId = btn.dataset.docId;
+                const doc = documents.find(d => d.id === docId);
+                if (doc) {
+                    const newTitle = prompt('Enter new title:', doc.title);
+                    if (newTitle && newTitle.trim() && newTitle !== doc.title) {
+                        renameDocument(classData, docId, newTitle.trim());
+                    }
+                }
+            });
+        });
+        
+        // Move to folder buttons
+        document.querySelectorAll('.move-to-folder-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                const docId = btn.dataset.docId;
+                showMoveToFolderDialog(classData, documents.find(d => d.id === docId));
+            });
+        });
+        
+        // Share buttons
+        document.querySelectorAll('.share-doc-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                const docId = btn.dataset.docId;
+                const doc = documents.find(d => d.id === docId);
+                if (doc) shareDocument(doc);
+            });
+        });
+        
+        // Delete buttons
+        document.querySelectorAll('.delete-doc-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                const docId = btn.dataset.docId;
+                if (confirm('Are you sure you want to delete this document?')) {
+                    deleteDocument(classData, docId);
+                }
+            });
+        });
+        
+        // Document card clicks
+        document.querySelectorAll('.document-card, .document-grid-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.doc-card-actions, .doc-info-right, .doc-menu-btn')) {
+                    return;
+                }
+                
+                const docId = card.dataset.docId;
+                const doc = documents.find(d => d.id === docId);
+                if (doc) {
+                    if (doc.type === 'text' && typeof window.openDocumentEditor === 'function') {
+                        window.openDocumentEditor(classData, doc);
+                    } else {
+                        openDocumentViewer(doc);
+                    }
+                }
+            });
+        });
+    }, 100);
+}
+
+// Show error state
+function showDocumentError(error) {
+    const documentsList = document.getElementById('documentsList');
+    const emptyDocuments = document.getElementById('emptyDocuments');
+    
+    if (documentsList) {
+        documentsList.innerHTML = `
+            <div class="error-message">
+                <div class="error-icon">⚠️</div>
+                <h3>Error Loading Documents</h3>
+                <p>${error.message}</p>
+                <button onclick="location.reload()" class="retry-btn">Refresh Page</button>
+            </div>
+        `;
+    }
+    
+    if (emptyDocuments) {
+        emptyDocuments.style.display = 'none';
     }
 }
 
