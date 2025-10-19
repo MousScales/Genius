@@ -311,7 +311,12 @@ function createClassView(classData) {
         // Load documents with saved view mode
         const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
         const savedViewMode = localStorage.getItem(viewModeKey) || 'list';
-        loadDocuments(classData, savedViewMode);
+        
+        // Add a small delay to ensure DOM is fully ready
+        setTimeout(() => {
+            console.log('🕐 Loading documents after DOM setup delay...');
+            loadDocuments(classData, savedViewMode);
+        }, 200);
         
         // Load study guides with saved view mode
         const studyGuideViewModeKey = `class_${classData.userId}_${classData.name}_studyGuideViewMode`;
@@ -564,11 +569,15 @@ async function loadDocuments(classData, viewMode = 'list') {
     console.log('🎯 DOM elements found:', {
         documentsList: !!documentsList,
         emptyDocuments: !!emptyDocuments,
-        documentsListId: documentsList?.id
+        documentsListId: documentsList?.id,
+        documentsListParent: documentsList?.parentElement?.id,
+        documentsListVisible: documentsList ? window.getComputedStyle(documentsList).display : 'N/A'
     });
     
     if (!documentsList) {
         console.error('❌ documentsList element not found!');
+        console.error('❌ Available elements with "documents" in ID:', 
+            Array.from(document.querySelectorAll('[id*="documents"]')).map(el => el.id));
         return;
     }
     
@@ -621,9 +630,27 @@ async function loadDocuments(classData, viewMode = 'list') {
         console.log('🎨 Final HTML preview:', html.substring(0, 1000));
         console.log('🎨 Setting innerHTML to documentsList');
         console.log('🎨 documentsList before update:', documentsList.innerHTML.length, 'characters');
+        
+        // Clear any existing content first
+        documentsList.innerHTML = '';
+        
+        // Set the new content
         documentsList.innerHTML = html;
+        
         console.log('🎨 documentsList after update:', documentsList.innerHTML.length, 'characters');
         console.log('🎨 documentsList children count:', documentsList.children.length);
+        console.log('🎨 documentsList visible:', window.getComputedStyle(documentsList).display);
+        console.log('🎨 documentsList parent visible:', window.getComputedStyle(documentsList.parentElement).display);
+        
+        // Verify the content was actually added
+        const documentItems = documentsList.querySelectorAll('.document-item, .document-card, .folder-section');
+        console.log('🎨 Found document items in DOM:', documentItems.length);
+        
+        if (documentItems.length === 0 && documents.length > 0) {
+            console.error('❌ CRITICAL: Documents loaded but not rendered in DOM!');
+            console.error('❌ HTML that was supposed to be inserted:', html);
+        }
+        
         console.log('✅ Documents rendered successfully');
         
         // Setup drag and drop
