@@ -307,25 +307,25 @@ function createClassView(classData) {
         
         // Setup calendar actions
         setupCalendarActions(classData);
+        
+        // Load documents after DOM is fully set up
+        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
+        const savedViewMode = localStorage.getItem(viewModeKey) || 'list';
+        
+        console.log('🕐 Loading documents after DOM setup...');
+        loadDocuments(classData, savedViewMode);
+        
+        const studyGuideViewModeKey = `class_${classData.userId}_${classData.name}_studyGuideViewMode`;
+        const savedStudyGuideViewMode = localStorage.getItem(studyGuideViewModeKey) || 'list';
+        loadStudyGuides(classData, savedStudyGuideViewMode);
+        
+        // Listen for documents updated event - use same approach as initial load
+        window.addEventListener('documentsUpdated', () => {
+            console.log('🔄 documentsUpdated event received, reloading documents...');
+            const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
+            loadDocuments(classData, currentViewMode);
+        });
     }, 100);
-    
-    // Load documents immediately after DOM setup
-    const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-    const savedViewMode = localStorage.getItem(viewModeKey) || 'list';
-    
-    console.log('🕐 Loading documents immediately after DOM setup...');
-    loadDocuments(classData, savedViewMode);
-    
-    const studyGuideViewModeKey = `class_${classData.userId}_${classData.name}_studyGuideViewMode`;
-    const savedStudyGuideViewMode = localStorage.getItem(studyGuideViewModeKey) || 'list';
-    loadStudyGuides(classData, savedStudyGuideViewMode);
-    
-    // Listen for documents updated event - use same approach as initial load
-    window.addEventListener('documentsUpdated', () => {
-        console.log('🔄 documentsUpdated event received, reloading documents...');
-        const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
-        loadDocuments(classData, currentViewMode);
-    });
     
     return viewContainer;
 }
