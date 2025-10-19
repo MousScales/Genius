@@ -308,23 +308,8 @@ function createClassView(classData) {
         // Setup calendar actions
         setupCalendarActions(classData);
         
-        // Load documents after DOM is fully set up
-        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-        const savedViewMode = localStorage.getItem(viewModeKey) || 'list';
-        
-        console.log('🕐 Loading documents after DOM setup...');
-        loadDocuments(classData, savedViewMode);
-        
-        const studyGuideViewModeKey = `class_${classData.userId}_${classData.name}_studyGuideViewMode`;
-        const savedStudyGuideViewMode = localStorage.getItem(studyGuideViewModeKey) || 'list';
-        loadStudyGuides(classData, savedStudyGuideViewMode);
-        
-        // Listen for documents updated event - use same approach as initial load
-        window.addEventListener('documentsUpdated', () => {
-            console.log('🔄 documentsUpdated event received, reloading documents...');
-            const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
-            loadDocuments(classData, currentViewMode);
-        });
+        // Load documents and study guides
+        loadClassContent(classData);
     }, 100);
     
     return viewContainer;
@@ -541,97 +526,77 @@ function readFileAsDataURL(file) {
 }
 
 
-// COMPLETELY REBUILT DOCUMENT LOADING SYSTEM
-async function loadDocuments(classData, viewMode = 'list') {
-    console.log('🚀 NEW loadDocuments called with:', { 
-        classData: classData.name, 
-        viewMode,
-        userId: classData.userId,
-        classId: classData.id,
-        timestamp: new Date().toISOString()
-    });
+// SIMPLE AND RELIABLE DOCUMENT LOADING SYSTEM
+async function loadClassContent(classData) {
+    console.log('🚀 Loading class content for:', classData.name);
     
-    // Step 1: Ensure DOM is ready
+    try {
+        // Load documents
+        await loadDocuments(classData);
+        
+        // Load study guides
+        await loadStudyGuides(classData);
+        
+        console.log('✅ Class content loaded successfully');
+    } catch (error) {
+        console.error('❌ Error loading class content:', error);
+    }
+}
+
+async function loadDocuments(classData) {
+    console.log('📄 Loading documents...');
+    
     const documentsList = document.getElementById('documentsList');
     const emptyDocuments = document.getElementById('emptyDocuments');
     
-    console.log('🎯 DOM elements check:', {
-        documentsList: !!documentsList,
-        emptyDocuments: !!emptyDocuments,
-        documentsListId: documentsList?.id
-    });
-    
     if (!documentsList) {
-        console.error('❌ documentsList element not found!');
+        console.error('❌ documentsList not found');
         return;
     }
     
-    // Step 2: Show loading state
-    documentsList.innerHTML = '<div class="loading-documents">🔄 Loading documents...</div>';
+    // Show loading
+    documentsList.innerHTML = '<div class="loading-documents">Loading documents...</div>';
     if (emptyDocuments) emptyDocuments.style.display = 'none';
     
     try {
-        // Step 3: Load documents from Firebase with retry logic
-        const documents = await loadDocumentsWithRetry(classData);
-        console.log('📄 Documents loaded successfully:', documents.length);
+        // Get view mode
+        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
+        const viewMode = localStorage.getItem(viewModeKey) || 'list';
         
-        // Step 4: Load folders
+        // Load from Firebase
+        const { documentService } = await getFirebaseServices();
+        const documents = await documentService.getDocuments(classData.userId, classData.id);
+        
+        console.log('📄 Loaded documents:', documents.length);
+        
+        // Load folders
         const folders = await getFolders(classData);
-        console.log('📁 Folders loaded:', folders.length);
         
-        // Step 5: Render documents
-        await renderDocumentsToDOM(documents, folders, viewMode, classData);
+        // Render
+        renderDocuments(documents, folders, viewMode, classData);
         
-        console.log('✅ Document loading completed successfully');
+        // Setup event listener for updates
+        setupDocumentUpdateListener(classData);
         
     } catch (error) {
-        console.error('❌ Error in loadDocuments:', error);
-        showDocumentError(error);
+        console.error('❌ Error loading documents:', error);
+        documentsList.innerHTML = `
+            <div class="error-message">
+                <h3>Error Loading Documents</h3>
+                <p>${error.message}</p>
+                <button onclick="location.reload()">Retry</button>
+            </div>
+        `;
     }
 }
 
-// Retry logic for document loading
-async function loadDocumentsWithRetry(classData, maxRetries = 3) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`🔄 Attempt ${attempt}/${maxRetries} to load documents...`);
-            
-            const { documentService } = await getFirebaseServices();
-            if (!documentService) {
-                throw new Error('DocumentService not available');
-            }
-            
-            const documents = await documentService.getDocuments(classData.userId, classData.id);
-            
-            if (Array.isArray(documents)) {
-                console.log(`✅ Documents loaded successfully on attempt ${attempt}:`, documents.length);
-                return documents;
-            } else {
-                throw new Error('Documents is not an array');
-            }
-            
-        } catch (error) {
-            console.error(`❌ Attempt ${attempt} failed:`, error.message);
-            
-            if (attempt === maxRetries) {
-                throw new Error(`Failed to load documents after ${maxRetries} attempts: ${error.message}`);
-            }
-            
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-    }
-}
-
-// Render documents to DOM
-async function renderDocumentsToDOM(documents, folders, viewMode, classData) {
+function renderDocuments(documents, folders, viewMode, classData) {
     const documentsList = document.getElementById('documentsList');
     const emptyDocuments = document.getElementById('emptyDocuments');
     
-    // Set view mode class
+    // Set view mode
     documentsList.className = viewMode === 'grid' ? 'documents-grid' : 'documents-list';
     
-    // Check if we have any content
     if (documents.length === 0 && folders.length === 0) {
         documentsList.innerHTML = '';
         if (emptyDocuments) emptyDocuments.style.display = 'block';
@@ -644,12 +609,12 @@ async function renderDocumentsToDOM(documents, folders, viewMode, classData) {
     // Generate HTML
     let html = '';
     
-    // Render all documents section
+    // All documents section
     if (documents.length > 0) {
         html += renderDocumentGroup(documents, viewMode, classData, 'All Documents');
     }
     
-    // Render folders
+    // Folders
     folders.forEach(folder => {
         const folderDocs = documents.filter(doc => doc.folderId === folder.id);
         html += renderFolder(folder, folderDocs, viewMode, classData);
@@ -658,25 +623,14 @@ async function renderDocumentsToDOM(documents, folders, viewMode, classData) {
     // Update DOM
     documentsList.innerHTML = html;
     
-    // Verify rendering
-    const documentItems = documentsList.querySelectorAll('.document-card, .folder-section');
-    console.log('🎨 Rendered document items:', documentItems.length);
-    
-    if (documentItems.length === 0 && documents.length > 0) {
-        console.error('❌ CRITICAL: Documents not rendered!');
-        throw new Error('Documents loaded but not rendered in DOM');
-    }
-    
     // Setup interactions
+    setupDocumentInteractions(documents, classData);
     setupDragAndDrop(classData);
     setupFolderFunctionality(classData);
-    setupDocumentInteractions(documents, classData);
 }
 
-// Setup document interactions
 function setupDocumentInteractions(documents, classData) {
-    // Setup interactions immediately - no delay needed
-    // Menu button toggle
+    // Menu buttons
     document.querySelectorAll('.doc-menu-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -684,10 +638,8 @@ function setupDocumentInteractions(documents, classData) {
             const folderId = btn.dataset.folderId || 'root';
             const menu = document.getElementById(`menu-${docId}-${folderId}`) || document.getElementById(`grid-menu-${docId}-${folderId}`);
             
-            // Close all other menus
             closeAllMenus();
             
-            // Toggle this menu
             if (menu) {
                 const isGridMenu = menu.id.startsWith('grid-menu-');
                 if (isGridMenu) {
@@ -699,7 +651,7 @@ function setupDocumentInteractions(documents, classData) {
         });
     });
     
-    // Close menus when clicking outside
+    // Close menus on outside click
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.doc-card-actions') && !e.target.closest('.doc-info-right')) {
             closeAllMenus();
@@ -708,7 +660,7 @@ function setupDocumentInteractions(documents, classData) {
     
     // Edit buttons
     document.querySelectorAll('.edit-doc-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
             e.stopPropagation();
             closeAllMenus();
             const docId = btn.dataset.docId;
@@ -799,24 +751,16 @@ function setupDocumentInteractions(documents, classData) {
     });
 }
 
-// Show error state
-function showDocumentError(error) {
-    const documentsList = document.getElementById('documentsList');
-    const emptyDocuments = document.getElementById('emptyDocuments');
+function setupDocumentUpdateListener(classData) {
+    // Remove existing listener to avoid duplicates
+    window.removeEventListener('documentsUpdated', handleDocumentsUpdated);
     
-    if (documentsList) {
-        documentsList.innerHTML = `
-            <div class="error-message">
-                <div class="error-icon">⚠️</div>
-                <h3>Error Loading Documents</h3>
-                <p>${error.message}</p>
-                <button onclick="location.reload()" class="retry-btn">Refresh Page</button>
-            </div>
-        `;
-    }
+    // Add new listener
+    window.addEventListener('documentsUpdated', handleDocumentsUpdated);
     
-    if (emptyDocuments) {
-        emptyDocuments.style.display = 'none';
+    function handleDocumentsUpdated() {
+        console.log('🔄 Documents updated, reloading...');
+        loadDocuments(classData);
     }
 }
 
