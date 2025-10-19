@@ -312,11 +312,9 @@ function createClassView(classData) {
         const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
         const savedViewMode = localStorage.getItem(viewModeKey) || 'list';
         
-        // Add a small delay to ensure DOM is fully ready
-        setTimeout(() => {
-            console.log('🕐 Loading documents after DOM setup delay...');
-            loadDocuments(classData, savedViewMode);
-        }, 200);
+        // Load documents immediately - no delay needed
+        console.log('🕐 Loading documents immediately...');
+        loadDocuments(classData, savedViewMode);
         
         // Load study guides with saved view mode
         const studyGuideViewModeKey = `class_${classData.userId}_${classData.name}_studyGuideViewMode`;
@@ -666,129 +664,128 @@ async function renderDocumentsToDOM(documents, folders, viewMode, classData) {
 
 // Setup document interactions
 function setupDocumentInteractions(documents, classData) {
-    setTimeout(() => {
-        // Menu button toggle
-        document.querySelectorAll('.doc-menu-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const docId = btn.dataset.docId;
-                const folderId = btn.dataset.folderId || 'root';
-                const menu = document.getElementById(`menu-${docId}-${folderId}`) || document.getElementById(`grid-menu-${docId}-${folderId}`);
-                
-                // Close all other menus
-                closeAllMenus();
-                
-                // Toggle this menu
-                if (menu) {
-                    const isGridMenu = menu.id.startsWith('grid-menu-');
-                    if (isGridMenu) {
-                        menu.classList.add('grid-popup');
-                    } else {
-                        menu.classList.toggle('show');
-                    }
+    // Setup interactions immediately - no delay needed
+    // Menu button toggle
+    document.querySelectorAll('.doc-menu-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const docId = btn.dataset.docId;
+            const folderId = btn.dataset.folderId || 'root';
+            const menu = document.getElementById(`menu-${docId}-${folderId}`) || document.getElementById(`grid-menu-${docId}-${folderId}`);
+            
+            // Close all other menus
+            closeAllMenus();
+            
+            // Toggle this menu
+            if (menu) {
+                const isGridMenu = menu.id.startsWith('grid-menu-');
+                if (isGridMenu) {
+                    menu.classList.add('grid-popup');
+                } else {
+                    menu.classList.toggle('show');
                 }
-            });
-        });
-        
-        // Close menus when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.doc-card-actions') && !e.target.closest('.doc-info-right')) {
-                closeAllMenus();
             }
         });
-        
-        // Edit buttons
-        document.querySelectorAll('.edit-doc-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                const docId = btn.dataset.docId;
-                const doc = documents.find(d => d.id === docId);
-                if (doc && typeof window.openDocumentEditor === 'function') {
+    });
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.doc-card-actions') && !e.target.closest('.doc-info-right')) {
+            closeAllMenus();
+        }
+    });
+    
+    // Edit buttons
+    document.querySelectorAll('.edit-doc-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            const docId = btn.dataset.docId;
+            const doc = documents.find(d => d.id === docId);
+            if (doc && typeof window.openDocumentEditor === 'function') {
+                window.openDocumentEditor(classData, doc);
+            }
+        });
+    });
+    
+    // Download buttons
+    document.querySelectorAll('.download-doc-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            const docId = btn.dataset.docId;
+            const doc = documents.find(d => d.id === docId);
+            if (doc) downloadDocument(doc);
+        });
+    });
+    
+    // Rename buttons
+    document.querySelectorAll('.rename-doc-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            const docId = btn.dataset.docId;
+            const doc = documents.find(d => d.id === docId);
+            if (doc) {
+                const newTitle = prompt('Enter new title:', doc.title);
+                if (newTitle && newTitle.trim() && newTitle !== doc.title) {
+                    renameDocument(classData, docId, newTitle.trim());
+                }
+            }
+        });
+    });
+    
+    // Move to folder buttons
+    document.querySelectorAll('.move-to-folder-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            const docId = btn.dataset.docId;
+            showMoveToFolderDialog(classData, documents.find(d => d.id === docId));
+        });
+    });
+    
+    // Share buttons
+    document.querySelectorAll('.share-doc-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            const docId = btn.dataset.docId;
+            const doc = documents.find(d => d.id === docId);
+            if (doc) shareDocument(doc);
+        });
+    });
+    
+    // Delete buttons
+    document.querySelectorAll('.delete-doc-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            const docId = btn.dataset.docId;
+            if (confirm('Are you sure you want to delete this document?')) {
+                deleteDocument(classData, docId);
+            }
+        });
+    });
+    
+    // Document card clicks
+    document.querySelectorAll('.document-card, .document-grid-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.doc-card-actions, .doc-info-right, .doc-menu-btn')) {
+                return;
+            }
+            
+            const docId = card.dataset.docId;
+            const doc = documents.find(d => d.id === docId);
+            if (doc) {
+                if (doc.type === 'text' && typeof window.openDocumentEditor === 'function') {
                     window.openDocumentEditor(classData, doc);
+                } else {
+                    openDocumentViewer(doc);
                 }
-            });
+            }
         });
-        
-        // Download buttons
-        document.querySelectorAll('.download-doc-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                const docId = btn.dataset.docId;
-                const doc = documents.find(d => d.id === docId);
-                if (doc) downloadDocument(doc);
-            });
-        });
-        
-        // Rename buttons
-        document.querySelectorAll('.rename-doc-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                const docId = btn.dataset.docId;
-                const doc = documents.find(d => d.id === docId);
-                if (doc) {
-                    const newTitle = prompt('Enter new title:', doc.title);
-                    if (newTitle && newTitle.trim() && newTitle !== doc.title) {
-                        renameDocument(classData, docId, newTitle.trim());
-                    }
-                }
-            });
-        });
-        
-        // Move to folder buttons
-        document.querySelectorAll('.move-to-folder-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                const docId = btn.dataset.docId;
-                showMoveToFolderDialog(classData, documents.find(d => d.id === docId));
-            });
-        });
-        
-        // Share buttons
-        document.querySelectorAll('.share-doc-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                const docId = btn.dataset.docId;
-                const doc = documents.find(d => d.id === docId);
-                if (doc) shareDocument(doc);
-            });
-        });
-        
-        // Delete buttons
-        document.querySelectorAll('.delete-doc-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                const docId = btn.dataset.docId;
-                if (confirm('Are you sure you want to delete this document?')) {
-                    deleteDocument(classData, docId);
-                }
-            });
-        });
-        
-        // Document card clicks
-        document.querySelectorAll('.document-card, .document-grid-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.doc-card-actions, .doc-info-right, .doc-menu-btn')) {
-                    return;
-                }
-                
-                const docId = card.dataset.docId;
-                const doc = documents.find(d => d.id === docId);
-                if (doc) {
-                    if (doc.type === 'text' && typeof window.openDocumentEditor === 'function') {
-                        window.openDocumentEditor(classData, doc);
-                    } else {
-                        openDocumentViewer(doc);
-                    }
-                }
-            });
-        });
-    }, 100);
+    });
 }
 
 // Show error state
