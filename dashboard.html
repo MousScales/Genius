@@ -24,25 +24,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <!-- Mobile Header -->
-    <div class="mobile-header mobile-only">
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
-            ☰
-        </button>
-        <h1 class="mobile-header-title">Genius</h1>
-        <div class="mobile-header-actions">
-            <button class="chat-btn" id="mobileChatBtn">
-                <span>💬</span>
-                <span>Chat</span>
-            </button>
-            <div class="profile-dropdown-container">
-                <button class="profile-btn" id="mobileProfileBtn">
-                    <img src="assets/darkgenius.png" alt="Profile" class="profile-avatar">
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
@@ -815,7 +796,7 @@
                     <div class="calculator-header">
                         <div class="calculator-title">
                             <div class="calculator-title-content">
-                                <img src="assets/darkgenius.png" alt="Genius AI" class="calculator-icon">
+                                <span class="calculator-icon">📱</span>
                                 <h2>Calculator</h2>
                             </div>
                             <p>Press Escape to exit</p>
@@ -2496,161 +2477,6 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                         resolve(false);
                     }
                 }, 10000);
-            });
-        }
-
-        // Mobile functionality
-        function initializeMobileFeatures() {
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileChatBtn = document.getElementById('mobileChatBtn');
-            const mobileProfileBtn = document.getElementById('mobileProfileBtn');
-            const sidebar = document.getElementById('sidebar');
-            const profileDropdown = document.getElementById('profileDropdown');
-
-            // Mobile menu toggle
-            if (mobileMenuBtn && sidebar) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('open');
-                });
-            }
-
-            // Mobile chat button
-            if (mobileChatBtn) {
-                mobileChatBtn.addEventListener('click', () => {
-                    if (window.geniusChat) {
-                        window.geniusChat.openChat();
-                    }
-                });
-            }
-
-            // Mobile profile button
-            if (mobileProfileBtn && profileDropdown) {
-                mobileProfileBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    profileDropdown.classList.toggle('show');
-                });
-            }
-
-            // Close sidebar when clicking outside
-            document.addEventListener('click', (e) => {
-                if (sidebar && !sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-                    sidebar.classList.remove('open');
-                }
-            });
-
-            // Close profile dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (profileDropdown && !profileDropdown.contains(e.target) && !mobileProfileBtn.contains(e.target)) {
-                    profileDropdown.classList.remove('show');
-                }
-            });
-
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                if (window.innerWidth > 768) {
-                    sidebar.classList.remove('open');
-                }
-            });
-        }
-
-        // Initialize mobile features when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeMobileFeatures();
-            initializeMobileTouchHandling();
-        });
-
-        // Mobile touch handling for better UX
-        function initializeMobileTouchHandling() {
-            // Add touch feedback to buttons
-            const buttons = document.querySelectorAll('button, .btn, .action-btn, .nav-item');
-            buttons.forEach(button => {
-                button.addEventListener('touchstart', function() {
-                    this.style.transform = 'scale(0.98)';
-                    this.style.transition = 'transform 0.1s ease';
-                });
-                
-                button.addEventListener('touchend', function() {
-                    this.style.transform = 'scale(1)';
-                });
-            });
-
-            // Handle swipe gestures for sidebar
-            let startX = 0;
-            let startY = 0;
-            let currentX = 0;
-            let currentY = 0;
-            let isSwipe = false;
-
-            document.addEventListener('touchstart', function(e) {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                isSwipe = false;
-            });
-
-            document.addEventListener('touchmove', function(e) {
-                if (!startX || !startY) return;
-                
-                currentX = e.touches[0].clientX;
-                currentY = e.touches[0].clientY;
-                
-                const diffX = startX - currentX;
-                const diffY = startY - currentY;
-                
-                // Check if it's a horizontal swipe
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    isSwipe = true;
-                    e.preventDefault();
-                }
-            });
-
-            document.addEventListener('touchend', function(e) {
-                if (!isSwipe) return;
-                
-                const diffX = startX - currentX;
-                const sidebar = document.getElementById('sidebar');
-                
-                if (diffX > 50) {
-                    // Swipe left - close sidebar
-                    if (sidebar && sidebar.classList.contains('open')) {
-                        sidebar.classList.remove('open');
-                    }
-                } else if (diffX < -50) {
-                    // Swipe right - open sidebar
-                    if (sidebar && !sidebar.classList.contains('open')) {
-                        sidebar.classList.add('open');
-                    }
-                }
-                
-                startX = 0;
-                startY = 0;
-                isSwipe = false;
-            });
-
-            // Prevent zoom on double tap
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function(e) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    e.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-
-            // Handle orientation change
-            window.addEventListener('orientationchange', function() {
-                setTimeout(function() {
-                    // Close sidebar on orientation change
-                    const sidebar = document.getElementById('sidebar');
-                    if (sidebar) {
-                        sidebar.classList.remove('open');
-                    }
-                }, 100);
-            });
-
-            // Improve scrolling performance
-            const scrollableElements = document.querySelectorAll('.scrollable, .genius-chat-messages, .dashboard-content');
-            scrollableElements.forEach(element => {
-                element.style.webkitOverflowScrolling = 'touch';
             });
         }
 
