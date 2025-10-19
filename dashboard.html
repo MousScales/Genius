@@ -24,6 +24,25 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
+    <!-- Mobile Header -->
+    <div class="mobile-header mobile-only">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            ☰
+        </button>
+        <h1 class="mobile-header-title">Genius</h1>
+        <div class="mobile-header-actions">
+            <button class="chat-btn" id="mobileChatBtn">
+                <span>💬</span>
+                <span>Chat</span>
+            </button>
+            <div class="profile-dropdown-container">
+                <button class="profile-btn" id="mobileProfileBtn">
+                    <img src="assets/darkgenius.png" alt="Profile" class="profile-avatar">
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
@@ -2479,6 +2498,65 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 }, 10000);
             });
         }
+
+        // Mobile functionality
+        function initializeMobileFeatures() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileChatBtn = document.getElementById('mobileChatBtn');
+            const mobileProfileBtn = document.getElementById('mobileProfileBtn');
+            const sidebar = document.getElementById('sidebar');
+            const profileDropdown = document.getElementById('profileDropdown');
+
+            // Mobile menu toggle
+            if (mobileMenuBtn && sidebar) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                });
+            }
+
+            // Mobile chat button
+            if (mobileChatBtn) {
+                mobileChatBtn.addEventListener('click', () => {
+                    if (window.geniusChat) {
+                        window.geniusChat.openChat();
+                    }
+                });
+            }
+
+            // Mobile profile button
+            if (mobileProfileBtn && profileDropdown) {
+                mobileProfileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+            }
+
+            // Close sidebar when clicking outside
+            document.addEventListener('click', (e) => {
+                if (sidebar && !sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            });
+
+            // Close profile dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (profileDropdown && !profileDropdown.contains(e.target) && !mobileProfileBtn.contains(e.target)) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
+
+        // Initialize mobile features when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMobileFeatures();
+        });
 
     </script>
     
