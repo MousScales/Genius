@@ -10,6 +10,7 @@ class GeniusChat {
         this.assistantId = null;
         this.threadId = null;
         this.uploadedFileIds = [];
+        this.focusCheckInterval = null;
         this.init();
     }
 
@@ -181,10 +182,26 @@ class GeniusChat {
         });
 
         // Auto-resize textarea
-        chatInput.addEventListener('input', () => {
+        chatInput.addEventListener('input', (e) => {
             this.autoResizeTextarea(chatInput);
             this.updateSendButton();
         });
+
+        // Ensure input gets focus when clicked
+        chatInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+            chatInput.focus();
+        });
+
+        // Also handle clicks on the input wrapper
+        const inputWrapper = document.querySelector('.genius-chat-input-wrapper');
+        if (inputWrapper) {
+            inputWrapper.addEventListener('click', (e) => {
+                if (e.target !== chatInput) {
+                    chatInput.focus();
+                }
+            });
+        }
 
         // Suggestion chips
         document.querySelectorAll('.suggestion-chip').forEach(chip => {
@@ -237,18 +254,26 @@ class GeniusChat {
         
         console.log('Chat opened successfully');
         
-        // Focus on input
+        // Focus on input with better timing
         setTimeout(() => {
             const input = document.getElementById('chatInput');
             if (input) {
                 input.focus();
+                // Ensure the input is actually focused and ready for typing
+                input.click();
+                
+                // Set up periodic focus check to ensure input stays focusable
+                this.startFocusCheck();
             }
-        }, 100);
+        }, 150);
     }
 
     closeChat() {
         const overlay = document.getElementById('geniusChatOverlay');
         overlay.classList.remove('show');
+        
+        // Stop focus checking
+        this.stopFocusCheck();
         
         // Wait for transition to complete before hiding
         setTimeout(() => {
@@ -356,13 +381,15 @@ class GeniusChat {
         
         // Clear input and reset
         input.value = '';
-        input.style.height = 'auto';
+        input.style.height = '40px'; // Reset to minimum height
         this.updateSendButton();
         
-        // Keep focus on input
+        // Keep focus on input with better handling
         setTimeout(() => {
             input.focus();
-        }, 100);
+            // Ensure cursor is at the beginning
+            input.setSelectionRange(0, 0);
+        }, 50);
 
         // Store files for AI processing before clearing UI
         const filesForAI = [...this.uploadedFiles];
@@ -1049,20 +1076,59 @@ IMPORTANT:
     }
 
     autoResizeTextarea(textarea) {
+        // Store current cursor position
+        const cursorPosition = textarea.selectionStart;
+        
+        // Reset height to auto to get the correct scrollHeight
         textarea.style.height = 'auto';
-        const newHeight = Math.min(textarea.scrollHeight, 200);
+        
+        // Calculate new height with reasonable limits
+        const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 200);
         textarea.style.height = newHeight + 'px';
         
-        // Ensure minimum height
-        if (newHeight < 40) {
-            textarea.style.height = '40px';
-        }
+        // Restore cursor position
+        textarea.setSelectionRange(cursorPosition, cursorPosition);
     }
 
     updateSendButton() {
         const input = document.getElementById('chatInput');
         const sendBtn = document.getElementById('sendBtn');
         sendBtn.disabled = !input.value.trim();
+    }
+
+    ensureInputFocus() {
+        const input = document.getElementById('chatInput');
+        if (input && this.isOpen) {
+            // Check if input is actually focusable
+            if (input.offsetParent !== null && !input.disabled && !input.readOnly) {
+                input.focus();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    startFocusCheck() {
+        // Clear any existing interval
+        this.stopFocusCheck();
+        
+        // Check focus every 2 seconds when chat is open
+        this.focusCheckInterval = setInterval(() => {
+            if (this.isOpen) {
+                const input = document.getElementById('chatInput');
+                if (input && document.activeElement !== input) {
+                    // Input is not focused, try to focus it
+                    input.focus();
+                }
+            }
+        }, 2000);
+    }
+
+    stopFocusCheck() {
+        if (this.focusCheckInterval) {
+            clearInterval(this.focusCheckInterval);
+            this.focusCheckInterval = null;
+        }
     }
 
     async loadSavedChats() {
