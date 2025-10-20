@@ -3628,45 +3628,75 @@ async function editFlashcardSet(guideId, classData) {
         
         const guide = { id: guideDoc.id, ...guideDoc.data() };
         
-        // Create edit modal
+        // Create edit modal with flashcard quiz-like interface
         const modal = document.createElement('div');
         modal.className = 'flashcard-edit-modal';
         modal.innerHTML = `
-            <div class="flashcard-edit-content">
-                <div class="flashcard-edit-header">
-                    <h3>Edit Flashcard Set</h3>
-                    <button class="close-flashcard-edit" onclick="closeFlashcardEdit()">✕</button>
-                </div>
-                <div class="flashcard-edit-body">
-                    <div class="flashcard-edit-title">
-                        <label for="editFlashcardSetTitle">Title:</label>
-                        <input type="text" id="editFlashcardSetTitle" value="${guide.title}" placeholder="Enter flashcard set title">
+            <!-- Close Button -->
+            <button class="close-flashcard-edit" onclick="closeFlashcardEdit()">✕</button>
+            
+            <!-- Main Layout Container -->
+            <div class="flashcard-edit-layout-container">
+                <!-- Center Card Area -->
+                <div class="flashcard-edit-center">
+                    <!-- Title Input -->
+                    <div class="flashcard-edit-title-section">
+                        <input type="text" id="editFlashcardSetTitle" value="${guide.title}" placeholder="Enter flashcard set title" class="flashcard-edit-title-input">
                     </div>
-                    <div class="flashcards-container" id="editFlashcardsContainer">
+                    
+                    <!-- Main Card Display -->
+                    <div class="flashcard-edit-card-display" id="flashcardEditCardDisplay">
+                        <div class="flashcard-edit-card" id="main-edit-flashcard">
+                            <div class="flashcard-edit-inner">
+                                <div class="flashcard-edit-front">
+                                    <div class="flashcard-edit-question" id="edit-card-question">Click a card to edit</div>
+                                </div>
+                                <div class="flashcard-edit-back">
+                                    <div class="flashcard-edit-answer" id="edit-card-answer">Click a card to edit</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation Controls -->
+                        <div class="flashcard-edit-navigation">
+                            <button class="edit-nav-btn" id="prevEditCard" onclick="previousEditCard()">← Previous</button>
+                            <span class="edit-card-counter" id="editCardCounter">1 / ${guide.flashcards.length}</span>
+                            <button class="edit-nav-btn" id="nextEditCard" onclick="nextEditCard()">Next →</button>
+                        </div>
+                        
+                        <!-- Flip Button -->
+                        <div class="edit-flip-button-container">
+                            <button class="edit-flip-button" onclick="flipEditCard()">
+                                <span class="flip-icon">🔄</span>
+                                <span class="flip-text">Flip Card</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Card List -->
+                    <div class="flashcard-edit-list" id="flashcardEditList">
                         ${guide.flashcards.map((card, index) => `
-                            <div class="flashcard-item">
-                                <div class="flashcard-card front">
-                                    <div class="flashcard-card-header front">
-                                        <span>Question ${index + 1}</span>
-                                    </div>
-                                    <textarea class="flashcard-question-input" rows="3">${card.question}</textarea>
+                            <div class="flashcard-edit-item" data-index="${index}" onclick="selectEditCard(${index})">
+                                <div class="edit-card-preview">
+                                    <div class="edit-card-question-preview">${card.question.substring(0, 50)}${card.question.length > 50 ? '...' : ''}</div>
+                                    <div class="edit-card-answer-preview">${card.answer.substring(0, 50)}${card.answer.length > 50 ? '...' : ''}</div>
                                 </div>
-                                <div class="flashcard-card back">
-                                    <div class="flashcard-card-header back">
-                                        <span>Answer ${index + 1}</span>
-                                    </div>
-                                    <textarea class="flashcard-answer-input" rows="3">${card.answer}</textarea>
-                                </div>
-                                <button class="remove-flashcard-btn" onclick="removeFlashcard(this)">Remove</button>
+                                <button class="remove-edit-card-btn" onclick="removeEditCard(${index})" title="Remove card">✕</button>
                             </div>
                         `).join('')}
                     </div>
-                    <button class="add-flashcard-btn" id="addEditFlashcardBtn">+ Add Another Card</button>
+                    
+                    <!-- Add Card Button -->
+                    <div class="add-edit-card-section">
+                        <button class="add-edit-card-btn" onclick="addEditCard()">+ Add New Card</button>
+                    </div>
                 </div>
-                <div class="flashcard-edit-footer">
-                    <button class="cancel-flashcard-edit" onclick="closeFlashcardEdit()">Cancel</button>
-                    <button class="save-flashcard-edit" onclick="saveFlashcardEdit('${guideId}', '${classData.userId}', '${classData.id}')">Save Changes</button>
-                </div>
+            </div>
+            
+            <!-- Footer Actions -->
+            <div class="flashcard-edit-footer">
+                <button class="cancel-flashcard-edit" onclick="closeFlashcardEdit()">Cancel</button>
+                <button class="save-flashcard-edit" onclick="saveFlashcardEdit('${guideId}', '${classData.userId}', '${classData.id}')">Save Changes</button>
             </div>
         `;
         
@@ -3675,11 +3705,155 @@ async function editFlashcardSet(guideId, classData) {
         // Add event listeners for the edit modal
         setupFlashcardEditListeners();
         
+        // Initialize edit interface
+        initializeFlashcardEdit(guide);
+        
     } catch (error) {
         console.error('Error editing flashcard set:', error);
         alert('Error loading flashcard set for editing. Please try again.');
     }
 }
+
+// Global variables for edit interface
+let editCards = [];
+let currentEditCardIndex = 0;
+let isEditCardFlipped = false;
+
+function initializeFlashcardEdit(guide) {
+    editCards = [...guide.flashcards];
+    currentEditCardIndex = 0;
+    isEditCardFlipped = false;
+    
+    // Update the main card display
+    updateEditCardDisplay();
+    
+    // Update navigation buttons
+    updateEditNavigation();
+}
+
+function updateEditCardDisplay() {
+    if (editCards.length === 0) {
+        document.getElementById('edit-card-question').textContent = 'No cards available';
+        document.getElementById('edit-card-answer').textContent = 'Add a card to get started';
+        return;
+    }
+    
+    const currentCard = editCards[currentEditCardIndex];
+    document.getElementById('edit-card-question').textContent = currentCard.question;
+    document.getElementById('edit-card-answer').textContent = currentCard.answer;
+    
+    // Update counter
+    document.getElementById('editCardCounter').textContent = `${currentEditCardIndex + 1} / ${editCards.length}`;
+    
+    // Update card list selection
+    document.querySelectorAll('.flashcard-edit-item').forEach((item, index) => {
+        item.classList.toggle('selected', index === currentEditCardIndex);
+    });
+}
+
+function selectEditCard(index) {
+    currentEditCardIndex = index;
+    isEditCardFlipped = false;
+    updateEditCardDisplay();
+    
+    // Reset flip state
+    const card = document.getElementById('main-edit-flashcard');
+    card.classList.remove('flipped');
+}
+
+function previousEditCard() {
+    if (currentEditCardIndex > 0) {
+        currentEditCardIndex--;
+        isEditCardFlipped = false;
+        updateEditCardDisplay();
+        
+        // Reset flip state
+        const card = document.getElementById('main-edit-flashcard');
+        card.classList.remove('flipped');
+    }
+}
+
+function nextEditCard() {
+    if (currentEditCardIndex < editCards.length - 1) {
+        currentEditCardIndex++;
+        isEditCardFlipped = false;
+        updateEditCardDisplay();
+        
+        // Reset flip state
+        const card = document.getElementById('main-edit-flashcard');
+        card.classList.remove('flipped');
+    }
+}
+
+function flipEditCard() {
+    const card = document.getElementById('main-edit-flashcard');
+    isEditCardFlipped = !isEditCardFlipped;
+    card.classList.toggle('flipped', isEditCardFlipped);
+}
+
+function addEditCard() {
+    const newCard = {
+        question: 'New question',
+        answer: 'New answer',
+        id: `card_${Date.now()}`
+    };
+    
+    editCards.push(newCard);
+    currentEditCardIndex = editCards.length - 1;
+    
+    // Update the card list
+    updateEditCardList();
+    updateEditCardDisplay();
+    updateEditNavigation();
+}
+
+function removeEditCard(index) {
+    if (editCards.length <= 1) {
+        alert('You must have at least one card in the set.');
+        return;
+    }
+    
+    editCards.splice(index, 1);
+    
+    // Adjust current index if needed
+    if (currentEditCardIndex >= editCards.length) {
+        currentEditCardIndex = editCards.length - 1;
+    }
+    
+    // Update the interface
+    updateEditCardList();
+    updateEditCardDisplay();
+    updateEditNavigation();
+}
+
+function updateEditCardList() {
+    const list = document.getElementById('flashcardEditList');
+    list.innerHTML = editCards.map((card, index) => `
+        <div class="flashcard-edit-item ${index === currentEditCardIndex ? 'selected' : ''}" data-index="${index}" onclick="selectEditCard(${index})">
+            <div class="edit-card-preview">
+                <div class="edit-card-question-preview">${card.question.substring(0, 50)}${card.question.length > 50 ? '...' : ''}</div>
+                <div class="edit-card-answer-preview">${card.answer.substring(0, 50)}${card.answer.length > 50 ? '...' : ''}</div>
+            </div>
+            <button class="remove-edit-card-btn" onclick="removeEditCard(${index})" title="Remove card">✕</button>
+        </div>
+    `).join('');
+}
+
+function updateEditNavigation() {
+    const prevBtn = document.getElementById('prevEditCard');
+    const nextBtn = document.getElementById('nextEditCard');
+    
+    prevBtn.disabled = currentEditCardIndex === 0;
+    nextBtn.disabled = currentEditCardIndex === editCards.length - 1;
+}
+
+// Make functions globally available
+window.selectEditCard = selectEditCard;
+window.previousEditCard = previousEditCard;
+window.nextEditCard = nextEditCard;
+window.flipEditCard = flipEditCard;
+window.addEditCard = addEditCard;
+window.removeEditCard = removeEditCard;
 
 function setupFlashcardEditListeners() {
     // Add flashcard button
@@ -3721,34 +3895,19 @@ async function saveFlashcardEdit(guideId, userId, classId) {
             return;
         }
         
-        // Collect all flashcards
-        const flashcardItems = document.querySelectorAll('#editFlashcardsContainer .flashcard-item');
-        const flashcards = [];
-        
-        flashcardItems.forEach((item, index) => {
-            const question = item.querySelector('.flashcard-question-input').value.trim();
-            const answer = item.querySelector('.flashcard-answer-input').value.trim();
-            
-            if (question && answer) {
-                flashcards.push({
-                    question,
-                    answer,
-                    id: `card_${index + 1}`
-                });
-            }
-        });
-        
-        if (flashcards.length === 0) {
+        if (editCards.length === 0) {
             alert('Please add at least one flashcard.');
             return;
         }
+        
+        console.log('💾 Saving edited flashcards for:', guideId);
         
         // Save to Firebase
         const db = window.firebase.firestore();
         await db.collection('users').doc(userId).collection('classes').doc(classId).collection('studyGuides').doc(guideId).update({
             title: title,
-            flashcards: flashcards,
-            totalCards: flashcards.length,
+            flashcards: editCards,
+            totalCards: editCards.length,
             updatedAt: new Date()
         });
         
