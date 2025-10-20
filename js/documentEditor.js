@@ -243,6 +243,9 @@ function createEditorScreen(classData, existingDoc) {
                         <div class="dropdown-item active" data-value="Segoe UI">Segoe UI</div>
                     </div>
                 </div>
+            </div>
+            
+            <div class="toolbar-group">
                 <div class="custom-dropdown" id="fontSizeDropdown">
                     <div class="dropdown-trigger" id="fontSizeTrigger">
                         <span class="dropdown-text">16</span>
@@ -262,6 +265,9 @@ function createEditorScreen(classData, existingDoc) {
                         <div class="dropdown-item" data-value="48">48</div>
                     </div>
                 </div>
+            </div>
+            
+            <div class="toolbar-group">
                 <div class="custom-dropdown" id="headingDropdown">
                     <div class="dropdown-trigger" id="headingTrigger">
                         <span class="dropdown-text">Normal Text</span>
@@ -5965,6 +5971,10 @@ function getTextNodes(element) {
 
 // Check a text node for spelling errors
 function checkTextNode(textNode) {
+    console.log('📝 checkTextNode called with:', textNode);
+    console.log('📝 textNode type:', typeof textNode);
+    console.log('📝 textNode.nodeType:', textNode?.nodeType);
+    
     const text = textNode.textContent;
     if (!text || text.trim().length === 0) {
         console.log('📝 Empty text node, skipping');
@@ -5989,7 +5999,14 @@ function checkTextNode(textNode) {
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
                 console.log('✅ Marking word as misspelled:', word);
-                console.log('📝 Text node details:', { textNode, wordStart, wordEnd, word: word.trim() });
+                console.log('📝 Text node details before call:', { 
+                    textNode, 
+                    textNodeType: typeof textNode,
+                    textNodeNodeType: textNode?.nodeType,
+                    wordStart, 
+                    wordEnd, 
+                    word: word.trim() 
+                });
                 try {
                     markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
                 } catch (error) {
