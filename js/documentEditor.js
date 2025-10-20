@@ -204,14 +204,11 @@ function createEditorScreen(classData, existingDoc) {
     
     container.innerHTML = `
         <div class="doc-editor-header">
-            <div class="doc-editor-header-left">
             <button class="doc-tool-btn doc-back-btn-arrow" id="docBackToClassBtn" title="Back to Class" onclick="closeDocumentEditor()">
                 <span class="back-icon">←</span>
             </button>
             <input type="text" class="doc-editor-title" id="docEditorTitle" 
                    value="${docTitle}" placeholder="Untitled Document">
-            </div>
-            <div class="doc-editor-header-right">
             <button class="doc-tool-btn" id="manualSaveBtn" title="Save Document (Ctrl+S)">💾 Save</button>
             <button class="doc-tool-btn" id="savingStatus">Saved</button>
             <button class="doc-tool-btn" id="downloadPdfBtn" title="Download as PDF">📥 PDF</button>
@@ -224,61 +221,63 @@ function createEditorScreen(classData, existingDoc) {
             <button class="doc-chat-toggle-btn" id="chatToggleBtn" title="Toggle Genius AI Chat">
                 <img src="assets/darkgenius.png" alt="Genius AI" class="chat-toggle-icon">
             </button>
-            </div>
         </div>
         
         <div class="doc-editor-toolbar">
             <div class="toolbar-group">
-                <div class="custom-dropdown" id="fontDropdown">
-                    <div class="dropdown-trigger" id="fontTrigger">
-                        <span class="dropdown-text">Segoe UI</span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-menu" id="fontMenu">
-                        <div class="dropdown-item" data-value="Arial">Arial</div>
-                        <div class="dropdown-item" data-value="Times New Roman">Times New Roman</div>
-                        <div class="dropdown-item" data-value="Courier New">Courier New</div>
-                        <div class="dropdown-item" data-value="Georgia">Georgia</div>
-                        <div class="dropdown-item" data-value="Verdana">Verdana</div>
-                        <div class="dropdown-item active" data-value="Segoe UI">Segoe UI</div>
-                    </div>
-                </div>
-                <div class="custom-dropdown" id="fontSizeDropdown">
-                    <div class="dropdown-trigger" id="fontSizeTrigger">
-                        <span class="dropdown-text">16</span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-menu" id="fontSizeMenu">
-                        <div class="dropdown-item" data-value="10">10</div>
-                        <div class="dropdown-item" data-value="12">12</div>
-                        <div class="dropdown-item" data-value="14">14</div>
-                        <div class="dropdown-item active" data-value="16">16</div>
-                        <div class="dropdown-item" data-value="18">18</div>
-                        <div class="dropdown-item" data-value="20">20</div>
-                        <div class="dropdown-item" data-value="24">24</div>
-                        <div class="dropdown-item" data-value="28">28</div>
-                        <div class="dropdown-item" data-value="32">32</div>
-                        <div class="dropdown-item" data-value="36">36</div>
-                        <div class="dropdown-item" data-value="48">48</div>
-                    </div>
-                </div>
-                <div class="custom-dropdown" id="headingDropdown">
-                    <div class="dropdown-trigger" id="headingTrigger">
-                        <span class="dropdown-text">Normal Text</span>
-                        <span class="dropdown-arrow">▼</span>
-                    </div>
-                    <div class="dropdown-menu" id="headingMenu">
-                        <div class="dropdown-item active" data-value="p">Normal Text</div>
-                        <div class="dropdown-item" data-value="h1">Title</div>
-                        <div class="dropdown-item" data-value="h2">Subtitle</div>
-                        <div class="dropdown-item" data-value="h3">Heading 1</div>
-                        <div class="dropdown-item" data-value="h4">Heading 2</div>
-                        <div class="dropdown-item" data-value="h5">Heading 3</div>
-                        <div class="dropdown-item" data-value="h6">Heading 4</div>
-                        <div class="dropdown-item" data-value="blockquote">Quote</div>
-                        <div class="dropdown-item" data-value="code">Code</div>
-                    </div>
-                </div>
+                <button class="toolbar-btn dropdown-btn" id="fontBtn" title="Font Family">
+                    <span class="btn-text">Font</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <button class="toolbar-btn dropdown-btn" id="fontSizeBtn" title="Font Size">
+                    <span class="btn-text">Size</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <button class="toolbar-btn dropdown-btn" id="headingBtn" title="Text Style">
+                    <span class="btn-text">Style</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+            </div>
+            
+            <!-- Dropdown Menus -->
+            <div class="dropdown-overlay" id="dropdownOverlay"></div>
+            
+            <div class="dropdown-menu" id="fontMenu">
+                <div class="dropdown-header">Font Family</div>
+                <div class="dropdown-item" data-value="Arial">Arial</div>
+                <div class="dropdown-item" data-value="Times New Roman">Times New Roman</div>
+                <div class="dropdown-item" data-value="Courier New">Courier New</div>
+                <div class="dropdown-item" data-value="Georgia">Georgia</div>
+                <div class="dropdown-item" data-value="Verdana">Verdana</div>
+                <div class="dropdown-item active" data-value="Segoe UI">Segoe UI</div>
+            </div>
+            
+            <div class="dropdown-menu" id="fontSizeMenu">
+                <div class="dropdown-header">Font Size</div>
+                <div class="dropdown-item" data-value="10">10px</div>
+                <div class="dropdown-item" data-value="12">12px</div>
+                <div class="dropdown-item" data-value="14">14px</div>
+                <div class="dropdown-item active" data-value="16">16px</div>
+                <div class="dropdown-item" data-value="18">18px</div>
+                <div class="dropdown-item" data-value="20">20px</div>
+                <div class="dropdown-item" data-value="24">24px</div>
+                <div class="dropdown-item" data-value="28">28px</div>
+                <div class="dropdown-item" data-value="32">32px</div>
+                <div class="dropdown-item" data-value="36">36px</div>
+                <div class="dropdown-item" data-value="48">48px</div>
+            </div>
+            
+            <div class="dropdown-menu" id="headingMenu">
+                <div class="dropdown-header">Text Style</div>
+                <div class="dropdown-item active" data-value="p">Normal Text</div>
+                <div class="dropdown-item" data-value="h1">Title</div>
+                <div class="dropdown-item" data-value="h2">Subtitle</div>
+                <div class="dropdown-item" data-value="h3">Heading 1</div>
+                <div class="dropdown-item" data-value="h4">Heading 2</div>
+                <div class="dropdown-item" data-value="h5">Heading 3</div>
+                <div class="dropdown-item" data-value="h6">Heading 4</div>
+                <div class="dropdown-item" data-value="blockquote">Quote</div>
+                <div class="dropdown-item" data-value="code">Code</div>
             </div>
             
             <div class="toolbar-divider"></div>
@@ -498,9 +497,9 @@ function createEditorScreen(classData, existingDoc) {
          // Initialize spell check
          loadSpellCheckSettings();
          initializeSpellCheck();
-    }, 100);
-    
-    return container;
+     }, 100);
+     
+     return container;
 }
 
 function setupEditorControls(classData, existingDoc) {
@@ -1009,8 +1008,8 @@ function setupToolbarButtons() {
                 console.log('Font changed to:', selectedFont);
                 
                 // Focus content first
-        const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-        if (activeContent) {
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
                     activeContent.focus();
                 }
                 
@@ -1039,7 +1038,7 @@ function setupToolbarButtons() {
                 }
                 
                 if (typeof triggerFormattingSave === 'function') {
-            triggerFormattingSave();
+                    triggerFormattingSave();
                 }
             }
         });
@@ -1083,13 +1082,13 @@ function setupToolbarButtons() {
                     activeContent.focus();
                 }
                 
-            // Use a more reliable method for font size
+                // Use a more reliable method for font size
                 const success = document.execCommand('fontSize', false, '7');
                 console.log('Font size command executed:', success);
                 
-            setTimeout(() => {
+                setTimeout(() => {
                     // Find the most recent font element and update it
-                const fontElements = document.querySelectorAll('font[size="7"]');
+                    const fontElements = document.querySelectorAll('font[size="7"]');
                     if (fontElements.length > 0) {
                         const lastFontElement = fontElements[fontElements.length - 1];
                         lastFontElement.removeAttribute('size');
@@ -1111,7 +1110,7 @@ function setupToolbarButtons() {
                     }
                     
                     if (typeof triggerFormattingSave === 'function') {
-                triggerFormattingSave();
+                        triggerFormattingSave();
                     }
                 }, 50);
             }
@@ -1259,7 +1258,7 @@ function setupToolbarButtons() {
                 }
                 
                 if (typeof triggerFormattingSave === 'function') {
-                triggerFormattingSave();
+                    triggerFormattingSave();
                 }
             }
         });
@@ -1271,9 +1270,9 @@ function setupToolbarButtons() {
     if (boldBtn) {
         boldBtn.addEventListener('click', (e) => {
             e.preventDefault();
-                e.stopPropagation();
-                console.log('Bold button clicked!');
-                executeCommand('bold');
+            e.stopPropagation();
+            console.log('Bold button clicked!');
+            executeCommand('bold');
         });
     }
     
@@ -1282,12 +1281,12 @@ function setupToolbarButtons() {
     console.log('Italic button found:', !!italicBtn);
     if (italicBtn) {
         italicBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Italic button clicked!');
-                executeCommand('italic');
-            });
-        }
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Italic button clicked!');
+            executeCommand('italic');
+        });
+    }
     
     // Underline button
     const underlineBtn = document.getElementById('underlineBtn');
@@ -3482,7 +3481,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     
     // Initialize chat management with a delay to ensure Firebase is loaded
     setTimeout(() => {
-    initializeChatManagement();
+        initializeChatManagement();
     }, 1000);
     
     // Also try to initialize immediately if Firebase is already available
@@ -3769,8 +3768,8 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
             }
             
             if (chatService) {
-            await chatService.saveChats(classData.userId, classData.id, docId, chats);
-            console.log('Chats saved to Firebase');
+                await chatService.saveChats(classData.userId, classData.id, docId, chats);
+                console.log('Chats saved to Firebase');
             } else {
                 console.warn('Firebase chatService not available, using localStorage only');
             }
@@ -5842,19 +5841,13 @@ function initializeSpellCheck() {
     
     // Add event listeners for real-time spell checking with faster response
     contentElement.addEventListener('input', (e) => {
-        // Only clear markers if there's no active popup
-        const existingPopup = document.querySelector('.spell-check-suggestion-popup');
-        if (!existingPopup) {
-            clearSpellCheckMarkers();
-        }
+        // Clear spell check markers when user starts typing
+        clearSpellCheckMarkers();
         debounce(performSpellCheck, 200)();
     });
     contentElement.addEventListener('keyup', debounce(performSpellCheck, 150));
     contentElement.addEventListener('paste', () => {
-        const existingPopup = document.querySelector('.spell-check-suggestion-popup');
-        if (!existingPopup) {
-            clearSpellCheckMarkers();
-        }
+        clearSpellCheckMarkers();
         setTimeout(performSpellCheck, 50);
     });
     
@@ -5865,12 +5858,9 @@ function initializeSpellCheck() {
         }
     });
     
-    // Clear spell check markers when user focuses on editor (but not if popup is open)
+    // Clear spell check markers when user focuses on editor
     contentElement.addEventListener('focus', () => {
-        const existingPopup = document.querySelector('.spell-check-suggestion-popup');
-        if (!existingPopup) {
-            clearSpellCheckMarkers();
-        }
+        clearSpellCheckMarkers();
     });
     
     // Initial spell check
@@ -5925,12 +5915,8 @@ function performSpellCheck() {
     }
     
     // Get all text nodes in the content
-    console.log('📝 contentElement:', contentElement);
-    console.log('📝 contentElement type:', typeof contentElement);
-    console.log('📝 contentElement.nodeType:', contentElement?.nodeType);
     const textNodes = getTextNodes(contentElement);
     console.log('📝 Found text nodes:', textNodes.length);
-    console.log('📝 textNodes array:', textNodes);
     
     textNodes.forEach((node, index) => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
@@ -5944,16 +5930,25 @@ function performSpellCheck() {
 
 // Get all text nodes in an element
 function getTextNodes(element) {
+    console.log('🔍 getTextNodes called with element:', element);
+    console.log('🔍 element type:', typeof element);
+    console.log('🔍 element.nodeType:', element?.nodeType);
+    
     const textNodes = [];
     const walker = document.createTreeWalker(
         element,
         NodeFilter.SHOW_TEXT,
         {
             acceptNode: (node) => {
+                console.log('🔍 TreeWalker found node:', node);
+                console.log('🔍 Node type:', node.nodeType);
+                console.log('🔍 Node text content:', node.textContent);
                 // Skip text nodes that are inside spell check markers
                 if (node.parentElement && node.parentElement.classList.contains('spell-check-error')) {
+                    console.log('🔍 Rejecting node (inside spell check marker)');
                     return NodeFilter.FILTER_REJECT;
                 }
+                console.log('🔍 Accepting node');
                 return NodeFilter.FILTER_ACCEPT;
             }
         }
@@ -5961,9 +5956,12 @@ function getTextNodes(element) {
     
     let node;
     while (node = walker.nextNode()) {
+        console.log('🔍 Adding node to array:', node);
+        console.log('🔍 Node text content:', node.textContent);
         textNodes.push(node);
     }
     
+    console.log('🔍 Final textNodes array:', textNodes);
     return textNodes;
 }
 
@@ -5993,7 +5991,6 @@ function checkTextNode(textNode) {
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
                 console.log('✅ Marking word as misspelled:', word);
-                console.log('📝 Text node details:', { textNode, wordStart, wordEnd, word: word.trim() });
                 try {
                     markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
                 } catch (error) {
@@ -6104,15 +6101,8 @@ function isMisspelled(word) {
 // Mark a misspelled word with red underline
 function markMisspelledWord(textNode, startOffset, endOffset, word) {
     // Validate inputs
-    if (!textNode || typeof textNode.textContent !== 'string' || startOffset < 0 || endOffset <= startOffset || endOffset > textNode.textContent.length) {
-        console.log('Invalid parameters for markMisspelledWord:', { 
-            textNode: textNode, 
-            textNodeType: typeof textNode,
-            textContent: textNode?.textContent,
-            startOffset, 
-            endOffset, 
-            word 
-        });
+    if (!textNode || startOffset < 0 || endOffset <= startOffset || endOffset > textNode.textContent.length) {
+        console.log('Invalid parameters for markMisspelledWord:', { textNode, startOffset, endOffset, word });
         return;
     }
     
