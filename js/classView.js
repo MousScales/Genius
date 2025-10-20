@@ -3692,7 +3692,7 @@ async function editFlashcardSet(guideId, classData) {
                         <!-- Flip Button -->
                         <div class="edit-flip-button-container">
                             <button class="edit-flip-button" onclick="flipEditCard()">
-                                <span class="flip-icon">🔄</span>
+                                <span class="edit-flip-icon">🔄</span>
                                 <span class="flip-text">Flip Card</span>
                             </button>
                         </div>
@@ -3757,8 +3757,10 @@ async function editFlashcardSet(guideId, classData) {
         
         document.body.appendChild(modal);
         
-        // Add event listeners for the edit modal
-        setupFlashcardEditListeners();
+        // Add event listeners for the edit modal after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            setupFlashcardEditListeners();
+        }, 100);
         
         // Initialize edit interface
         initializeFlashcardEdit(guide);
