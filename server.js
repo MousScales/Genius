@@ -32,7 +32,33 @@ app.use((req, res, next) => {
 
 // Routes
 app.get('/favicon.ico', (req, res) => {
+    res.setHeader('Content-Type', 'image/x-icon');
     res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
+app.get('/favicon-16x16.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'favicon-16x16.png'));
+});
+
+app.get('/favicon-32x32.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'favicon-32x32.png'));
+});
+
+app.get('/icon-192.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'icon-192.png'));
+});
+
+app.get('/icon-512.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'icon-512.png'));
+});
+
+app.get('/apple-touch-icon.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'apple-touch-icon.png'));
 });
 
 // Explicit routes for main HTML files
