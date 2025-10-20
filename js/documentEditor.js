@@ -325,6 +325,7 @@ function createEditorScreen(classData, existingDoc) {
                 <button class="toolbar-btn" id="imageBtn" title="Insert Image" tabindex="-1">
                     🖼️
                 </button>
+                <input type="color" class="toolbar-color" id="textColorBtn" title="Text Color" tabindex="-1">
             </div>
             
             <div class="toolbar-divider"></div>
@@ -353,6 +354,17 @@ function createEditorScreen(classData, existingDoc) {
             <div class="toolbar-group">
                 <button class="toolbar-btn" id="clearFormatBtn" title="Clear Formatting" tabindex="-1">
                     ✖️
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="spellCheckBtn" title="Toggle Spell Check" tabindex="-1">
+                    ✓
+                </button>
+                <button class="toolbar-btn" id="findReplaceBtn" title="Find and Replace (Ctrl+H)" tabindex="-1">
+                    🔍
                 </button>
             </div>
             
@@ -414,6 +426,12 @@ function createEditorScreen(classData, existingDoc) {
             console.error('Error setting up editor controls:', error);
         }
         
+        try {
+            setupToolbarButtons();
+        } catch (error) {
+            console.error('Error setting up toolbar buttons:', error);
+        }
+        
          try {
              setupGeniusChat(classData, existingDoc);
          } catch (error) {
@@ -443,9 +461,13 @@ function createEditorScreen(classData, existingDoc) {
          setTimeout(() => {
              loadSavedSuggestions(classData, existingDoc);
          }, 300);
-    }, 100);
-    
-    return container;
+         
+         // Initialize spell check
+         loadSpellCheckSettings();
+         initializeSpellCheck();
+     }, 100);
+     
+     return container;
 }
 
 function setupEditorControls(classData, existingDoc) {
@@ -660,12 +682,21 @@ function setupToolbarButtons() {
     
     // Helper function to execute command and maintain focus
     const executeCommand = (command, value = null) => {
+        console.log('Executing command:', command, value);
+        
+        // Ensure content is focused first
+        const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+        if (activeContent) {
+            activeContent.focus();
+        }
+        
         // Save current selection
         const selection = window.getSelection();
         const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
         
         // Execute command
-        document.execCommand(command, false, value);
+        const success = document.execCommand(command, false, value);
+        console.log('Command executed:', success);
         
         // Restore selection if it was lost
         if (range) {
@@ -673,16 +704,131 @@ function setupToolbarButtons() {
                 selection.removeAllRanges();
                 selection.addRange(range);
             } catch (e) {
-                // Ignore errors
+                console.log('Could not restore selection:', e);
             }
         }
         
-        // Ensure content is focused
-        const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-        if (activeContent) {
-            setTimeout(() => activeContent.focus(), 0);
+        // Update button states
+        setTimeout(updateButtonStates, 100);
+        
+        // Trigger auto-save
+        if (typeof triggerFormattingSave === 'function') {
+            triggerFormattingSave();
         }
     };
+    
+    // Helper function to update button states
+    const updateButtonStates = () => {
+        const content = document.querySelector('.doc-editor-content');
+        if (!content) return;
+        
+        // Update formatting buttons
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
+        const strikeBtn = document.getElementById('strikeBtn');
+        
+        if (boldBtn) {
+            boldBtn.classList.toggle('active', document.queryCommandState('bold'));
+        }
+        if (italicBtn) {
+            italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+        }
+        if (underlineBtn) {
+            underlineBtn.classList.toggle('active', document.queryCommandState('underline'));
+        }
+        if (strikeBtn) {
+            strikeBtn.classList.toggle('active', document.queryCommandState('strikeThrough'));
+        }
+        
+        // Update alignment buttons
+        const alignLeftBtn = document.getElementById('alignLeftBtn');
+        const alignCenterBtn = document.getElementById('alignCenterBtn');
+        const alignRightBtn = document.getElementById('alignRightBtn');
+        const justifyBtn = document.getElementById('justifyBtn');
+        
+        if (alignLeftBtn) {
+            alignLeftBtn.classList.toggle('active', document.queryCommandState('justifyLeft'));
+        }
+        if (alignCenterBtn) {
+            alignCenterBtn.classList.toggle('active', document.queryCommandState('justifyCenter'));
+        }
+        if (alignRightBtn) {
+            alignRightBtn.classList.toggle('active', document.queryCommandState('justifyRight'));
+        }
+        if (justifyBtn) {
+            justifyBtn.classList.toggle('active', document.queryCommandState('justifyFull'));
+        }
+    };
+    
+    // Add keyboard shortcuts
+    const addKeyboardShortcuts = () => {
+        const content = document.querySelector('.doc-editor-content');
+        if (!content) return;
+        
+        content.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + B for Bold
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                executeCommand('bold');
+                triggerFormattingSave();
+                updateButtonStates();
+            }
+            // Ctrl/Cmd + I for Italic
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                executeCommand('italic');
+                triggerFormattingSave();
+                updateButtonStates();
+            }
+            // Ctrl/Cmd + U for Underline
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                executeCommand('underline');
+                triggerFormattingSave();
+                updateButtonStates();
+            }
+            // Ctrl/Cmd + Z for Undo
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+            // Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z for Redo
+            else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                redo();
+            }
+            // Ctrl/Cmd + S for Save
+            else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (typeof window.autoSave === 'function') {
+                    window.hasChanges = true;
+                    window.autoSave();
+                }
+            }
+            // Ctrl/Cmd + H for Find and Replace
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+                e.preventDefault();
+                showFindReplaceDialog();
+            }
+            // Ctrl/Cmd + F for Find
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                showFindDialog();
+            }
+        });
+    };
+    
+    // Initialize keyboard shortcuts
+    addKeyboardShortcuts();
+    
+    // Update button states on selection change
+    const content = document.querySelector('.doc-editor-content');
+    if (content) {
+        content.addEventListener('selectionchange', updateButtonStates);
+        content.addEventListener('keyup', updateButtonStates);
+        content.addEventListener('mouseup', updateButtonStates);
+    }
     
     // Font select
     const fontSelect = document.getElementById('fontSelect');
@@ -700,229 +846,188 @@ function setupToolbarButtons() {
     if (fontSizeSelect) {
         fontSizeSelect.addEventListener('change', (e) => {
             const size = e.target.value;
+            console.log('Changing font size to:', size);
+            
+            // Focus content first
+            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+            if (activeContent) {
+                activeContent.focus();
+            }
+            
             // Use a more reliable method for font size
-            executeCommand('fontSize', '7');
+            const success = document.execCommand('fontSize', false, '7');
+            console.log('Font size command executed:', success);
+            
             setTimeout(() => {
+                // Find the most recent font element and update it
                 const fontElements = document.querySelectorAll('font[size="7"]');
-                fontElements.forEach(el => {
-                    el.removeAttribute('size');
-                    el.style.fontSize = size + 'px';
-                });
-                triggerFormattingSave();
-            }, 10);
+                if (fontElements.length > 0) {
+                    const lastFontElement = fontElements[fontElements.length - 1];
+                    lastFontElement.removeAttribute('size');
+                    lastFontElement.style.fontSize = size + 'px';
+                    console.log('Updated font size to:', size + 'px');
+                } else {
+                    // Fallback: apply to selection or current element
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const span = document.createElement('span');
+                        span.style.fontSize = size + 'px';
+                        try {
+                            range.surroundContents(span);
+                        } catch (e) {
+                            console.log('Could not apply font size directly:', e);
+                        }
+                    }
+                }
+                
+                if (typeof triggerFormattingSave === 'function') {
+                    triggerFormattingSave();
+                }
+            }, 50);
         });
     }
     
-    // Text formatting buttons - completely redo
-    setTimeout(() => {
+    // Bold button
     const boldBtn = document.getElementById('boldBtn');
     console.log('Bold button found:', !!boldBtn);
     if (boldBtn) {
-            // Remove all existing listeners
-            boldBtn.replaceWith(boldBtn.cloneNode(true));
-            const newBoldBtn = document.getElementById('boldBtn');
-            
-            // Make sure it's clickable
-            newBoldBtn.style.pointerEvents = 'auto';
-            newBoldBtn.style.cursor = 'pointer';
-            newBoldBtn.style.zIndex = '9999';
-            newBoldBtn.style.position = 'relative';
-            
-            // Add multiple event types
-            newBoldBtn.addEventListener('mousedown', (e) => {
+        boldBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-                console.log('Bold button mousedown!');
+            console.log('Bold button clicked!');
             executeCommand('bold');
-                triggerFormattingSave();
         });
-            
-            newBoldBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-                e.stopPropagation();
-                console.log('Bold button clicked!');
-                executeCommand('bold');
-                triggerFormattingSave();
-        });
-            
-            console.log('Bold button completely resetup');
     }
-    }, 300);
     
-    // Italic button - completely redo
-    setTimeout(() => {
+    // Italic button
     const italicBtn = document.getElementById('italicBtn');
+    console.log('Italic button found:', !!italicBtn);
     if (italicBtn) {
-            // Remove all existing listeners
-            italicBtn.replaceWith(italicBtn.cloneNode(true));
-            const newItalicBtn = document.getElementById('italicBtn');
-            
-            // Make sure it's clickable
-            newItalicBtn.style.pointerEvents = 'auto';
-            newItalicBtn.style.cursor = 'pointer';
-            newItalicBtn.style.zIndex = '9999';
-            newItalicBtn.style.position = 'relative';
-            
-            // Add multiple event types
-            newItalicBtn.addEventListener('mousedown', (e) => {
+        italicBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-                console.log('Italic button mousedown!');
+            console.log('Italic button clicked!');
             executeCommand('italic');
-                triggerFormattingSave();
-            });
-            
-            newItalicBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Italic button clicked!');
-                executeCommand('italic');
-                triggerFormattingSave();
-            });
-            
-            console.log('Italic button completely resetup');
-        }
-    }, 350);
+        });
+    }
     
+    // Underline button
     const underlineBtn = document.getElementById('underlineBtn');
     if (underlineBtn) {
-        underlineBtn.addEventListener('mousedown', (e) => {
+        underlineBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Underline button clicked!');
             executeCommand('underline');
-            triggerFormattingSave();
         });
-        underlineBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
+    // Strikethrough button
     const strikeBtn = document.getElementById('strikeBtn');
     if (strikeBtn) {
-        strikeBtn.addEventListener('mousedown', (e) => {
+        strikeBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Strikethrough button clicked!');
             executeCommand('strikeThrough');
-            triggerFormattingSave();
         });
-        strikeBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     // Alignment buttons
     const alignLeftBtn = document.getElementById('alignLeftBtn');
     if (alignLeftBtn) {
-        alignLeftBtn.addEventListener('mousedown', (e) => {
+        alignLeftBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    selectAllInElement(activeContent);
-                }
-            }
+            console.log('Align left button clicked!');
             executeCommand('justifyLeft');
-            triggerFormattingSave();
         });
-        alignLeftBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     const alignCenterBtn = document.getElementById('alignCenterBtn');
     if (alignCenterBtn) {
-        alignCenterBtn.addEventListener('mousedown', (e) => {
+        alignCenterBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    selectAllInElement(activeContent);
-                }
-            }
+            console.log('Align center button clicked!');
             executeCommand('justifyCenter');
-            triggerFormattingSave();
         });
-        alignCenterBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     const alignRightBtn = document.getElementById('alignRightBtn');
     if (alignRightBtn) {
-        alignRightBtn.addEventListener('mousedown', (e) => {
+        alignRightBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    selectAllInElement(activeContent);
-                }
-            }
+            console.log('Align right button clicked!');
             executeCommand('justifyRight');
-            triggerFormattingSave();
         });
-        alignRightBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     const justifyBtn = document.getElementById('justifyBtn');
     if (justifyBtn) {
-        justifyBtn.addEventListener('mousedown', (e) => {
+        justifyBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    selectAllInElement(activeContent);
-                }
-            }
+            console.log('Justify button clicked!');
             executeCommand('justifyFull');
-            triggerFormattingSave();
         });
-        justifyBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     // List buttons
     const bulletListBtn = document.getElementById('bulletListBtn');
     if (bulletListBtn) {
-        bulletListBtn.addEventListener('mousedown', (e) => {
+        bulletListBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Bullet list button clicked!');
             executeCommand('insertUnorderedList');
-            triggerFormattingSave();
         });
-        bulletListBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     const numberListBtn = document.getElementById('numberListBtn');
     if (numberListBtn) {
-        numberListBtn.addEventListener('mousedown', (e) => {
+        numberListBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Number list button clicked!');
             executeCommand('insertOrderedList');
-            triggerFormattingSave();
         });
-        numberListBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     // Indent buttons
     const indentBtn = document.getElementById('indentBtn');
     if (indentBtn) {
-        indentBtn.addEventListener('mousedown', (e) => {
+        indentBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Indent button clicked!');
             executeCommand('indent');
-            triggerFormattingSave();
         });
-        indentBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     const outdentBtn = document.getElementById('outdentBtn');
     if (outdentBtn) {
-        outdentBtn.addEventListener('mousedown', (e) => {
+        outdentBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Outdent button clicked!');
             executeCommand('outdent');
+        });
+    }
+    
+    // Text Color Picker
+    const textColorBtn = document.getElementById('textColorBtn');
+    if (textColorBtn) {
+        textColorBtn.value = '#ffffff'; // Default white color
+        textColorBtn.addEventListener('change', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const color = e.target.value;
+            executeCommand('foreColor', color);
             triggerFormattingSave();
         });
-        outdentBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     // Image
@@ -1080,35 +1185,65 @@ function setupToolbarButtons() {
     // Undo/Redo buttons
     const undoBtn = document.getElementById('undoBtn');
     if (undoBtn) {
-        undoBtn.addEventListener('mousedown', (e) => {
+        undoBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Undo button clicked!');
             undo();
         });
-        undoBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     const redoBtn = document.getElementById('redoBtn');
     if (redoBtn) {
-        redoBtn.addEventListener('mousedown', (e) => {
+        redoBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Redo button clicked!');
             redo();
         });
-        redoBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
     // Clear Formatting button
     const clearFormatBtn = document.getElementById('clearFormatBtn');
     if (clearFormatBtn) {
-        clearFormatBtn.addEventListener('mousedown', (e) => {
+        clearFormatBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Clear formatting button clicked!');
             executeCommand('removeFormat');
         });
-        clearFormatBtn.addEventListener('click', (e) => e.preventDefault());
     }
     
+    // Spell Check toggle button
+    const spellCheckBtn = document.getElementById('spellCheckBtn');
+    if (spellCheckBtn) {
+        spellCheckBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSpellCheck();
+            
+            // Update button appearance
+            if (spellCheckEnabled) {
+                spellCheckBtn.style.background = 'rgba(0, 255, 136, 0.2)';
+                spellCheckBtn.style.borderColor = 'rgba(0, 255, 136, 0.4)';
+                spellCheckBtn.title = 'Spell Check: ON';
+            } else {
+                spellCheckBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+                spellCheckBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                spellCheckBtn.title = 'Spell Check: OFF';
+            }
+        });
+    }
+    
+    // Find and Replace button
+    const findReplaceBtn = document.getElementById('findReplaceBtn');
+    if (findReplaceBtn) {
+        findReplaceBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showFindReplaceDialog();
+        });
+    }
     
     // Remove all suggestions button
     const removeSuggestionsBtn = document.getElementById('removeSuggestionsBtn');
@@ -2968,8 +3103,16 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     // Setup resize functionality
     setupGeniusSidebarResize();
     
-    // Initialize chat management
-    initializeChatManagement();
+    // Initialize chat management with a delay to ensure Firebase is loaded
+    setTimeout(() => {
+        initializeChatManagement();
+    }, 1000);
+    
+    // Also try to initialize immediately if Firebase is already available
+    if (window.chatService && typeof window.chatService.getChats === 'function') {
+        console.log('Firebase chatService already available, initializing immediately');
+        initializeChatManagement();
+    }
     
     // New chat button
     if (newChatBtn) {
@@ -2982,12 +3125,49 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     }
     
     async function initializeChatManagement() {
+        // Prevent duplicate initialization
+        if (window.chatManagementInitialized) {
+            console.log('Chat management already initialized, skipping');
+            return;
+        }
+        window.chatManagementInitialized = true;
+        
         // Load saved chats from Firebase first, then localStorage
         const docId = existingDoc ? existingDoc.id : 'new-document';
         
         try {
-            // Try Firebase first
-            const { chatService } = await import('./firebase-service.js');
+            // Try Firebase first with retry mechanism
+            let chatService = null;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    const { chatService: importedChatService } = await import('./firebase-service.js');
+                    if (importedChatService && typeof importedChatService.getChats === 'function') {
+                        chatService = importedChatService;
+                        break;
+                    }
+                } catch (importError) {
+                    console.warn(`Firebase import attempt ${retryCount + 1} failed:`, importError);
+                }
+                
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            // Fallback to window object if ES6 import fails
+            if (!chatService && window.chatService && typeof window.chatService.getChats === 'function') {
+                console.log('Using chatService from window object');
+                chatService = window.chatService;
+            }
+            
+            if (!chatService) {
+                throw new Error('Firebase chatService not available after retries');
+            }
+            
             const firebaseChats = await chatService.getChats(classData.userId, classData.id, docId);
             
             if (Object.keys(firebaseChats).length > 0) {
@@ -3021,7 +3201,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
                         console.log('Loaded chats from localStorage:', Object.keys(chats).length);
                         
                         // Migrate to Firebase
-                        if (Object.keys(chats).length > 0) {
+                        if (Object.keys(chats).length > 0 && chatService && typeof chatService.saveChats === 'function') {
                             console.log('Migrating chats from localStorage to Firebase...');
                             await chatService.saveChats(classData.userId, classData.id, docId, chats);
                             console.log('Chats migrated to Firebase');
@@ -3058,8 +3238,9 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
             }
         }
         
-        // Create default chat if none exist
+        // Ensure we always have at least one chat, even if everything fails
         if (Object.keys(chats).length === 0) {
+            console.log('No chats found, creating default chat');
             createNewChat();
         } else {
             // Load the first chat
@@ -3182,10 +3363,40 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         const docId = existingDoc ? existingDoc.id : 'new-document';
         
         try {
-            // Save to Firebase
-            const { chatService } = await import('./firebase-service.js');
-            await chatService.saveChats(classData.userId, classData.id, docId, chats);
-            console.log('Chats saved to Firebase');
+            // Save to Firebase with retry mechanism
+            let chatService = null;
+            let retryCount = 0;
+            const maxRetries = 2;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    const { chatService: importedChatService } = await import('./firebase-service.js');
+                    if (importedChatService && typeof importedChatService.saveChats === 'function') {
+                        chatService = importedChatService;
+                        break;
+                    }
+                } catch (importError) {
+                    console.warn(`Firebase import attempt ${retryCount + 1} failed:`, importError);
+                }
+                
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
+            
+            // Fallback to window object if ES6 import fails
+            if (!chatService && window.chatService && typeof window.chatService.saveChats === 'function') {
+                console.log('Using chatService from window object for save');
+                chatService = window.chatService;
+            }
+            
+            if (chatService) {
+                await chatService.saveChats(classData.userId, classData.id, docId, chats);
+                console.log('Chats saved to Firebase');
+            } else {
+                console.warn('Firebase chatService not available, using localStorage only');
+            }
         } catch (error) {
             console.error('Error saving chats to Firebase:', error);
         }
@@ -5236,6 +5447,856 @@ window.testAutoSave = function() {
         window.autoSave();
     }
 };
+
+// Spell Check Functionality
+let spellCheckEnabled = true;
+let ignoredWords = new Set();
+let customDictionary = new Set();
+
+// Initialize spell check when document editor opens
+function initializeSpellCheck() {
+    if (!spellCheckEnabled) return;
+    
+    const contentElement = document.getElementById('docEditorContent');
+    if (!contentElement) return;
+    
+    // Disable browser's built-in spell check to use our custom one
+    contentElement.setAttribute('spellcheck', 'false');
+    
+    // Add event listeners for real-time spell checking with faster response
+    contentElement.addEventListener('input', debounce(performSpellCheck, 200));
+    contentElement.addEventListener('keyup', debounce(performSpellCheck, 150));
+    contentElement.addEventListener('paste', () => {
+        setTimeout(performSpellCheck, 50);
+    });
+    
+    // Add immediate spell check on word completion (space, punctuation)
+    contentElement.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === '.' || e.key === ',' || e.key === '!' || e.key === '?' || e.key === '\n') {
+            setTimeout(performSpellCheck, 100);
+        }
+    });
+    
+    // Initial spell check
+    setTimeout(performSpellCheck, 500);
+}
+
+// Debounce function to limit spell check frequency
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Main spell check function
+function performSpellCheck() {
+    if (!spellCheckEnabled) return;
+    
+    const contentElement = document.getElementById('docEditorContent');
+    if (!contentElement) return;
+    
+    // Clear existing spell check markers
+    clearSpellCheckMarkers();
+    
+    // Get all text nodes in the content
+    const textNodes = getTextNodes(contentElement);
+    
+    textNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            checkTextNode(node);
+        }
+    });
+}
+
+// Get all text nodes in an element
+function getTextNodes(element) {
+    const textNodes = [];
+    const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: (node) => {
+                // Skip text nodes that are inside spell check markers
+                if (node.parentElement && node.parentElement.classList.contains('spell-check-error')) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+        textNodes.push(node);
+    }
+    
+    return textNodes;
+}
+
+// Check a text node for spelling errors
+function checkTextNode(textNode) {
+    const text = textNode.textContent;
+    const words = text.split(/(\s+)/);
+    
+    let currentOffset = 0;
+    words.forEach(word => {
+        if (word.trim() && isWord(word)) {
+            const wordStart = text.indexOf(word, currentOffset);
+            const wordEnd = wordStart + word.length;
+            
+            if (isMisspelled(word.trim())) {
+                markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
+            }
+        }
+        currentOffset += word.length;
+    });
+}
+
+// Check if a string is a word (contains only letters)
+function isWord(str) {
+    return /^[a-zA-Z]+$/.test(str);
+}
+
+// Check if a word is misspelled using multiple methods
+function isMisspelled(word) {
+    if (ignoredWords.has(word.toLowerCase())) return false;
+    if (customDictionary.has(word.toLowerCase())) return false;
+    
+    // Basic word validation
+    if (word.length < 2) return false;
+    if (!/^[a-zA-Z]+$/.test(word)) return false;
+    
+    // Check against common English words dictionary
+    const commonWords = [
+        'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+        'this', 'but', 'his', 'by', 'from', 'they', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
+        'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just',
+        'him', 'know', 'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then',
+        'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first',
+        'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is', 'was', 'are', 'been',
+        'has', 'had', 'were', 'said', 'each', 'which', 'their', 'time', 'will', 'about', 'if', 'up', 'out', 'many', 'then', 'them',
+        'can', 'only', 'other', 'new', 'some', 'what', 'time', 'very', 'when', 'much', 'get', 'through', 'back', 'much', 'before',
+        'go', 'good', 'new', 'first', 'last', 'long', 'little', 'own', 'other', 'old', 'right', 'big', 'high', 'different', 'small',
+        'large', 'next', 'early', 'young', 'important', 'few', 'public', 'same', 'able'
+    ];
+    
+    if (commonWords.includes(word.toLowerCase())) return false;
+    
+    // Use a simple spell check algorithm for common misspellings
+    const misspelledWords = [
+        'teh', 'adn', 'nad', 'taht', 'thier', 'recieve', 'recieved', 'recieving', 'seperate', 'seperated', 'seperating',
+        'occured', 'occuring', 'definately', 'definately', 'accomodate', 'accomodation', 'acheive', 'acheived', 'acheiving',
+        'begining', 'begining', 'beleive', 'beleived', 'beleiving', 'calender', 'cemetary', 'changable', 'collegue', 'comming',
+        'concious', 'definately', 'dependant', 'embarass', 'embarassed', 'embarassing', 'exagerate', 'exagerated', 'exagerating',
+        'existance', 'existant', 'foriegn', 'foriegn', 'goverment', 'independant', 'independance', 'occured', 'occuring',
+        'priviledge', 'priviledged', 'recieve', 'recieved', 'recieving', 'seperate', 'seperated', 'seperating', 'thier', 'untill',
+        'usefull', 'usefullness', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen'
+    ];
+    
+    if (misspelledWords.includes(word.toLowerCase())) return true;
+    
+    // Check for common patterns of misspelling
+    const patterns = [
+        /([a-z])\1{2,}/, // Triple letters (aaa, bbb)
+        /^[a-z]*[aeiou]{3,}[a-z]*$/i, // Multiple vowels in a row
+        /^[a-z]*[bcdfghjklmnpqrstvwxyz]{4,}[a-z]*$/i, // Multiple consonants in a row
+        /^[a-z]{1,2}$/i, // Very short words (likely abbreviations)
+    ];
+    
+    for (const pattern of patterns) {
+        if (pattern.test(word)) {
+            return false; // Don't mark as misspelled for these patterns
+        }
+    }
+    
+    // If word is not in common words and not obviously misspelled, check with AI
+    return true; // For now, mark as potentially misspelled for AI checking
+}
+
+// Mark a misspelled word with red underline
+function markMisspelledWord(textNode, startOffset, endOffset, word) {
+    const range = document.createRange();
+    range.setStart(textNode, startOffset);
+    range.setEnd(textNode, endOffset);
+    
+    const span = document.createElement('span');
+    span.className = 'spell-check-error';
+    span.setAttribute('data-word', word);
+    span.setAttribute('data-original-text', word);
+    
+    try {
+        range.surroundContents(span);
+        
+        // Add click event for suggestions
+        span.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showSpellCheckSuggestions(span, word);
+        });
+        
+        // Add right-click context menu
+        span.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showSpellCheckContextMenu(e, span, word);
+        });
+    } catch (error) {
+        console.log('Could not mark word as misspelled:', error);
+    }
+}
+
+// Show spell check suggestions popup
+async function showSpellCheckSuggestions(element, word) {
+    // Remove existing popup
+    const existingPopup = document.querySelector('.spell-check-suggestion-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const popup = document.createElement('div');
+    popup.className = 'spell-check-suggestion-popup';
+    popup.style.display = 'block';
+    
+    // Show loading state
+    popup.innerHTML = '<div class="spell-check-suggestion-item">Loading suggestions...</div>';
+    
+    // Position the popup
+    const rect = element.getBoundingClientRect();
+    popup.style.left = `${rect.left}px`;
+    popup.style.top = `${rect.bottom + 5}px`;
+    popup.style.position = 'fixed';
+    popup.style.zIndex = '10000';
+    
+    document.body.appendChild(popup);
+    
+    try {
+        // Get AI-powered suggestions
+        const suggestions = await getSuggestions(word);
+        
+        // Clear loading and add suggestions
+        popup.innerHTML = '';
+        
+        // Add suggestions
+        suggestions.forEach(suggestion => {
+            const item = document.createElement('div');
+            item.className = 'spell-check-suggestion-item';
+            item.textContent = suggestion;
+            
+            // Handle different suggestion types
+            if (suggestion === 'Ignore word') {
+                item.classList.add('ignore');
+                item.addEventListener('click', () => {
+                    ignoreWord(word);
+                    element.remove();
+                    popup.remove();
+                });
+            } else if (suggestion === 'Add to dictionary') {
+                item.classList.add('add-to-dict');
+                item.addEventListener('click', () => {
+                    addToDictionary(word);
+                    element.remove();
+                    popup.remove();
+                });
+            } else {
+                // Regular suggestion
+                item.addEventListener('click', () => {
+                    replaceWord(element, suggestion);
+                    popup.remove();
+                });
+            }
+            
+            popup.appendChild(item);
+        });
+        
+    } catch (error) {
+        console.error('Error getting spell suggestions:', error);
+        popup.innerHTML = '<div class="spell-check-suggestion-item">Error loading suggestions</div>';
+    }
+    
+    // Close popup when clicking outside
+    const closePopup = (e) => {
+        if (!popup.contains(e.target) && !element.contains(e.target)) {
+            popup.remove();
+            document.removeEventListener('click', closePopup);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', closePopup);
+    }, 100);
+}
+
+// Show context menu for spell check
+function showSpellCheckContextMenu(event, element, word) {
+    // Remove existing popup
+    const existingPopup = document.querySelector('.spell-check-suggestion-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const popup = document.createElement('div');
+    popup.className = 'spell-check-suggestion-popup';
+    popup.style.display = 'block';
+    
+    // Add ignore option
+    const ignoreItem = document.createElement('div');
+    ignoreItem.className = 'spell-check-suggestion-item ignore';
+    ignoreItem.textContent = 'Ignore';
+    ignoreItem.addEventListener('click', () => {
+        ignoreWord(word);
+        element.remove();
+        popup.remove();
+    });
+    popup.appendChild(ignoreItem);
+    
+    // Add to dictionary option
+    const addToDictItem = document.createElement('div');
+    addToDictItem.className = 'spell-check-suggestion-item add-to-dict';
+    addToDictItem.textContent = 'Add to Dictionary';
+    addToDictItem.addEventListener('click', () => {
+        addToDictionary(word);
+        element.remove();
+        popup.remove();
+    });
+    popup.appendChild(addToDictItem);
+    
+    // Position popup
+    popup.style.left = event.pageX + 'px';
+    popup.style.top = event.pageY + 'px';
+    
+    document.body.appendChild(popup);
+    
+    // Close popup when clicking outside
+    const closePopup = (e) => {
+        if (!popup.contains(e.target) && !element.contains(e.target)) {
+            popup.remove();
+            document.removeEventListener('click', closePopup);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', closePopup);
+    }, 100);
+}
+
+// Get AI-powered suggestions for a misspelled word
+async function getSuggestions(word) {
+    const suggestions = [];
+    
+    // First, check common misspellings
+    const commonCorrections = {
+        'teh': 'the',
+        'adn': 'and',
+        'nad': 'and',
+        'taht': 'that',
+        'thier': 'their',
+        'recieve': 'receive',
+        'recieved': 'received',
+        'recieving': 'receiving',
+        'seperate': 'separate',
+        'seperated': 'separated',
+        'seperating': 'separating',
+        'occured': 'occurred',
+        'occuring': 'occurring',
+        'definately': 'definitely',
+        'accomodate': 'accommodate',
+        'acheive': 'achieve',
+        'begining': 'beginning',
+        'beleive': 'believe',
+        'calender': 'calendar',
+        'cemetary': 'cemetery',
+        'changable': 'changeable',
+        'collegue': 'colleague',
+        'comming': 'coming',
+        'concious': 'conscious',
+        'dependant': 'dependent',
+        'embarass': 'embarrass',
+        'exagerate': 'exaggerate',
+        'existance': 'existence',
+        'existant': 'existent',
+        'foriegn': 'foreign',
+        'goverment': 'government',
+        'independant': 'independent',
+        'priviledge': 'privilege',
+        'untill': 'until',
+        'usefull': 'useful',
+        'writting': 'writing',
+        'writen': 'written'
+    };
+    
+    if (commonCorrections[word.toLowerCase()]) {
+        suggestions.push(commonCorrections[word.toLowerCase()]);
+    }
+    
+    // If no common correction found, try AI suggestions
+    if (suggestions.length === 0) {
+        try {
+            const aiSuggestions = await getAISpellSuggestions(word);
+            suggestions.push(...aiSuggestions);
+        } catch (error) {
+            console.log('AI spell check failed, using fallback:', error);
+            // Fallback suggestions
+            suggestions.push('Check spelling');
+        }
+    }
+    
+    // Always add these options
+    suggestions.push('Ignore word');
+    suggestions.push('Add to dictionary');
+    
+    return suggestions;
+}
+
+// Get AI-powered spell suggestions using OpenAI
+async function getAISpellSuggestions(word) {
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.openAIKey || 'your-openai-key-here'}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a spell checker. Given a potentially misspelled word, provide 3-5 correct spelling suggestions. Return only the words separated by commas, no explanations.'
+                    },
+                    {
+                        role: 'user',
+                        content: `Suggest correct spellings for: "${word}"`
+                    }
+                ],
+                max_tokens: 50,
+                temperature: 0.1
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`OpenAI API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const suggestions = data.choices[0].message.content
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s.length > 0 && s !== word)
+            .slice(0, 5);
+        
+        return suggestions;
+    } catch (error) {
+        console.error('AI spell check error:', error);
+        return ['Check spelling'];
+    }
+}
+
+// Replace a misspelled word with a suggestion
+function replaceWord(element, suggestion) {
+    element.textContent = suggestion;
+    element.classList.remove('spell-check-error');
+    element.classList.add('spell-check-corrected');
+    
+    // Trigger auto-save
+    if (typeof triggerAutoSave === 'function') {
+        triggerAutoSave();
+    }
+}
+
+// Ignore a word (add to ignored words list)
+function ignoreWord(word) {
+    ignoredWords.add(word.toLowerCase());
+    saveSpellCheckSettings();
+}
+
+// Add word to custom dictionary
+function addToDictionary(word) {
+    customDictionary.add(word.toLowerCase());
+    saveSpellCheckSettings();
+}
+
+// Clear all spell check markers
+function clearSpellCheckMarkers() {
+    const markers = document.querySelectorAll('.spell-check-error');
+    markers.forEach(marker => {
+        const parent = marker.parentNode;
+        parent.replaceChild(document.createTextNode(marker.textContent), marker);
+        parent.normalize();
+    });
+}
+
+// Save spell check settings to localStorage
+function saveSpellCheckSettings() {
+    localStorage.setItem('spellCheckIgnoredWords', JSON.stringify([...ignoredWords]));
+    localStorage.setItem('spellCheckCustomDictionary', JSON.stringify([...customDictionary]));
+}
+
+// Load spell check settings from localStorage
+function loadSpellCheckSettings() {
+    const ignored = localStorage.getItem('spellCheckIgnoredWords');
+    const custom = localStorage.getItem('spellCheckCustomDictionary');
+    
+    if (ignored) {
+        ignoredWords = new Set(JSON.parse(ignored));
+    }
+    
+    if (custom) {
+        customDictionary = new Set(JSON.parse(custom));
+    }
+}
+
+// Toggle spell check on/off
+function toggleSpellCheck() {
+    spellCheckEnabled = !spellCheckEnabled;
+    
+    if (spellCheckEnabled) {
+        initializeSpellCheck();
+    } else {
+        clearSpellCheckMarkers();
+    }
+    
+    // Update UI to show spell check status
+    const contentElement = document.getElementById('docEditorContent');
+    if (contentElement) {
+        contentElement.setAttribute('spellcheck', spellCheckEnabled.toString());
+    }
+}
+
+// Find and Replace Functionality
+let findReplaceDialog = null;
+let currentFindIndex = 0;
+let findResults = [];
+
+function showFindDialog() {
+    const findText = prompt('Find:', '');
+    if (findText) {
+        findTextInDocument(findText);
+    }
+}
+
+function showFindReplaceDialog() {
+    // Remove existing dialog
+    if (findReplaceDialog) {
+        findReplaceDialog.remove();
+    }
+    
+    // Create dialog
+    findReplaceDialog = document.createElement('div');
+    findReplaceDialog.className = 'find-replace-dialog';
+    findReplaceDialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        min-width: 400px;
+        color: #ffffff;
+    `;
+    
+    findReplaceDialog.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 16px 0; color: #ffffff; font-size: 18px;">Find and Replace</h3>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; color: #cccccc;">Find:</label>
+            <input type="text" id="findInput" style="
+                width: 100%;
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 14px;
+            " placeholder="Enter text to find...">
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; color: #cccccc;">Replace with:</label>
+            <input type="text" id="replaceInput" style="
+                width: 100%;
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 14px;
+            " placeholder="Enter replacement text...">
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="findBtn" style="
+                padding: 8px 16px;
+                background: rgba(74, 158, 255, 0.2);
+                border: 1px solid rgba(74, 158, 255, 0.4);
+                border-radius: 6px;
+                color: #4a9eff;
+                cursor: pointer;
+                font-size: 14px;
+            ">Find</button>
+            <button id="replaceBtn" style="
+                padding: 8px 16px;
+                background: rgba(0, 255, 136, 0.2);
+                border: 1px solid rgba(0, 255, 136, 0.4);
+                border-radius: 6px;
+                color: #00ff88;
+                cursor: pointer;
+                font-size: 14px;
+            ">Replace</button>
+            <button id="replaceAllBtn" style="
+                padding: 8px 16px;
+                background: rgba(255, 107, 107, 0.2);
+                border: 1px solid rgba(255, 107, 107, 0.4);
+                border-radius: 6px;
+                color: #ff6b6b;
+                cursor: pointer;
+                font-size: 14px;
+            ">Replace All</button>
+            <button id="closeFindReplaceBtn" style="
+                padding: 8px 16px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                color: #ffffff;
+                cursor: pointer;
+                font-size: 14px;
+            ">Close</button>
+        </div>
+        <div id="findResults" style="
+            margin-top: 16px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #cccccc;
+            display: none;
+        "></div>
+    `;
+    
+    document.body.appendChild(findReplaceDialog);
+    
+    // Add event listeners
+    const findInput = findReplaceDialog.querySelector('#findInput');
+    const replaceInput = findReplaceDialog.querySelector('#replaceInput');
+    const findBtn = findReplaceDialog.querySelector('#findBtn');
+    const replaceBtn = findReplaceDialog.querySelector('#replaceBtn');
+    const replaceAllBtn = findReplaceDialog.querySelector('#replaceAllBtn');
+    const closeBtn = findReplaceDialog.querySelector('#closeFindReplaceBtn');
+    const resultsDiv = findReplaceDialog.querySelector('#findResults');
+    
+    findBtn.addEventListener('click', () => {
+        const findText = findInput.value;
+        if (findText) {
+            findTextInDocument(findText);
+        }
+    });
+    
+    replaceBtn.addEventListener('click', () => {
+        const findText = findInput.value;
+        const replaceText = replaceInput.value;
+        if (findText) {
+            replaceNext(findText, replaceText);
+        }
+    });
+    
+    replaceAllBtn.addEventListener('click', () => {
+        const findText = findInput.value;
+        const replaceText = replaceInput.value;
+        if (findText) {
+            replaceAll(findText, replaceText);
+        }
+    });
+    
+    closeBtn.addEventListener('click', () => {
+        findReplaceDialog.remove();
+        findReplaceDialog = null;
+        clearHighlights();
+    });
+    
+    // Focus on find input
+    findInput.focus();
+    
+    // Close on Escape
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            findReplaceDialog.remove();
+            findReplaceDialog = null;
+            clearHighlights();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+function findTextInDocument(searchText) {
+    const content = document.querySelector('.doc-editor-content');
+    if (!content) return;
+    
+    clearHighlights();
+    findResults = [];
+    
+    const text = content.textContent;
+    const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+        findResults.push({
+            index: match.index,
+            text: match[0],
+            length: match[0].length
+        });
+    }
+    
+    if (findResults.length > 0) {
+        highlightFindResults();
+        showFindResults(findResults.length);
+        currentFindIndex = 0;
+        scrollToFindResult(0);
+    } else {
+        showFindResults(0);
+    }
+}
+
+function highlightFindResults() {
+    const content = document.querySelector('.doc-editor-content');
+    if (!content) return;
+    
+    const text = content.textContent;
+    let offset = 0;
+    
+    findResults.forEach((result, index) => {
+        const range = document.createRange();
+        const textNode = content.firstChild;
+        
+        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+            range.setStart(textNode, result.index);
+            range.setEnd(textNode, result.index + result.length);
+            
+            const span = document.createElement('span');
+            span.className = 'find-highlight';
+            span.style.cssText = `
+                background: rgba(255, 255, 0, 0.3);
+                border: 1px solid rgba(255, 255, 0, 0.6);
+                border-radius: 2px;
+            `;
+            span.setAttribute('data-find-index', index);
+            
+            try {
+                range.surroundContents(span);
+            } catch (e) {
+                console.log('Could not highlight text:', e);
+            }
+        }
+    });
+}
+
+function clearHighlights() {
+    const highlights = document.querySelectorAll('.find-highlight');
+    highlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+        parent.normalize();
+    });
+}
+
+function showFindResults(count) {
+    const resultsDiv = findReplaceDialog?.querySelector('#findResults');
+    if (resultsDiv) {
+        if (count > 0) {
+            resultsDiv.textContent = `Found ${count} result${count > 1 ? 's' : ''}`;
+            resultsDiv.style.display = 'block';
+        } else {
+            resultsDiv.textContent = 'No results found';
+            resultsDiv.style.display = 'block';
+        }
+    }
+}
+
+function scrollToFindResult(index) {
+    const highlight = document.querySelector(`[data-find-index="${index}"]`);
+    if (highlight) {
+        highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        highlight.style.background = 'rgba(74, 158, 255, 0.4)';
+        highlight.style.borderColor = 'rgba(74, 158, 255, 0.8)';
+    }
+}
+
+function replaceNext(findText, replaceText) {
+    if (findResults.length === 0) {
+        findTextInDocument(findText);
+        return;
+    }
+    
+    if (currentFindIndex < findResults.length) {
+        const result = findResults[currentFindIndex];
+        const highlight = document.querySelector(`[data-find-index="${currentFindIndex}"]`);
+        
+        if (highlight) {
+            highlight.textContent = replaceText;
+            highlight.classList.remove('find-highlight');
+            highlight.style.background = 'rgba(0, 255, 136, 0.3)';
+            highlight.style.borderColor = 'rgba(0, 255, 136, 0.6)';
+            
+            // Update the result
+            result.text = replaceText;
+            result.length = replaceText.length;
+            
+            currentFindIndex++;
+            if (currentFindIndex < findResults.length) {
+                scrollToFindResult(currentFindIndex);
+            }
+            
+            // Trigger auto-save
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
+            }
+        }
+    }
+}
+
+function replaceAll(findText, replaceText) {
+    if (findResults.length === 0) {
+        findTextInDocument(findText);
+        return;
+    }
+    
+    const content = document.querySelector('.doc-editor-content');
+    if (!content) return;
+    
+    let text = content.textContent;
+    const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    text = text.replace(regex, replaceText);
+    
+    content.textContent = text;
+    
+    // Trigger auto-save
+    if (typeof triggerFormattingSave === 'function') {
+        triggerFormattingSave();
+    }
+    
+    // Close dialog
+    if (findReplaceDialog) {
+        findReplaceDialog.remove();
+        findReplaceDialog = null;
+    }
+}
+
+// Make spell check functions globally available
+window.initializeSpellCheck = initializeSpellCheck;
+window.toggleSpellCheck = toggleSpellCheck;
+window.clearSpellCheckMarkers = clearSpellCheckMarkers;
+
+// Make find and replace functions globally available
+window.showFindDialog = showFindDialog;
+window.showFindReplaceDialog = showFindReplaceDialog;
 
 // Make main functions globally available
 window.openDocumentEditor = openDocumentEditor;
