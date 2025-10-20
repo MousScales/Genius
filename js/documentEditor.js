@@ -205,25 +205,25 @@ function createEditorScreen(classData, existingDoc) {
     container.innerHTML = `
         <div class="doc-editor-header">
             <div class="doc-editor-header-left">
-                <button class="doc-tool-btn doc-back-btn-arrow" id="docBackToClassBtn" title="Back to Class" onclick="closeDocumentEditor()">
-                    <span class="back-icon">←</span>
-                </button>
-                <input type="text" class="doc-editor-title" id="docEditorTitle" 
-                       value="${docTitle}" placeholder="Untitled Document">
+            <button class="doc-tool-btn doc-back-btn-arrow" id="docBackToClassBtn" title="Back to Class" onclick="closeDocumentEditor()">
+                <span class="back-icon">←</span>
+            </button>
+            <input type="text" class="doc-editor-title" id="docEditorTitle" 
+                   value="${docTitle}" placeholder="Untitled Document">
             </div>
             <div class="doc-editor-header-right">
-                <button class="doc-tool-btn" id="manualSaveBtn" title="Save Document (Ctrl+S)">💾 Save</button>
-                <button class="doc-tool-btn" id="savingStatus">Saved</button>
-                <button class="doc-tool-btn" id="downloadPdfBtn" title="Download as PDF">📥 PDF</button>
-                <div class="doc-stats">
-                    <span class="stat-item" id="wordCount">0 words</span>
-                    <span class="stat-divider">•</span>
-                    <span class="stat-item" id="charCount">0 characters</span>
-                </div>
-                <button class="doc-tool-btn" id="humanizeBtn" title="Humanize Text">Humanize</button>
-                <button class="doc-chat-toggle-btn" id="chatToggleBtn" title="Toggle Genius AI Chat">
-                    <img src="assets/darkgenius.png" alt="Genius AI" class="chat-toggle-icon">
-                </button>
+            <button class="doc-tool-btn" id="manualSaveBtn" title="Save Document (Ctrl+S)">💾 Save</button>
+            <button class="doc-tool-btn" id="savingStatus">Saved</button>
+            <button class="doc-tool-btn" id="downloadPdfBtn" title="Download as PDF">📥 PDF</button>
+            <div class="doc-stats">
+                <span class="stat-item" id="wordCount">0 words</span>
+                <span class="stat-divider">•</span>
+                <span class="stat-item" id="charCount">0 characters</span>
+            </div>
+            <button class="doc-tool-btn" id="humanizeBtn" title="Humanize Text">Humanize</button>
+            <button class="doc-chat-toggle-btn" id="chatToggleBtn" title="Toggle Genius AI Chat">
+                <img src="assets/darkgenius.png" alt="Genius AI" class="chat-toggle-icon">
+            </button>
             </div>
         </div>
         
@@ -243,9 +243,6 @@ function createEditorScreen(classData, existingDoc) {
                         <div class="dropdown-item active" data-value="Segoe UI">Segoe UI</div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="toolbar-group">
                 <div class="custom-dropdown" id="fontSizeDropdown">
                     <div class="dropdown-trigger" id="fontSizeTrigger">
                         <span class="dropdown-text">16</span>
@@ -265,9 +262,6 @@ function createEditorScreen(classData, existingDoc) {
                         <div class="dropdown-item" data-value="48">48</div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="toolbar-group">
                 <div class="custom-dropdown" id="headingDropdown">
                     <div class="dropdown-trigger" id="headingTrigger">
                         <span class="dropdown-text">Normal Text</span>
@@ -504,9 +498,9 @@ function createEditorScreen(classData, existingDoc) {
          // Initialize spell check
          loadSpellCheckSettings();
          initializeSpellCheck();
-     }, 100);
-     
-     return container;
+    }, 100);
+    
+    return container;
 }
 
 function setupEditorControls(classData, existingDoc) {
@@ -1015,8 +1009,8 @@ function setupToolbarButtons() {
                 console.log('Font changed to:', selectedFont);
                 
                 // Focus content first
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
+        const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+        if (activeContent) {
                     activeContent.focus();
                 }
                 
@@ -1045,7 +1039,7 @@ function setupToolbarButtons() {
                 }
                 
                 if (typeof triggerFormattingSave === 'function') {
-                    triggerFormattingSave();
+            triggerFormattingSave();
                 }
             }
         });
@@ -1089,13 +1083,13 @@ function setupToolbarButtons() {
                     activeContent.focus();
                 }
                 
-                // Use a more reliable method for font size
+            // Use a more reliable method for font size
                 const success = document.execCommand('fontSize', false, '7');
                 console.log('Font size command executed:', success);
                 
-                setTimeout(() => {
+            setTimeout(() => {
                     // Find the most recent font element and update it
-                    const fontElements = document.querySelectorAll('font[size="7"]');
+                const fontElements = document.querySelectorAll('font[size="7"]');
                     if (fontElements.length > 0) {
                         const lastFontElement = fontElements[fontElements.length - 1];
                         lastFontElement.removeAttribute('size');
@@ -1117,7 +1111,7 @@ function setupToolbarButtons() {
                     }
                     
                     if (typeof triggerFormattingSave === 'function') {
-                        triggerFormattingSave();
+                triggerFormattingSave();
                     }
                 }, 50);
             }
@@ -1265,7 +1259,7 @@ function setupToolbarButtons() {
                 }
                 
                 if (typeof triggerFormattingSave === 'function') {
-                    triggerFormattingSave();
+                triggerFormattingSave();
                 }
             }
         });
@@ -1277,9 +1271,9 @@ function setupToolbarButtons() {
     if (boldBtn) {
         boldBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            console.log('Bold button clicked!');
-            executeCommand('bold');
+                e.stopPropagation();
+                console.log('Bold button clicked!');
+                executeCommand('bold');
         });
     }
     
@@ -1288,12 +1282,12 @@ function setupToolbarButtons() {
     console.log('Italic button found:', !!italicBtn);
     if (italicBtn) {
         italicBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Italic button clicked!');
-            executeCommand('italic');
-        });
-    }
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Italic button clicked!');
+                executeCommand('italic');
+            });
+        }
     
     // Underline button
     const underlineBtn = document.getElementById('underlineBtn');
@@ -3488,7 +3482,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     
     // Initialize chat management with a delay to ensure Firebase is loaded
     setTimeout(() => {
-        initializeChatManagement();
+    initializeChatManagement();
     }, 1000);
     
     // Also try to initialize immediately if Firebase is already available
@@ -3775,8 +3769,8 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
             }
             
             if (chatService) {
-                await chatService.saveChats(classData.userId, classData.id, docId, chats);
-                console.log('Chats saved to Firebase');
+            await chatService.saveChats(classData.userId, classData.id, docId, chats);
+            console.log('Chats saved to Firebase');
             } else {
                 console.warn('Firebase chatService not available, using localStorage only');
             }
@@ -5931,8 +5925,12 @@ function performSpellCheck() {
     }
     
     // Get all text nodes in the content
+    console.log('📝 contentElement:', contentElement);
+    console.log('📝 contentElement type:', typeof contentElement);
+    console.log('📝 contentElement.nodeType:', contentElement?.nodeType);
     const textNodes = getTextNodes(contentElement);
     console.log('📝 Found text nodes:', textNodes.length);
+    console.log('📝 textNodes array:', textNodes);
     
     textNodes.forEach((node, index) => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
@@ -5971,10 +5969,6 @@ function getTextNodes(element) {
 
 // Check a text node for spelling errors
 function checkTextNode(textNode) {
-    console.log('📝 checkTextNode called with:', textNode);
-    console.log('📝 textNode type:', typeof textNode);
-    console.log('📝 textNode.nodeType:', textNode?.nodeType);
-    
     const text = textNode.textContent;
     if (!text || text.trim().length === 0) {
         console.log('📝 Empty text node, skipping');
@@ -5999,14 +5993,7 @@ function checkTextNode(textNode) {
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
                 console.log('✅ Marking word as misspelled:', word);
-                console.log('📝 Text node details before call:', { 
-                    textNode, 
-                    textNodeType: typeof textNode,
-                    textNodeNodeType: textNode?.nodeType,
-                    wordStart, 
-                    wordEnd, 
-                    word: word.trim() 
-                });
+                console.log('📝 Text node details:', { textNode, wordStart, wordEnd, word: word.trim() });
                 try {
                     markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
                 } catch (error) {
