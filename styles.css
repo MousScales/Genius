@@ -11512,94 +11512,261 @@ img {
     }
 }
 
-/* Flashcard Edit Modal - Flashcard Quiz Style */
+/* Flashcard Edit Modal - Dark Theme Study Interface */
 .flashcard-edit-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: #0a0a0a;
     display: flex;
     flex-direction: column;
     z-index: 10000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .close-flashcard-edit {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 0, 0, 0.8);
     border: none;
     color: #ffffff;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
-    padding: 10px;
+    padding: 12px;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.3s;
     z-index: 10001;
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
 }
 
 .close-flashcard-edit:hover {
-    background: rgba(255, 0, 0, 0.7);
+    background: rgba(255, 0, 0, 1);
+    transform: scale(1.1);
 }
 
 .flashcard-edit-layout-container {
     display: flex;
     flex: 1;
-    padding: 20px;
-    gap: 20px;
+    height: 100vh;
+    padding: 0;
+    gap: 0;
 }
 
+/* Left Panel - Card List */
+.flashcard-edit-left-panel {
+    width: 300px;
+    background: #1a1a1a;
+    border-right: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.edit-panel-header {
+    padding: 20px;
+    border-bottom: 2px solid #333;
+    background: #2a2a2a;
+}
+
+.edit-panel-header h3 {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.edit-card-count {
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.flashcard-edit-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.flashcard-edit-item {
+    background: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.flashcard-edit-item:hover {
+    background: #333;
+    border-color: #555;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.flashcard-edit-item.selected {
+    background: #007bff;
+    border-color: #0056b3;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+}
+
+.edit-card-number {
+    background: #444;
+    color: #ffffff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.flashcard-edit-item.selected .edit-card-number {
+    background: #ffffff;
+    color: #007bff;
+}
+
+.edit-card-preview {
+    flex: 1;
+    min-width: 0;
+}
+
+.edit-card-question-preview,
+.edit-card-answer-preview {
+    color: #ffffff;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.edit-card-question-preview {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.edit-card-answer-preview {
+    opacity: 0.7;
+    color: #ccc;
+}
+
+.remove-edit-card-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 0, 0, 0.8);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.flashcard-edit-item:hover .remove-edit-card-btn {
+    opacity: 1;
+}
+
+.remove-edit-card-btn:hover {
+    background: rgba(255, 0, 0, 1);
+    transform: scale(1.1);
+}
+
+.add-edit-card-btn {
+    margin: 15px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.add-edit-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+}
+
+/* Center Panel - Study Interface */
 .flashcard-edit-center {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    background: #0f0f0f;
+    padding: 30px;
+    align-items: center;
+    justify-content: center;
 }
 
 .flashcard-edit-title-section {
-    text-align: center;
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 600px;
 }
 
 .flashcard-edit-title-input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
     color: #ffffff;
     font-size: 24px;
     font-weight: 600;
-    padding: 15px 25px;
+    padding: 20px 30px;
     text-align: center;
     width: 100%;
-    max-width: 600px;
     transition: all 0.3s;
 }
 
 .flashcard-edit-title-input:focus {
     outline: none;
     border-color: #007bff;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
 }
 
 .flashcard-edit-card-display {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
+    width: 100%;
+    max-width: 500px;
 }
 
 .flashcard-edit-card {
     width: 100%;
-    max-width: 500px;
-    height: 300px;
+    height: 350px;
     perspective: 1000px;
     cursor: pointer;
 }
@@ -11627,8 +11794,9 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 30px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .flashcard-edit-front {
@@ -11644,27 +11812,28 @@ img {
 
 .flashcard-edit-question,
 .flashcard-edit-answer {
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.6;
     word-wrap: break-word;
     max-width: 100%;
+    font-weight: 500;
 }
 
 .flashcard-edit-navigation {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
     justify-content: center;
 }
 
 .edit-nav-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
+    border-radius: 30px;
     color: #ffffff;
-    padding: 12px 24px;
+    padding: 15px 30px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -11672,19 +11841,24 @@ img {
 .edit-nav-btn:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.2);
     border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
 }
 
 .edit-nav-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
 }
 
 .edit-card-counter {
     color: #ffffff;
-    font-size: 18px;
-    font-weight: 600;
-    min-width: 80px;
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 100px;
     text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 20px;
 }
 
 .edit-flip-button-container {
@@ -11695,137 +11869,142 @@ img {
 .edit-flip-button {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
-    border-radius: 25px;
+    border-radius: 30px;
     color: white;
-    padding: 15px 30px;
-    font-size: 16px;
-    font-weight: 600;
+    padding: 18px 35px;
+    font-size: 18px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
 .edit-flip-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
 }
 
-.flashcard-edit-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 15px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.05);
+/* Right Panel - Edit Fields */
+.flashcard-edit-right-panel {
+    width: 350px;
+    background: #1a1a1a;
+    border-left: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.edit-fields-header {
+    padding: 20px;
+    border-bottom: 2px solid #333;
+    background: #2a2a2a;
+}
+
+.edit-fields-header h3 {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.edit-card-position {
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.edit-field-section {
+    padding: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.edit-field-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.field-icon {
+    font-size: 18px;
+}
+
+.edit-field-textarea {
+    width: 100%;
+    background: #2a2a2a;
+    border: 2px solid #444;
     border-radius: 12px;
+    color: #ffffff;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 15px;
+    resize: vertical;
+    min-height: 120px;
+    transition: all 0.3s;
+    font-family: inherit;
 }
 
-.flashcard-edit-item {
+.edit-field-textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    background: #333;
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
+}
+
+.edit-quick-actions {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-action-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
-    padding: 15px;
+    color: #ffffff;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-    position: relative;
-}
-
-.flashcard-edit-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #007bff;
-}
-
-.flashcard-edit-item.selected {
-    background: rgba(0, 123, 255, 0.2);
-    border-color: #007bff;
-}
-
-.edit-card-preview {
-    margin-bottom: 10px;
-}
-
-.edit-card-question-preview,
-.edit-card-answer-preview {
-    color: #ffffff;
-    font-size: 14px;
-    line-height: 1.4;
-    margin-bottom: 5px;
-}
-
-.edit-card-question-preview {
-    font-weight: 600;
-}
-
-.edit-card-answer-preview {
-    opacity: 0.8;
-}
-
-.remove-edit-card-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(255, 0, 0, 0.7);
-    border: none;
-    border-radius: 50%;
-    color: white;
-    width: 25px;
-    height: 25px;
-    cursor: pointer;
-    font-size: 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+    gap: 8px;
 }
 
-.remove-edit-card-btn:hover {
-    background: rgba(255, 0, 0, 0.9);
-    transform: scale(1.1);
-}
-
-.add-edit-card-section {
-    display: flex;
-    justify-content: center;
-}
-
-.add-edit-card-btn {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    border: none;
-    border-radius: 25px;
-    color: white;
-    padding: 15px 30px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.add-edit-card-btn:hover {
+.quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #007bff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
 }
 
+/* Footer */
 .flashcard-edit-footer {
     display: flex;
     justify-content: center;
     gap: 20px;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.5);
+    padding: 25px;
+    background: #1a1a1a;
+    border-top: 2px solid #333;
 }
 
 .cancel-flashcard-edit,
 .save-flashcard-edit {
-    padding: 15px 30px;
+    padding: 18px 35px;
     border: none;
-    border-radius: 25px;
+    border-radius: 30px;
     cursor: pointer;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.3s;
-    min-width: 120px;
+    min-width: 140px;
 }
 
 .cancel-flashcard-edit {
@@ -11837,16 +12016,18 @@ img {
 .cancel-flashcard-edit:hover {
     background: rgba(255, 255, 255, 0.2);
     border-color: #ffffff;
+    transform: translateY(-2px);
 }
 
 .save-flashcard-edit {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #ffffff;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
 .save-flashcard-edit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
 }
 
 /* Loading Study Guides */
