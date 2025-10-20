@@ -204,23 +204,27 @@ function createEditorScreen(classData, existingDoc) {
     
     container.innerHTML = `
         <div class="doc-editor-header">
-            <button class="doc-tool-btn doc-back-btn-arrow" id="docBackToClassBtn" title="Back to Class" onclick="closeDocumentEditor()">
-                <span class="back-icon">←</span>
-            </button>
-            <input type="text" class="doc-editor-title" id="docEditorTitle" 
-                   value="${docTitle}" placeholder="Untitled Document">
-            <button class="doc-tool-btn" id="manualSaveBtn" title="Save Document (Ctrl+S)">💾 Save</button>
-            <button class="doc-tool-btn" id="savingStatus">Saved</button>
-            <button class="doc-tool-btn" id="downloadPdfBtn" title="Download as PDF">📥 PDF</button>
-            <div class="doc-stats">
-                <span class="stat-item" id="wordCount">0 words</span>
-                <span class="stat-divider">•</span>
-                <span class="stat-item" id="charCount">0 characters</span>
+            <div class="doc-editor-header-left">
+                <button class="doc-tool-btn doc-back-btn-arrow" id="docBackToClassBtn" title="Back to Class" onclick="closeDocumentEditor()">
+                    <span class="back-icon">←</span>
+                </button>
+                <input type="text" class="doc-editor-title" id="docEditorTitle" 
+                       value="${docTitle}" placeholder="Untitled Document">
             </div>
-            <button class="doc-tool-btn" id="humanizeBtn" title="Humanize Text">Humanize</button>
-            <button class="doc-chat-toggle-btn" id="chatToggleBtn" title="Toggle Genius AI Chat">
-                <img src="assets/darkgenius.png" alt="Genius AI" class="chat-toggle-icon">
-            </button>
+            <div class="doc-editor-header-right">
+                <button class="doc-tool-btn" id="manualSaveBtn" title="Save Document (Ctrl+S)">💾 Save</button>
+                <button class="doc-tool-btn" id="savingStatus">Saved</button>
+                <button class="doc-tool-btn" id="downloadPdfBtn" title="Download as PDF">📥 PDF</button>
+                <div class="doc-stats">
+                    <span class="stat-item" id="wordCount">0 words</span>
+                    <span class="stat-divider">•</span>
+                    <span class="stat-item" id="charCount">0 characters</span>
+                </div>
+                <button class="doc-tool-btn" id="humanizeBtn" title="Humanize Text">Humanize</button>
+                <button class="doc-chat-toggle-btn" id="chatToggleBtn" title="Toggle Genius AI Chat">
+                    <img src="assets/darkgenius.png" alt="Genius AI" class="chat-toggle-icon">
+                </button>
+            </div>
         </div>
         
         <div class="doc-editor-toolbar">
@@ -5985,6 +5989,7 @@ function checkTextNode(textNode) {
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
                 console.log('✅ Marking word as misspelled:', word);
+                console.log('📝 Text node details:', { textNode, wordStart, wordEnd, word: word.trim() });
                 try {
                     markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
                 } catch (error) {
@@ -6095,8 +6100,15 @@ function isMisspelled(word) {
 // Mark a misspelled word with red underline
 function markMisspelledWord(textNode, startOffset, endOffset, word) {
     // Validate inputs
-    if (!textNode || startOffset < 0 || endOffset <= startOffset || endOffset > textNode.textContent.length) {
-        console.log('Invalid parameters for markMisspelledWord:', { textNode, startOffset, endOffset, word });
+    if (!textNode || typeof textNode.textContent !== 'string' || startOffset < 0 || endOffset <= startOffset || endOffset > textNode.textContent.length) {
+        console.log('Invalid parameters for markMisspelledWord:', { 
+            textNode: textNode, 
+            textNodeType: typeof textNode,
+            textContent: textNode?.textContent,
+            startOffset, 
+            endOffset, 
+            word 
+        });
         return;
     }
     
