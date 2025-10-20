@@ -246,6 +246,17 @@ function createEditorScreen(classData, existingDoc) {
                     <option value="36">36</option>
                     <option value="48">48</option>
                 </select>
+                <select class="toolbar-select" id="headingSelect">
+                    <option value="p">Normal Text</option>
+                    <option value="h1">Title</option>
+                    <option value="h2">Subtitle</option>
+                    <option value="h3">Heading 1</option>
+                    <option value="h4">Heading 2</option>
+                    <option value="h5">Heading 3</option>
+                    <option value="h6">Heading 4</option>
+                    <option value="blockquote">Quote</option>
+                    <option value="code">Code</option>
+                </select>
             </div>
             
             <div class="toolbar-divider"></div>
@@ -758,6 +769,55 @@ function setupToolbarButtons() {
         }
         if (justifyBtn) {
             justifyBtn.classList.toggle('active', document.queryCommandState('justifyFull'));
+        }
+        
+        // Update font dropdown to show current font
+        const fontSelect = document.getElementById('fontSelect');
+        if (fontSelect) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.commonAncestorContainer;
+                const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                
+                if (element) {
+                    const computedStyle = window.getComputedStyle(element);
+                    const fontFamily = computedStyle.fontFamily;
+                    
+                    // Find matching option
+                    for (let option of fontSelect.options) {
+                        if (fontFamily.includes(option.value)) {
+                            fontSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Update font size dropdown to show current size
+        const fontSizeSelect = document.getElementById('fontSizeSelect');
+        if (fontSizeSelect) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.commonAncestorContainer;
+                const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                
+                if (element) {
+                    const computedStyle = window.getComputedStyle(element);
+                    const fontSize = computedStyle.fontSize;
+                    const sizeValue = parseInt(fontSize);
+                    
+                    // Find matching option
+                    for (let option of fontSizeSelect.options) {
+                        if (parseInt(option.value) === sizeValue) {
+                            fontSizeSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+            }
         }
     };
     
@@ -5958,14 +6018,20 @@ async function getSuggestions(word) {
         suggestions.push(commonCorrections[word.toLowerCase()]);
     }
     
-    // If no common correction found, try AI suggestions
+    // If no common correction found, try AI suggestions (only if API key is available)
     if (suggestions.length === 0) {
-        try {
-            const aiSuggestions = await getAISpellSuggestions(word);
-            suggestions.push(...aiSuggestions);
-        } catch (error) {
-            console.log('AI spell check failed, using fallback:', error);
-            // Fallback suggestions
+        const apiKey = window.getOpenAIApiKey() || window.APP_CONFIG?.OPENAI_API_KEY;
+        if (apiKey) {
+            try {
+                const aiSuggestions = await getAISpellSuggestions(word);
+                suggestions.push(...aiSuggestions);
+            } catch (error) {
+                console.log('AI spell check failed, using fallback:', error);
+                // Fallback suggestions
+                suggestions.push('Check spelling');
+            }
+        } else {
+            // No API key available, just provide basic suggestions
             suggestions.push('Check spelling');
         }
     }
@@ -5980,11 +6046,18 @@ async function getSuggestions(word) {
 // Get AI-powered spell suggestions using OpenAI
 async function getAISpellSuggestions(word) {
     try {
+        // Use the same API key method as genius chat
+        const apiKey = window.getOpenAIApiKey() || window.APP_CONFIG?.OPENAI_API_KEY;
+        
+        if (!apiKey) {
+            throw new Error('OpenAI API key not found. Please add your API key in the profile settings to enable AI-powered spell suggestions.');
+        }
+        
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${window.openAIKey || 'your-openai-key-here'}`
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
                 model: 'gpt-3.5-turbo',
