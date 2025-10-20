@@ -6137,66 +6137,11 @@ function isWordAlreadyMarked(textNode, startOffset, endOffset) {
     return false;
 }
 
-// Check if a string is a word (contains only letters)
-function isWord(str) {
-    return /^[a-zA-Z]+$/.test(str);
-}
+// Make spell check functions globally available
+window.initializeSpellCheck = initializeSpellCheck;
+window.toggleSpellCheck = toggleSpellCheck;
+window.clearSpellCheckMarkers = clearSpellCheckMarkers;
 
-// Check if a word is misspelled using multiple methods
-function isMisspelled(word) {
-    if (ignoredWords.has(word.toLowerCase())) return false;
-    if (customDictionary.has(word.toLowerCase())) return false;
-    
-    // Basic word validation
-    if (word.length < 2) return false;
-    if (!/^[a-zA-Z]+$/.test(word)) return false;
-    
-    // Check against common English words dictionary
-    const commonWords = [
-        'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
-        'this', 'but', 'his', 'by', 'from', 'they', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
-        'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just',
-        'him', 'know', 'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then',
-        'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first',
-        'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is', 'was', 'are', 'been',
-        'has', 'had', 'were', 'said', 'each', 'which', 'their', 'time', 'will', 'about', 'if', 'up', 'out', 'many', 'then', 'them',
-        'can', 'only', 'other', 'new', 'some', 'what', 'time', 'very', 'when', 'much', 'get', 'through', 'back', 'much', 'before',
-        'go', 'good', 'new', 'first', 'last', 'long', 'little', 'own', 'other', 'old', 'right', 'big', 'high', 'different', 'small',
-        'large', 'next', 'early', 'young', 'important', 'few', 'public', 'same', 'able'
-    ];
-    
-    if (commonWords.includes(word.toLowerCase())) return false;
-    
-    // Use a simple spell check algorithm for common misspellings
-    const misspelledWords = [
-        'teh', 'adn', 'nad', 'taht', 'thier', 'recieve', 'recieved', 'recieving', 'seperate', 'seperated', 'seperating',
-        'occured', 'occuring', 'definately', 'definately', 'accomodate', 'accomodation', 'acheive', 'acheived', 'acheiving',
-        'begining', 'begining', 'beleive', 'beleived', 'beleiving', 'calender', 'cemetary', 'changable', 'collegue', 'comming',
-        'concious', 'definately', 'dependant', 'embarass', 'embarassed', 'embarassing', 'exagerate', 'exagerated', 'exagerating',
-        'existance', 'existant', 'foriegn', 'foriegn', 'goverment', 'independant', 'independance', 'occured', 'occuring',
-        'priviledge', 'priviledged', 'recieve', 'recieved', 'recieving', 'seperate', 'seperated', 'seperating', 'thier', 'untill',
-        'usefull', 'usefullness', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen'
-    ];
-    
-    if (misspelledWords.includes(word.toLowerCase())) return true;
-    
-    // Check for common patterns of misspelling
-    const patterns = [
-        /([a-z])\1{2,}/, // Triple letters (aaa, bbb)
-        /^[a-z]*[aeiou]{3,}[a-z]*$/i, // Multiple vowels in a row
-        /^[a-z]*[bcdfghjklmnpqrstvwxyz]{4,}[a-z]*$/i, // Multiple consonants in a row
-        /^[a-z]{1,2}$/i, // Very short words (likely abbreviations)
-    ];
-    
-    for (const pattern of patterns) {
-        if (pattern.test(word)) {
-            return false; // Don't mark as misspelled for these patterns
-        }
-    }
-    
-    // If word is not in common words and not obviously misspelled, check with AI
-    return true; // For now, mark as potentially misspelled for AI checking
-}
 
 // Mark a misspelled word with red underline
 function markMisspelledWord(textNode, startOffset, endOffset, word) {
@@ -6547,17 +6492,7 @@ function replaceWord(element, suggestion) {
     }
 }
 
-// Ignore a word (add to ignored words list)
-function ignoreWord(word) {
-    ignoredWords.add(word.toLowerCase());
-    saveSpellCheckSettings();
-}
-
-// Add word to custom dictionary
-function addToDictionary(word) {
-    customDictionary.add(word.toLowerCase());
-    saveSpellCheckSettings();
-}
+// These functions are replaced by the simple versions above
 
 // Clear all spell check markers
 function clearSpellCheckMarkers() {
@@ -6570,24 +6505,7 @@ function clearSpellCheckMarkers() {
 }
 
 // Save spell check settings to localStorage
-function saveSpellCheckSettings() {
-    localStorage.setItem('spellCheckIgnoredWords', JSON.stringify([...ignoredWords]));
-    localStorage.setItem('spellCheckCustomDictionary', JSON.stringify([...customDictionary]));
-}
-
-// Load spell check settings from localStorage
-function loadSpellCheckSettings() {
-    const ignored = localStorage.getItem('spellCheckIgnoredWords');
-    const custom = localStorage.getItem('spellCheckCustomDictionary');
-    
-    if (ignored) {
-        ignoredWords = new Set(JSON.parse(ignored));
-    }
-    
-    if (custom) {
-        customDictionary = new Set(JSON.parse(custom));
-    }
-}
+// These functions are replaced by the simple versions above
 
 // Toggle spell check on/off
 function toggleSpellCheck() {
