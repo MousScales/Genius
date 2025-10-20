@@ -5244,6 +5244,25 @@ select.toolbar-select option {
     color: #ffffff;
 }
 
+/* Vertical stack for toolbar buttons */
+.toolbar-vertical-stack {
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Text buttons that match humanize button styling */
+.toolbar-text-btn {
+    width: auto !important;
+    height: auto !important;
+    min-width: 120px;
+    padding: 6px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .align-icon-btn {
     padding: 0 !important;
 }

@@ -351,17 +351,12 @@ function createEditorScreen(classData, existingDoc) {
             
             <div class="toolbar-divider"></div>
             
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="removeSuggestionsBtn" title="Remove All Suggestions" tabindex="-1">
-                    Remove Suggestions
-                </button>
-            </div>
-            
-            <div class="toolbar-divider"></div>
-            
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="findReplaceBtn" title="Find and Replace (Ctrl+H)" tabindex="-1">
+            <div class="toolbar-group toolbar-vertical-stack">
+                <button class="toolbar-btn toolbar-text-btn" id="findReplaceBtn" title="Find and Replace (Ctrl+H)" tabindex="-1">
                     Find and Replace
+                </button>
+                <button class="toolbar-btn toolbar-text-btn" id="removeSuggestionsBtn" title="Remove All Suggestions" tabindex="-1">
+                    Remove Suggestions
                 </button>
             </div>
             
