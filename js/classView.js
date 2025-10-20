@@ -3513,9 +3513,19 @@ function renderFlashcardSetCard(guide, classData, viewMode = 'list') {
                     <p class="flashcard-set-type">${guide.totalCards} Cards</p>
                 </div>
                 <div class="flashcard-set-actions">
-                    <button class="flashcard-set-action-btn delete-study-guide-btn" data-guide-id="${guide.id}">
-                        <span>✕</span> Delete
-                    </button>
+                    <div class="flashcard-menu-container">
+                        <button class="flashcard-menu-btn" data-guide-id="${guide.id}" title="More options">
+                            <span>⋯</span>
+                        </button>
+                        <div class="flashcard-menu-dropdown" id="menu-${guide.id}">
+                            <button class="flashcard-menu-item edit-flashcard-btn" data-guide-id="${guide.id}">
+                                <span>✏️</span> Edit
+                            </button>
+                            <button class="flashcard-menu-item delete-study-guide-btn" data-guide-id="${guide.id}">
+                                <span>🗑️</span> Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -3554,6 +3564,205 @@ function setupStudyGuideEventListeners(classData) {
             }
         });
     });
+    
+    // 3 dots menu buttons
+    document.querySelectorAll('.flashcard-menu-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const guideId = btn.dataset.guideId;
+            const menu = document.getElementById(`menu-${guideId}`);
+            
+            // Close other menus
+            document.querySelectorAll('.flashcard-menu-dropdown').forEach(m => {
+                if (m.id !== `menu-${guideId}`) {
+                    m.style.display = 'none';
+                }
+            });
+            
+            // Toggle current menu
+            if (menu) {
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    });
+    
+    // Edit flashcard buttons
+    document.querySelectorAll('.edit-flashcard-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const guideId = btn.dataset.guideId;
+            editFlashcardSet(guideId, classData);
+        });
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.flashcard-menu-container')) {
+            document.querySelectorAll('.flashcard-menu-dropdown').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+    });
+}
+
+async function editFlashcardSet(guideId, classData) {
+    try {
+        console.log('📝 Editing flashcard set:', guideId);
+        
+        // Load the flashcard set data
+        const db = window.firebase.firestore();
+        const guideRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides').doc(guideId);
+        const guideDoc = await guideRef.get();
+        
+        if (!guideDoc.exists) {
+            alert('Flashcard set not found.');
+            return;
+        }
+        
+        const guide = { id: guideDoc.id, ...guideDoc.data() };
+        
+        // Create edit modal
+        const modal = document.createElement('div');
+        modal.className = 'flashcard-edit-modal';
+        modal.innerHTML = `
+            <div class="flashcard-edit-content">
+                <div class="flashcard-edit-header">
+                    <h3>Edit Flashcard Set</h3>
+                    <button class="close-flashcard-edit" onclick="closeFlashcardEdit()">✕</button>
+                </div>
+                <div class="flashcard-edit-body">
+                    <div class="flashcard-edit-title">
+                        <label for="editFlashcardSetTitle">Title:</label>
+                        <input type="text" id="editFlashcardSetTitle" value="${guide.title}" placeholder="Enter flashcard set title">
+                    </div>
+                    <div class="flashcards-container" id="editFlashcardsContainer">
+                        ${guide.flashcards.map((card, index) => `
+                            <div class="flashcard-item">
+                                <div class="flashcard-card front">
+                                    <div class="flashcard-card-header front">
+                                        <span>Question ${index + 1}</span>
+                                    </div>
+                                    <textarea class="flashcard-question-input" rows="3">${card.question}</textarea>
+                                </div>
+                                <div class="flashcard-card back">
+                                    <div class="flashcard-card-header back">
+                                        <span>Answer ${index + 1}</span>
+                                    </div>
+                                    <textarea class="flashcard-answer-input" rows="3">${card.answer}</textarea>
+                                </div>
+                                <button class="remove-flashcard-btn" onclick="removeFlashcard(this)">Remove</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="add-flashcard-btn" id="addEditFlashcardBtn">+ Add Another Card</button>
+                </div>
+                <div class="flashcard-edit-footer">
+                    <button class="cancel-flashcard-edit" onclick="closeFlashcardEdit()">Cancel</button>
+                    <button class="save-flashcard-edit" onclick="saveFlashcardEdit('${guideId}', '${classData.userId}', '${classData.id}')">Save Changes</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners for the edit modal
+        setupFlashcardEditListeners();
+        
+    } catch (error) {
+        console.error('Error editing flashcard set:', error);
+        alert('Error loading flashcard set for editing. Please try again.');
+    }
+}
+
+function setupFlashcardEditListeners() {
+    // Add flashcard button
+    document.getElementById('addEditFlashcardBtn').addEventListener('click', () => {
+        addFlashcardToEdit();
+    });
+}
+
+function addFlashcardToEdit() {
+    const container = document.getElementById('editFlashcardsContainer');
+    const flashcardCount = container.children.length;
+    
+    const flashcardItem = document.createElement('div');
+    flashcardItem.className = 'flashcard-item';
+    flashcardItem.innerHTML = `
+        <div class="flashcard-card front">
+            <div class="flashcard-card-header front">
+                <span>Question ${flashcardCount + 1}</span>
+            </div>
+            <textarea class="flashcard-question-input" rows="3" placeholder="Enter question"></textarea>
+        </div>
+        <div class="flashcard-card back">
+            <div class="flashcard-card-header back">
+                <span>Answer ${flashcardCount + 1}</span>
+            </div>
+            <textarea class="flashcard-answer-input" rows="3" placeholder="Enter answer"></textarea>
+        </div>
+        <button class="remove-flashcard-btn" onclick="removeFlashcard(this)">Remove</button>
+    `;
+    
+    container.appendChild(flashcardItem);
+}
+
+async function saveFlashcardEdit(guideId, userId, classId) {
+    try {
+        const title = document.getElementById('editFlashcardSetTitle').value.trim();
+        if (!title) {
+            alert('Please enter a title for the flashcard set.');
+            return;
+        }
+        
+        // Collect all flashcards
+        const flashcardItems = document.querySelectorAll('#editFlashcardsContainer .flashcard-item');
+        const flashcards = [];
+        
+        flashcardItems.forEach((item, index) => {
+            const question = item.querySelector('.flashcard-question-input').value.trim();
+            const answer = item.querySelector('.flashcard-answer-input').value.trim();
+            
+            if (question && answer) {
+                flashcards.push({
+                    question,
+                    answer,
+                    id: `card_${index + 1}`
+                });
+            }
+        });
+        
+        if (flashcards.length === 0) {
+            alert('Please add at least one flashcard.');
+            return;
+        }
+        
+        // Save to Firebase
+        const db = window.firebase.firestore();
+        await db.collection('users').doc(userId).collection('classes').doc(classId).collection('studyGuides').doc(guideId).update({
+            title: title,
+            flashcards: flashcards,
+            totalCards: flashcards.length,
+            updatedAt: new Date()
+        });
+        
+        console.log('✅ Flashcard set updated successfully');
+        closeFlashcardEdit();
+        
+        // Reload study guides to show changes
+        const classData = { userId, id: classId };
+        loadStudyGuides(classData);
+        
+    } catch (error) {
+        console.error('Error saving flashcard edit:', error);
+        alert('Error saving changes. Please try again.');
+    }
+}
+
+function closeFlashcardEdit() {
+    const modal = document.querySelector('.flashcard-edit-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 async function openStudyGuideViewer(guideId, classData) {
