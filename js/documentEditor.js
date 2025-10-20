@@ -484,6 +484,11 @@ function setupEditorControls(classData, existingDoc) {
     // Initialize undo/redo functionality
     initializeUndoRedo();
     
+    // Reattach image functionality after content is loaded
+    setTimeout(() => {
+        reattachImageFunctionality();
+    }, 100);
+    
     // Store the document ID to ensure we always update the same document
     let currentDocId = existingDoc ? existingDoc.id : Date.now().toString();
     
@@ -4983,6 +4988,24 @@ function saveState() {
         redoStack = [];
         
         console.log('State saved. Undo stack size:', undoStack.length);
+        
+        // Update undo/redo button states
+        updateUndoRedoButtons();
+    }
+}
+
+function updateUndoRedoButtons() {
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    
+    if (undoBtn) {
+        undoBtn.disabled = undoStack.length <= 1;
+        undoBtn.style.opacity = undoStack.length <= 1 ? '0.5' : '1';
+    }
+    
+    if (redoBtn) {
+        redoBtn.disabled = redoStack.length === 0;
+        redoBtn.style.opacity = redoStack.length === 0 ? '0.5' : '1';
     }
 }
 
@@ -5016,6 +5039,9 @@ function initializeUndoRedo() {
             }
         });
     }
+    
+    // Initial button state update
+    updateUndoRedoButtons();
 }
 
 function undo() {
@@ -5050,6 +5076,14 @@ function undo() {
         
         isUndoRedoOperation = false;
         
+        // Update button states
+        updateUndoRedoButtons();
+        
+        // Reattach image functionality after undo
+        setTimeout(() => {
+            reattachImageFunctionality();
+        }, 50);
+        
         showNotification('Undo successful', 'success');
         console.log('Undo performed. Undo stack size:', undoStack.length, 'Redo stack size:', redoStack.length);
     }
@@ -5083,8 +5117,141 @@ function redo() {
     
     isUndoRedoOperation = false;
     
+    // Update button states
+    updateUndoRedoButtons();
+    
+    // Reattach image functionality after redo
+    setTimeout(() => {
+        reattachImageFunctionality();
+    }, 50);
+    
     showNotification('Redo successful', 'success');
     console.log('Redo performed. Undo stack size:', undoStack.length, 'Redo stack size:', redoStack.length);
+}
+
+// Function to reattach image functionality after content is loaded
+function reattachImageFunctionality() {
+    const content = document.getElementById('docEditorContent');
+    if (!content) return;
+    
+    // Find all existing images and reattach functionality
+    const imageWrappers = content.querySelectorAll('.image-wrapper');
+    imageWrappers.forEach(imageWrapper => {
+        const img = imageWrapper.querySelector('img');
+        const resizeHandle = imageWrapper.querySelector('.resize-handle');
+        
+        if (!img || !resizeHandle) return;
+        
+        // Remove existing event listeners by cloning the elements
+        const newImageWrapper = imageWrapper.cloneNode(true);
+        const newImg = newImageWrapper.querySelector('img');
+        const newResizeHandle = newImageWrapper.querySelector('.resize-handle');
+        
+        // Copy styles
+        newImageWrapper.style.cssText = imageWrapper.style.cssText;
+        newImg.style.cssText = img.style.cssText;
+        newResizeHandle.style.cssText = resizeHandle.style.cssText;
+        
+        // Replace the old wrapper with the new one
+        imageWrapper.parentNode.replaceChild(newImageWrapper, imageWrapper);
+        
+        // Reattach all functionality
+        attachImageFunctionality(newImageWrapper, newImg, newResizeHandle);
+    });
+}
+
+// Function to attach image functionality to a specific image wrapper
+function attachImageFunctionality(imageWrapper, img, resizeHandle) {
+    // Show/hide resize handle on hover
+    imageWrapper.addEventListener('mouseenter', () => {
+        resizeHandle.style.display = 'block';
+    });
+    imageWrapper.addEventListener('mouseleave', () => {
+        if (!imageWrapper.classList.contains('resizing')) {
+            resizeHandle.style.display = 'none';
+        }
+    });
+    
+    // Make image draggable
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    
+    imageWrapper.addEventListener('mousedown', (e) => {
+        if (e.target === resizeHandle) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = imageWrapper.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+        imageWrapper.style.position = 'absolute';
+        imageWrapper.style.zIndex = '1000';
+        e.stopPropagation();
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            imageWrapper.style.left = (startLeft + deltaX) + 'px';
+            imageWrapper.style.top = (startTop + deltaY) + 'px';
+        }
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            imageWrapper.style.position = 'relative';
+            imageWrapper.style.zIndex = 'auto';
+            imageWrapper.style.left = 'auto';
+            imageWrapper.style.top = 'auto';
+            
+            // Trigger save after dragging is complete
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
+            }
+        }
+    });
+    
+    // Make image resizable
+    let isResizing = false;
+    let startWidth, startHeight, aspectRatio;
+    
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = img.offsetWidth;
+        startHeight = img.offsetHeight;
+        aspectRatio = startWidth / startHeight;
+        imageWrapper.classList.add('resizing');
+        e.stopPropagation();
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (isResizing) {
+            const deltaX = e.clientX - startX;
+            const newWidth = Math.max(100, startWidth + deltaX);
+            const newHeight = newWidth / aspectRatio;
+            
+            img.style.width = newWidth + 'px';
+            img.style.height = newHeight + 'px';
+        }
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            imageWrapper.classList.remove('resizing');
+            resizeHandle.style.display = 'none';
+            
+            // Trigger save after resizing is complete
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
+            }
+        }
+    });
 }
 
 // Global function to type out content with animation (like geniusChat.js)
