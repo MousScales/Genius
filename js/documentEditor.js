@@ -225,38 +225,56 @@ function createEditorScreen(classData, existingDoc) {
         
         <div class="doc-editor-toolbar">
             <div class="toolbar-group">
-                <select class="toolbar-select" id="fontSelect">
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Segoe UI" selected>Segoe UI</option>
-                </select>
-                <select class="toolbar-select" id="fontSizeSelect">
-                    <option value="10">10</option>
-                    <option value="12">12</option>
-                    <option value="14">14</option>
-                    <option value="16" selected>16</option>
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="24">24</option>
-                    <option value="28">28</option>
-                    <option value="32">32</option>
-                    <option value="36">36</option>
-                    <option value="48">48</option>
-                </select>
-                <select class="toolbar-select" id="headingSelect">
-                    <option value="p">Normal Text</option>
-                    <option value="h1">Title</option>
-                    <option value="h2">Subtitle</option>
-                    <option value="h3">Heading 1</option>
-                    <option value="h4">Heading 2</option>
-                    <option value="h5">Heading 3</option>
-                    <option value="h6">Heading 4</option>
-                    <option value="blockquote">Quote</option>
-                    <option value="code">Code</option>
-                </select>
+                <div class="custom-dropdown" id="fontDropdown">
+                    <div class="dropdown-trigger" id="fontTrigger">
+                        <span class="dropdown-text">Segoe UI</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="fontMenu">
+                        <div class="dropdown-item" data-value="Arial">Arial</div>
+                        <div class="dropdown-item" data-value="Times New Roman">Times New Roman</div>
+                        <div class="dropdown-item" data-value="Courier New">Courier New</div>
+                        <div class="dropdown-item" data-value="Georgia">Georgia</div>
+                        <div class="dropdown-item" data-value="Verdana">Verdana</div>
+                        <div class="dropdown-item active" data-value="Segoe UI">Segoe UI</div>
+                    </div>
+                </div>
+                <div class="custom-dropdown" id="fontSizeDropdown">
+                    <div class="dropdown-trigger" id="fontSizeTrigger">
+                        <span class="dropdown-text">16</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="fontSizeMenu">
+                        <div class="dropdown-item" data-value="10">10</div>
+                        <div class="dropdown-item" data-value="12">12</div>
+                        <div class="dropdown-item" data-value="14">14</div>
+                        <div class="dropdown-item active" data-value="16">16</div>
+                        <div class="dropdown-item" data-value="18">18</div>
+                        <div class="dropdown-item" data-value="20">20</div>
+                        <div class="dropdown-item" data-value="24">24</div>
+                        <div class="dropdown-item" data-value="28">28</div>
+                        <div class="dropdown-item" data-value="32">32</div>
+                        <div class="dropdown-item" data-value="36">36</div>
+                        <div class="dropdown-item" data-value="48">48</div>
+                    </div>
+                </div>
+                <div class="custom-dropdown" id="headingDropdown">
+                    <div class="dropdown-trigger" id="headingTrigger">
+                        <span class="dropdown-text">Normal Text</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="headingMenu">
+                        <div class="dropdown-item active" data-value="p">Normal Text</div>
+                        <div class="dropdown-item" data-value="h1">Title</div>
+                        <div class="dropdown-item" data-value="h2">Subtitle</div>
+                        <div class="dropdown-item" data-value="h3">Heading 1</div>
+                        <div class="dropdown-item" data-value="h4">Heading 2</div>
+                        <div class="dropdown-item" data-value="h5">Heading 3</div>
+                        <div class="dropdown-item" data-value="h6">Heading 4</div>
+                        <div class="dropdown-item" data-value="blockquote">Quote</div>
+                        <div class="dropdown-item" data-value="code">Code</div>
+                    </div>
+                </div>
             </div>
             
             <div class="toolbar-divider"></div>
@@ -5933,13 +5951,10 @@ function isMisspelled(word) {
         return true;
     }
     
-    // For testing, let's mark some obvious misspellings
+    // Mark words that are not in the common words list as potentially misspelled
     if (word.length > 2 && !commonWords.includes(word.toLowerCase())) {
-        // Mark words that look like they might be misspelled
-        if (word.includes('ie') || word.includes('ei') || word.length > 8) {
-            console.log('Word marked as potentially misspelled:', word);
-            return true;
-        }
+        console.log('Word marked as potentially misspelled:', word);
+        return true;
     }
     
     console.log('Word not marked as misspelled:', word);
