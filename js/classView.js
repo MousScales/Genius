@@ -582,15 +582,21 @@ async function loadDocuments(classData) {
         
         console.log('📄 Loaded documents from Firebase:', documents.length);
         
-        // Load folders with timeout protection
+        // Load folders with timeout protection (optional - don't block if it fails)
         console.log('📄 Loading folders...');
-        const foldersPromise = getFolders(classData);
-        const foldersTimeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Folders query timeout after 5 seconds')), 5000)
-        );
-        
-        const folders = await Promise.race([foldersPromise, foldersTimeoutPromise]);
-        console.log('📄 Loaded folders:', folders.length);
+        let folders = [];
+        try {
+            const foldersPromise = getFolders(classData);
+            const foldersTimeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Folders query timeout after 5 seconds')), 5000)
+            );
+            
+            folders = await Promise.race([foldersPromise, foldersTimeoutPromise]);
+            console.log('📄 Loaded folders:', folders.length);
+        } catch (foldersError) {
+            console.warn('⚠️ Folders loading failed, continuing without folders:', foldersError.message);
+            folders = []; // Use empty folders array
+        }
         
         // Get view mode
         const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
@@ -1602,11 +1608,28 @@ async function createNewFolder(classData) {
 
 async function getFolders(classData) {
     try {
-        const { folderService } = await getFirebaseServices();
-        return await folderService.getFolders(classData.userId, classData.id);
+        console.log('📁 Getting folders for class:', classData.name);
+        
+        // Use direct Firebase query instead of service layer
+        const db = window.firebase.firestore();
+        const foldersRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('folders');
+        
+        const querySnapshot = await foldersRef.get();
+        const folders = [];
+        
+        querySnapshot.forEach((doc) => {
+            folders.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        console.log('📁 Loaded folders from Firebase:', folders.length);
+        return folders;
+        
     } catch (error) {
-        console.error('Error getting folders:', error);
-        return [];
+        console.error('❌ Error getting folders:', error);
+        return []; // Return empty array on error
     }
 }
 
