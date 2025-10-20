@@ -233,9 +233,6 @@
                 return;
             }
             
-            // Load document modules
-            await loadDocuments();
-            
             initDashboard().then(() => {
                 // Check Firebase authentication state
                 checkAuthState();
@@ -742,35 +739,6 @@
 
         // Load classes on page load
         loadClasses();
-        
-        // Load documents function (similar to loadClasses pattern)
-        async function loadDocuments() {
-            if (!currentUser || !currentUser.uid) {
-                console.log('No current user available for document loading');
-                return;
-            }
-
-            // Wait for document modules to be loaded
-            if (typeof window.openDocumentEditor !== 'function' || typeof window.closeDocumentEditor !== 'function') {
-                console.log('Document modules not loaded yet, waiting...');
-                await new Promise(resolve => {
-                    const checkModules = () => {
-                        if (typeof window.openDocumentEditor === 'function' && typeof window.closeDocumentEditor === 'function') {
-                            resolve();
-                        } else {
-                            setTimeout(checkModules, 100);
-                        }
-                    };
-                    checkModules();
-                });
-            }
-            
-            console.log('Document modules loaded successfully');
-            console.log('Available document functions:', {
-                openDocumentEditor: typeof window.openDocumentEditor,
-                closeDocumentEditor: typeof window.closeDocumentEditor
-            });
-        }
 
         // Add class button (top right)
         document.getElementById('addClassBtn').addEventListener('click', () => {
