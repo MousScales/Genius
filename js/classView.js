@@ -3,13 +3,21 @@ let documentService, folderService, studyGuideService, eventService;
 
 async function getFirebaseServices() {
     if (!documentService) {
-        // Wait for firebase-service.js to load with timeout
+        // Wait for firebase-service.js to load with longer timeout and better error handling
         await new Promise((resolve, reject) => {
             let attempts = 0;
-            const maxAttempts = 50; // 5 seconds timeout (50 * 100ms)
+            const maxAttempts = 100; // 10 seconds timeout (100 * 100ms)
             
             const checkServices = () => {
                 attempts++;
+                
+                console.log(`🔍 Checking Firebase services (attempt ${attempts}/${maxAttempts})...`);
+                console.log('Available services:', {
+                    documentService: !!window.documentService,
+                    folderService: !!window.folderService,
+                    studyGuideService: !!window.studyGuideService,
+                    eventService: !!window.eventService
+                });
                 
                 if (window.documentService && window.folderService && window.studyGuideService && window.eventService) {
                     documentService = window.documentService;
@@ -20,6 +28,7 @@ async function getFirebaseServices() {
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     console.error('❌ Timeout waiting for Firebase services to load');
+                    console.error('❌ Available window services:', Object.keys(window).filter(key => key.includes('Service')));
                     reject(new Error('Firebase services failed to load within timeout period'));
                 } else {
                     setTimeout(checkServices, 100);
@@ -1600,23 +1609,43 @@ async function createNewFolder(classData) {
     try {
         console.log('📁 Creating new folder:', folderName.trim());
         
-        // Ensure services are initialized
-        const { folderService } = await getFirebaseServices();
-        
-        if (!folderService) {
-            throw new Error('Folder service not available');
-        }
-        
-        console.log('📁 Folder service loaded successfully');
-        
         const newFolder = {
             name: folderName.trim(),
             documents: [],
             isExpanded: true
         };
         
-        console.log('📁 Saving folder to Firebase...');
-        await folderService.saveFolder(classData.userId, classData.id, newFolder);
+        // Try to use service first, fallback to direct Firebase if needed
+        try {
+            const { folderService } = await getFirebaseServices();
+            
+            if (!folderService) {
+                throw new Error('Folder service not available');
+            }
+            
+            console.log('📁 Using folder service...');
+            await folderService.saveFolder(classData.userId, classData.id, newFolder);
+        } catch (serviceError) {
+            console.log('📁 Service failed, trying direct Firebase...', serviceError.message);
+            
+            // Check if Firebase is available
+            if (!window.firebase || !window.firebase.firestore) {
+                throw new Error('Firebase is not initialized. Please refresh the page and try again.');
+            }
+            
+            // Fallback to direct Firebase call
+            const db = window.firebase.firestore();
+            const foldersRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('folders');
+            
+            console.log('📁 Saving folder directly to Firebase...');
+            await foldersRef.add({
+                name: newFolder.name,
+                documents: newFolder.documents,
+                isExpanded: newFolder.isExpanded,
+                createdAt: new Date()
+            });
+        }
+        
         console.log('📁 Folder saved successfully');
         
         // Reload documents to show the new folder
