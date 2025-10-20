@@ -313,6 +313,7 @@ function createClassView(classData) {
         
         // Load documents and study guides
         loadDocuments(classData);
+        loadStudyGuides(classData);
     }, 300);
     
     return viewContainer;
@@ -3287,47 +3288,104 @@ async function generateFlashcardContent(documents, flashcardCount = 25) {
 
 
 async function loadStudyGuides(classData, viewMode = 'list') {
-    try {
-        const { studyGuideService } = await getFirebaseServices();
-        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
+    console.log('📚 Loading study guides for:', classData.name);
     
     const studyGuidesList = document.getElementById('studyGuidesList');
     const emptyStudyGuides = document.getElementById('emptyStudyGuides');
     
-    if (!studyGuidesList) return;
-    
-    // Update CSS class based on view mode
-    if (viewMode === 'grid') {
-        studyGuidesList.classList.add('grid-view');
-    } else {
-        studyGuidesList.classList.remove('grid-view');
+    if (!studyGuidesList) {
+        console.error('❌ studyGuidesList not found');
+        return;
     }
     
-    if (studyGuides.length === 0) {
-        studyGuidesList.innerHTML = '';
-        if (emptyStudyGuides) emptyStudyGuides.style.display = 'block';
-    } else {
-        if (emptyStudyGuides) emptyStudyGuides.style.display = 'none';
+    // Show loading
+    studyGuidesList.innerHTML = '<div class="loading-study-guides">Loading study guides...</div>';
+    if (emptyStudyGuides) emptyStudyGuides.style.display = 'none';
+    
+    try {
+        console.log('📚 Starting study guide loading for class:', classData.name);
+        console.log('📚 Class data:', { userId: classData.userId, classId: classData.id });
         
-        let html = '';
-        studyGuides.forEach(guide => {
-            if (guide.isStudyGuide) {
-                html += renderStudyGuideCard(guide, classData, viewMode);
-            } else if (guide.isFlashcardSet) {
-                html += renderFlashcardSetCard(guide, classData, viewMode);
-            }
+        // Load study guides from Firebase (same pattern as documents)
+        const db = window.firebase.firestore();
+        const studyGuidesRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides');
+        
+        console.log('📚 Firebase query starting...');
+        
+        // Try with orderBy first, fallback to simple query if it fails
+        let querySnapshot;
+        try {
+            const queryPromise = studyGuidesRef.orderBy('createdAt', 'desc').get();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Study guides query timeout after 10 seconds')), 10000)
+            );
+            
+            querySnapshot = await Promise.race([queryPromise, timeoutPromise]);
+            console.log('📚 Firebase query with orderBy completed');
+        } catch (orderByError) {
+            console.warn('⚠️ Study guides orderBy query failed, trying simple query:', orderByError.message);
+            // Fallback to simple query without orderBy
+            const simpleQueryPromise = studyGuidesRef.get();
+            const simpleTimeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Simple study guides query timeout after 10 seconds')), 10000)
+            );
+            
+            querySnapshot = await Promise.race([simpleQueryPromise, simpleTimeoutPromise]);
+            console.log('📚 Firebase simple query completed');
+        }
+        
+        const studyGuides = [];
+        querySnapshot.forEach((doc) => {
+            studyGuides.push({
+                id: doc.id,
+                ...doc.data()
+            });
         });
         
-        studyGuidesList.innerHTML = html;
+        console.log('📚 Loaded study guides from Firebase:', studyGuides.length);
         
-        // Add event listeners
-        setTimeout(() => {
-            setupStudyGuideEventListeners(classData);
-        }, 100);
+        // Update CSS class based on view mode
+        if (viewMode === 'grid') {
+            studyGuidesList.classList.add('grid-view');
+        } else {
+            studyGuidesList.classList.remove('grid-view');
         }
+        
+        if (studyGuides.length === 0) {
+            studyGuidesList.innerHTML = '';
+            if (emptyStudyGuides) emptyStudyGuides.style.display = 'block';
+        } else {
+            if (emptyStudyGuides) emptyStudyGuides.style.display = 'none';
+            
+            let html = '';
+            studyGuides.forEach(guide => {
+                if (guide.isStudyGuide) {
+                    html += renderStudyGuideCard(guide, classData, viewMode);
+                } else if (guide.isFlashcardSet) {
+                    html += renderFlashcardSetCard(guide, classData, viewMode);
+                }
+            });
+            
+            studyGuidesList.innerHTML = html;
+            
+            // Add event listeners
+            setTimeout(() => {
+                setupStudyGuideEventListeners(classData);
+            }, 100);
+        }
+        
+        console.log('✅ Study guide loading completed successfully');
+        
     } catch (error) {
-        console.error('Error loading study guides:', error);
-        alert('Error loading study guides. Please try again.');
+        console.error('❌ Error loading study guides:', error);
+        console.error('❌ Error details:', error.message);
+        studyGuidesList.innerHTML = `
+            <div class="error-message">
+                <h3>Error Loading Study Guides</h3>
+                <p>${error.message}</p>
+                <button onclick="location.reload()">Retry</button>
+            </div>
+        `;
     }
 }
 
