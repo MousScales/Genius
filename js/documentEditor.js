@@ -5728,10 +5728,18 @@ function debounce(func, wait) {
 
 // Main spell check function
 function performSpellCheck() {
-    if (!spellCheckEnabled) return;
+    console.log('🔍 performSpellCheck called, enabled:', spellCheckEnabled);
+    
+    if (!spellCheckEnabled) {
+        console.log('❌ Spell check disabled');
+        return;
+    }
     
     const contentElement = document.getElementById('docEditorContent');
-    if (!contentElement) return;
+    if (!contentElement) {
+        console.log('❌ Content element not found');
+        return;
+    }
     
     console.log('🔍 Starting spell check...');
     
@@ -5742,22 +5750,36 @@ function performSpellCheck() {
     const text = contentElement.textContent || contentElement.innerText || '';
     console.log('📝 Text to check:', text);
     
+    if (!text.trim()) {
+        console.log('❌ No text to check');
+        return;
+    }
+    
     // Find misspelled words
     const words = text.split(/\s+/).filter(word => word.length > 2 && /^[a-zA-Z]+$/.test(word));
     console.log('📝 Words to check:', words);
     
+    if (words.length === 0) {
+        console.log('❌ No words to check');
+        return;
+    }
+    
+    let misspelledCount = 0;
     words.forEach(word => {
         if (isMisspelled(word)) {
             console.log('❌ Misspelled word found:', word);
             markMisspelledWord(word);
+            misspelledCount++;
         }
     });
     
-    console.log('✅ Spell check completed');
+    console.log(`✅ Spell check completed - found ${misspelledCount} misspelled words`);
 }
 
 // Check if a word is misspelled
 function isMisspelled(word) {
+    console.log('🔍 Checking if misspelled:', word);
+    
     const commonWords = [
         'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
         'this', 'but', 'his', 'by', 'from', 'they', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
@@ -5773,30 +5795,48 @@ function isMisspelled(word) {
         'keep', 'getting', 'distracted'
     ];
     
-    return !commonWords.includes(word.toLowerCase());
+    const isCommon = commonWords.includes(word.toLowerCase());
+    const isMisspelled = !isCommon;
+    
+    console.log(`🔍 Word "${word}" - isCommon: ${isCommon}, isMisspelled: ${isMisspelled}`);
+    
+    return isMisspelled;
 }
 
 // Mark a misspelled word
 function markMisspelledWord(word) {
+    console.log('🎯 markMisspelledWord called for:', word);
+    
     const contentElement = document.getElementById('docEditorContent');
-    if (!contentElement) return;
+    if (!contentElement) {
+        console.log('❌ Content element not found in markMisspelledWord');
+        return;
+    }
     
     // Find and replace the word in the content
     const html = contentElement.innerHTML;
+    console.log('📝 Current HTML:', html);
+    
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    console.log('🔍 Regex:', regex);
     
     if (regex.test(html)) {
+        console.log('✅ Found word in HTML, replacing...');
         const newHtml = html.replace(regex, `<span class="spell-check-error" data-word="${word}">${word}</span>`);
+        console.log('📝 New HTML:', newHtml);
         contentElement.innerHTML = newHtml;
         
         // Add click event to show suggestions
         const markers = contentElement.querySelectorAll('.spell-check-error');
+        console.log('🎯 Found markers:', markers.length);
         markers.forEach(marker => {
             marker.addEventListener('click', (e) => {
                 e.preventDefault();
                 showSpellCheckSuggestions(marker, word);
             });
         });
+    } else {
+        console.log('❌ Word not found in HTML');
     }
 }
 
