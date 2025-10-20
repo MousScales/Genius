@@ -3,15 +3,24 @@ let documentService, folderService, studyGuideService, eventService;
 
 async function getFirebaseServices() {
     if (!documentService) {
-        // Wait for firebase-service.js to load
-        await new Promise(resolve => {
+        // Wait for firebase-service.js to load with timeout
+        await new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds timeout (50 * 100ms)
+            
             const checkServices = () => {
+                attempts++;
+                
                 if (window.documentService && window.folderService && window.studyGuideService && window.eventService) {
                     documentService = window.documentService;
                     folderService = window.folderService;
                     studyGuideService = window.studyGuideService;
                     eventService = window.eventService;
+                    console.log('✅ Firebase services loaded successfully');
                     resolve();
+                } else if (attempts >= maxAttempts) {
+                    console.error('❌ Timeout waiting for Firebase services to load');
+                    reject(new Error('Firebase services failed to load within timeout period'));
                 } else {
                     setTimeout(checkServices, 100);
                 }
@@ -1589,21 +1598,41 @@ async function createNewFolder(classData) {
     if (!folderName || !folderName.trim()) return;
     
     try {
-    const newFolder = {
-        name: folderName.trim(),
-        documents: [],
-        isExpanded: true
-    };
-    
+        console.log('📁 Creating new folder:', folderName.trim());
+        
+        // Ensure services are initialized
+        const { folderService } = await getFirebaseServices();
+        
+        if (!folderService) {
+            throw new Error('Folder service not available');
+        }
+        
+        console.log('📁 Folder service loaded successfully');
+        
+        const newFolder = {
+            name: folderName.trim(),
+            documents: [],
+            isExpanded: true
+        };
+        
+        console.log('📁 Saving folder to Firebase...');
         await folderService.saveFolder(classData.userId, classData.id, newFolder);
-    
-    // Reload documents to show the new folder
-    const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-    const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
+        console.log('📁 Folder saved successfully');
+        
+        // Reload documents to show the new folder
+        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
+        const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
         await loadDocuments(classData, currentViewMode);
+        
+        console.log('📁 Documents reloaded, folder should now be visible');
     } catch (error) {
-        console.error('Error creating folder:', error);
-        alert('Error creating folder. Please try again.');
+        console.error('❌ Error creating folder:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack,
+            classData: classData
+        });
+        alert(`Error creating folder: ${error.message}. Please try again.`);
     }
 }
 
