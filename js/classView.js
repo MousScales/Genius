@@ -2107,10 +2107,19 @@ async function saveManualFlashcards(classData) {
 
 async function showFlashcardEditor(guideId, classData) {
     try {
-        // Load the flashcard set
-        const { studyGuideService } = await getFirebaseServices();
-        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
-        const guide = studyGuides.find(g => g.id === guideId);
+        console.log('📝 Opening flashcard editor for:', guideId);
+        
+        // Load the flashcard set using direct Firebase pattern
+        const db = window.firebase.firestore();
+        const guideRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides').doc(guideId);
+        const guideDoc = await guideRef.get();
+        
+        if (!guideDoc.exists) {
+            alert('Flashcard set not found.');
+            return;
+        }
+        
+        const guide = { id: guideDoc.id, ...guideDoc.data() };
         
         if (!guide || !guide.flashcards) {
             alert('Flashcard set not found.');
@@ -2241,27 +2250,25 @@ async function saveEditedFlashcards(guideId, classData) {
     }
     
     try {
-        // Update the flashcard set
-        const { studyGuideService } = await getFirebaseServices();
-        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
-        const guide = studyGuides.find(g => g.id === guideId);
+        console.log('💾 Saving edited flashcards for:', guideId);
         
-        if (guide) {
-            guide.title = title;
-            guide.flashcards = flashcards;
-            guide.totalCards = flashcards.length;
-            
-            // Save updated guide
-            await studyGuideService.saveStudyGuide(classData.userId, classData.id, guide);
-            
-            // Reload study guides
-            loadStudyGuides(classData);
-            
-            // Close modal
-            document.body.removeChild(document.querySelector('.flashcard-editor-modal'));
-            
-            console.log('Flashcards updated successfully');
-        }
+        // Update the flashcard set using direct Firebase pattern
+        const db = window.firebase.firestore();
+        await db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides').doc(guideId).update({
+            title: title,
+            flashcards: flashcards,
+            totalCards: flashcards.length,
+            updatedAt: new Date()
+        });
+        
+        console.log('✅ Flashcard set updated successfully');
+        alert('Flashcard set updated successfully!');
+        
+        // Reload study guides
+        loadStudyGuides(classData);
+        
+        // Close modal
+        document.body.removeChild(document.querySelector('.flashcard-editor-modal'));
         
     } catch (error) {
         console.error('Error updating flashcards:', error);
@@ -3767,14 +3774,19 @@ function closeFlashcardEdit() {
 
 async function openStudyGuideViewer(guideId, classData) {
     try {
-        const { studyGuideService } = await getFirebaseServices();
-        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
-    const guide = studyGuides.find(g => g.id === guideId);
-    
-        if (!guide) {
+        console.log('📖 Opening study guide viewer for:', guideId);
+        
+        // Load study guide using direct Firebase pattern
+        const db = window.firebase.firestore();
+        const guideRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides').doc(guideId);
+        const guideDoc = await guideRef.get();
+        
+        if (!guideDoc.exists) {
             console.error('Study guide not found:', guideId);
             return;
         }
+        
+        const guide = { id: guideDoc.id, ...guideDoc.data() };
     
     // Create modal for study guide viewer
     const modal = document.createElement('div');
@@ -3831,14 +3843,24 @@ async function openStudyGuideViewer(guideId, classData) {
 
 async function openFlashcardQuiz(guideId, classData) {
     try {
-        // Load study guides from Firebase instead of localStorage
-        const studyGuides = await studyGuideService.getStudyGuides(classData.userId, classData.id);
-    const guide = studyGuides.find(g => g.id === guideId);
-    
-    if (!guide || !guide.flashcards || guide.flashcards.length === 0) {
-        alert('No flashcards available in this set. Please create a new flashcard set.');
-        return;
-    }
+        console.log('🎯 Opening flashcard quiz for:', guideId);
+        
+        // Load study guide from Firebase using direct pattern
+        const db = window.firebase.firestore();
+        const guideRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('studyGuides').doc(guideId);
+        const guideDoc = await guideRef.get();
+        
+        if (!guideDoc.exists) {
+            alert('Flashcard set not found.');
+            return;
+        }
+        
+        const guide = { id: guideDoc.id, ...guideDoc.data() };
+        
+        if (!guide || !guide.flashcards || guide.flashcards.length === 0) {
+            alert('No flashcards available in this set. Please create a new flashcard set.');
+            return;
+        }
     
     // Create floating flashcard interface
     const modal = document.createElement('div');
