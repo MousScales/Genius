@@ -24,9 +24,36 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+// Add logging for debugging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // Routes
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
+// Explicit routes for main HTML files
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/signup', (req, res) => {
+    res.sendFile(path.join(__dirname, 'signup.html'));
+});
+
+app.get('/onboarding', (req, res) => {
+    res.sendFile(path.join(__dirname, 'onboarding.html'));
 });
 
 // Serve static files with proper MIME types
@@ -174,6 +201,29 @@ app.get('/api/env', (req, res) => {
         firebaseAppId: process.env.FIREBASE_APP_ID || "1:567988128391:web:8a48294d736ec4013f8622",
         firebaseMeasurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-3SEG2XJQMP"
     });
+});
+
+// Catch-all route for any other requests
+app.get('*', (req, res) => {
+    console.log(`404 - File not found: ${req.url}`);
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>404 - Page Not Found</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #ff6b6b; }
+                a { color: #4a9eff; text-decoration: none; }
+            </style>
+        </head>
+        <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The requested page "${req.url}" could not be found.</p>
+            <p><a href="/">Go to Home</a> | <a href="/dashboard">Go to Dashboard</a></p>
+        </body>
+        </html>
+    `);
 });
 
 // Start server only if not in Vercel environment
