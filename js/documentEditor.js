@@ -5798,19 +5798,19 @@ function getTextNodes(element) {
 
 // Check a text node for spelling errors
 function checkTextNode(textNode) {
-    const text = textNode.textContent;
-    if (!text || text.trim().length === 0) return;
+    const textContent = textNode.textContent;
+    if (!textContent || textContent.trim().length === 0) return;
     
-    const words = text.split(/(\s+)/);
+    const words = textContent.split(/(\s+)/);
     
     let currentOffset = 0;
     words.forEach(word => {
         if (word.trim() && isWord(word)) {
-            const wordStart = text.indexOf(word, currentOffset);
+            const wordStart = textContent.indexOf(word, currentOffset);
             const wordEnd = wordStart + word.length;
             
             // Validate word position and check if already marked
-            if (wordStart >= 0 && wordEnd <= text.length && 
+            if (wordStart >= 0 && wordEnd <= textContent.length && 
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
                 try {
