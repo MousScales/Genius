@@ -1317,16 +1317,26 @@ function setupToolbarButtons() {
                         resizeHandle.className = 'resize-handle';
                         resizeHandle.style.cssText = `
                             position: absolute;
-                            bottom: 5px;
-                            right: 5px;
+                            bottom: -8px;
+                            right: -8px;
                             width: 20px;
                             height: 20px;
-                            background: rgba(255, 255, 255, 0.8);
+                            background: #4a9eff;
+                            border: 2px solid white;
                             border-radius: 50%;
-                            cursor: nwse-resize;
+                            cursor: se-resize;
                             display: none;
                             z-index: 10;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                         `;
+                        
+                        // Add resize icon
+                        resizeHandle.innerHTML = '↘';
+                        resizeHandle.style.fontSize = '12px';
+                        resizeHandle.style.color = 'white';
+                        resizeHandle.style.display = 'flex';
+                        resizeHandle.style.alignItems = 'center';
+                        resizeHandle.style.justifyContent = 'center';
                         
                         imageWrapper.appendChild(img);
                         imageWrapper.appendChild(resizeHandle);
@@ -1369,17 +1379,26 @@ function setupToolbarButtons() {
                         });
                         
                         document.addEventListener('mouseup', () => {
-                            isDragging = false;
+                            if (isDragging) {
+                                isDragging = false;
+                                
+                                // Trigger save after dragging is complete
+                                if (typeof triggerFormattingSave === 'function') {
+                                    triggerFormattingSave();
+                                }
+                            }
                         });
                         
                         // Make image resizable
                         let isResizing = false;
-                        let startWidth;
+                        let startWidth, startHeight, aspectRatio;
                         
                         resizeHandle.addEventListener('mousedown', (e) => {
                             isResizing = true;
                             startX = e.clientX;
                             startWidth = img.offsetWidth;
+                            startHeight = img.offsetHeight;
+                            aspectRatio = startWidth / startHeight;
                             imageWrapper.classList.add('resizing');
                             e.stopPropagation();
                             e.preventDefault();
@@ -1389,7 +1408,10 @@ function setupToolbarButtons() {
                             if (isResizing) {
                                 const deltaX = e.clientX - startX;
                                 const newWidth = Math.max(100, startWidth + deltaX);
+                                const newHeight = newWidth / aspectRatio;
+                                
                                 img.style.width = newWidth + 'px';
+                                img.style.height = newHeight + 'px';
                             }
                         });
                         
@@ -1398,6 +1420,11 @@ function setupToolbarButtons() {
                                 isResizing = false;
                                 imageWrapper.classList.remove('resizing');
                                 resizeHandle.style.display = 'none';
+                                
+                                // Trigger save after resizing is complete
+                                if (typeof triggerFormattingSave === 'function') {
+                                    triggerFormattingSave();
+                                }
                             }
                         });
                         
