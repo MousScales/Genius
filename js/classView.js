@@ -3797,11 +3797,34 @@ function updateEditCardDisplay() {
     }
     
     const currentCard = editCards[currentEditCardIndex];
-    document.getElementById('edit-card-question').textContent = currentCard.question;
-    document.getElementById('edit-card-answer').textContent = currentCard.answer;
+    if (!currentCard) {
+        console.error('No card found at index:', currentEditCardIndex);
+        return;
+    }
+    
+    console.log('Updating card display with:', currentCard);
+    
+    // Update the main card display
+    const questionElement = document.getElementById('edit-card-question');
+    const answerElement = document.getElementById('edit-card-answer');
+    
+    if (questionElement) {
+        questionElement.textContent = currentCard.question || 'No question';
+    } else {
+        console.error('Question element not found');
+    }
+    
+    if (answerElement) {
+        answerElement.textContent = currentCard.answer || 'No answer';
+    } else {
+        console.error('Answer element not found');
+    }
     
     // Update counter
-    document.getElementById('editCardCounter').textContent = `${currentEditCardIndex + 1} / ${editCards.length}`;
+    const counterElement = document.getElementById('editCardCounter');
+    if (counterElement) {
+        counterElement.textContent = `${currentEditCardIndex + 1} / ${editCards.length}`;
+    }
     
     // Update card list selection
     document.querySelectorAll('.flashcard-edit-item').forEach((item, index) => {
@@ -3810,6 +3833,14 @@ function updateEditCardDisplay() {
 }
 
 function selectEditCard(index) {
+    console.log('Selecting edit card at index:', index);
+    console.log('Available cards:', editCards.length);
+    
+    if (index < 0 || index >= editCards.length) {
+        console.error('Invalid card index:', index);
+        return;
+    }
+    
     currentEditCardIndex = index;
     isEditCardFlipped = false;
     updateEditCardDisplay();
@@ -3817,7 +3848,9 @@ function selectEditCard(index) {
     
     // Reset flip state
     const card = document.getElementById('main-edit-flashcard');
-    card.classList.remove('flipped');
+    if (card) {
+        card.classList.remove('flipped');
+    }
 }
 
 function previousEditCard() {

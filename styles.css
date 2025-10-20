@@ -6297,6 +6297,84 @@ body.document-editor-open {
     border-bottom: 2px solid #4a9eff;
 }
 
+/* Spell Check Styles */
+.spell-check-error {
+    border-bottom: 2px solid #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.spell-check-error:hover {
+    background: rgba(255, 68, 68, 0.2);
+    border-bottom-color: #ff6666;
+}
+
+.spell-check-suggestion-popup {
+    position: absolute;
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 150px;
+    max-width: 250px;
+    display: none;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.spell-check-suggestion-item {
+    padding: 8px 16px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.spell-check-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.spell-check-suggestion-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #4a9eff;
+}
+
+.spell-check-suggestion-item.ignore {
+    color: #888888;
+    font-style: italic;
+}
+
+.spell-check-suggestion-item.add-to-dict {
+    color: #00ff88;
+    font-weight: 500;
+}
+
+.spell-check-suggestion-item.add-to-dict:hover {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.spell-check-suggestion-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .suggestion-marker.suggestion-color-0:hover {
     background: rgba(74, 158, 255, 0.1);
 }
@@ -11765,10 +11843,53 @@ img {
 }
 
 .flashcard-edit-card {
-    width: 100%;
-    height: 350px;
+    width: min(600px, 70vw);
+    height: min(400px, 50vh);
+    max-width: 70vw;
+    max-height: 50vh;
     perspective: 1000px;
-    cursor: pointer;
+    cursor: grab;
+    user-select: none;
+    position: relative;
+    transition: transform 0.2s ease;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
+
+.flashcard-edit-card:active {
+    cursor: grabbing;
+}
+
+/* Stacked card effect */
+.flashcard-edit-card::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: -4px;
+    bottom: -4px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 8px;
+    border: 2px solid #333;
+    z-index: -2;
+    opacity: 0.7;
+}
+
+.flashcard-edit-card::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: -8px;
+    bottom: -8px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 8px;
+    border: 2px solid #333;
+    z-index: -1;
+    opacity: 0.4;
 }
 
 .flashcard-edit-inner {
@@ -11790,33 +11911,38 @@ img {
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 8px;
     padding: 40px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .flashcard-edit-front {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     color: white;
+    border: 2px solid #333;
 }
 
 .flashcard-edit-back {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
     color: white;
     transform: rotateY(180deg);
+    border: 2px solid #444;
 }
 
 .flashcard-edit-question,
 .flashcard-edit-answer {
-    font-size: 20px;
-    line-height: 1.6;
+    font-size: clamp(16px, 3.5vw, 22px);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    padding: 0 clamp(15px, 4vw, 20px);
     word-wrap: break-word;
     max-width: 100%;
-    font-weight: 500;
 }
 
 .flashcard-edit-navigation {
