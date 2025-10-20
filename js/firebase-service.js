@@ -762,14 +762,6 @@ console.log('Firebase services initialized:', {
     chatService 
 });
 
-// Export services for ES6 module imports
-export {
-    classService,
-    authService,
-    documentService,
-    folderService,
-    studyGuideService,
-    chatService
-};
+// Services are available on window object
 
 // Services are also available on window object
