@@ -804,8 +804,9 @@ function setupToolbarButtons() {
         }
         
         // Update font dropdown to show current font
-        const fontSelect = document.getElementById('fontSelect');
-        if (fontSelect) {
+        const fontTrigger = document.getElementById('fontTrigger');
+        const fontMenu = document.getElementById('fontMenu');
+        if (fontTrigger && fontMenu) {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -817,9 +818,13 @@ function setupToolbarButtons() {
                     const fontFamily = computedStyle.fontFamily;
                     
                     // Find matching option
-                    for (let option of fontSelect.options) {
-                        if (fontFamily.includes(option.value)) {
-                            fontSelect.value = option.value;
+                    const items = fontMenu.querySelectorAll('.dropdown-item');
+                    for (let item of items) {
+                        if (fontFamily.includes(item.dataset.value)) {
+                            fontTrigger.querySelector('.dropdown-text').textContent = item.textContent;
+                            // Update active state
+                            items.forEach(i => i.classList.remove('active'));
+                            item.classList.add('active');
                             break;
                         }
                     }
@@ -828,8 +833,9 @@ function setupToolbarButtons() {
         }
         
         // Update font size dropdown to show current size
-        const fontSizeSelect = document.getElementById('fontSizeSelect');
-        if (fontSizeSelect) {
+        const fontSizeTrigger = document.getElementById('fontSizeTrigger');
+        const fontSizeMenu = document.getElementById('fontSizeMenu');
+        if (fontSizeTrigger && fontSizeMenu) {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -842,9 +848,13 @@ function setupToolbarButtons() {
                     const sizeValue = parseInt(fontSize);
                     
                     // Find matching option
-                    for (let option of fontSizeSelect.options) {
-                        if (parseInt(option.value) === sizeValue) {
-                            fontSizeSelect.value = option.value;
+                    const items = fontSizeMenu.querySelectorAll('.dropdown-item');
+                    for (let item of items) {
+                        if (parseInt(item.dataset.value) === sizeValue) {
+                            fontSizeTrigger.querySelector('.dropdown-text').textContent = item.textContent;
+                            // Update active state
+                            items.forEach(i => i.classList.remove('active'));
+                            item.classList.add('active');
                             break;
                         }
                     }
@@ -853,8 +863,9 @@ function setupToolbarButtons() {
         }
         
         // Update heading dropdown to show current heading style
-        const headingSelect = document.getElementById('headingSelect');
-        if (headingSelect) {
+        const headingTrigger = document.getElementById('headingTrigger');
+        const headingMenu = document.getElementById('headingMenu');
+        if (headingTrigger && headingMenu) {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -863,17 +874,28 @@ function setupToolbarButtons() {
                 
                 if (element) {
                     const tagName = element.tagName.toLowerCase();
+                    let currentTag = 'p'; // Default to paragraph
                     
                     // Check if it's a heading, paragraph, blockquote, or code
                     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'blockquote', 'code'].includes(tagName)) {
-                        headingSelect.value = tagName;
+                        currentTag = tagName;
                     } else {
                         // Check if it's inside a heading element
                         const headingElement = element.closest('h1, h2, h3, h4, h5, h6, p, blockquote, code');
                         if (headingElement) {
-                            headingSelect.value = headingElement.tagName.toLowerCase();
-                        } else {
-                            headingSelect.value = 'p'; // Default to paragraph
+                            currentTag = headingElement.tagName.toLowerCase();
+                        }
+                    }
+                    
+                    // Find matching option and update UI
+                    const items = headingMenu.querySelectorAll('.dropdown-item');
+                    for (let item of items) {
+                        if (item.dataset.value === currentTag) {
+                            headingTrigger.querySelector('.dropdown-text').textContent = item.textContent;
+                            // Update active state
+                            items.forEach(i => i.classList.remove('active'));
+                            item.classList.add('active');
+                            break;
                         }
                     }
                 }
@@ -5816,13 +5838,19 @@ function initializeSpellCheck() {
     
     // Add event listeners for real-time spell checking with faster response
     contentElement.addEventListener('input', (e) => {
-        // Clear spell check markers when user starts typing
-        clearSpellCheckMarkers();
+        // Only clear markers if there's no active popup
+        const existingPopup = document.querySelector('.spell-check-suggestion-popup');
+        if (!existingPopup) {
+            clearSpellCheckMarkers();
+        }
         debounce(performSpellCheck, 200)();
     });
     contentElement.addEventListener('keyup', debounce(performSpellCheck, 150));
     contentElement.addEventListener('paste', () => {
-        clearSpellCheckMarkers();
+        const existingPopup = document.querySelector('.spell-check-suggestion-popup');
+        if (!existingPopup) {
+            clearSpellCheckMarkers();
+        }
         setTimeout(performSpellCheck, 50);
     });
     
@@ -5833,9 +5861,12 @@ function initializeSpellCheck() {
         }
     });
     
-    // Clear spell check markers when user focuses on editor
+    // Clear spell check markers when user focuses on editor (but not if popup is open)
     contentElement.addEventListener('focus', () => {
-        clearSpellCheckMarkers();
+        const existingPopup = document.querySelector('.spell-check-suggestion-popup');
+        if (!existingPopup) {
+            clearSpellCheckMarkers();
+        }
     });
     
     // Initial spell check
@@ -5881,8 +5912,13 @@ function performSpellCheck() {
     }
     
     console.log('🧹 Clearing existing spell check markers...');
-    // Clear existing spell check markers
-    clearSpellCheckMarkers();
+    // Only clear markers if there's no active suggestion popup
+    const existingPopup = document.querySelector('.spell-check-suggestion-popup');
+    if (!existingPopup) {
+        clearSpellCheckMarkers();
+    } else {
+        console.log('⏸️ Keeping existing markers due to active popup');
+    }
     
     // Get all text nodes in the content
     const textNodes = getTextNodes(contentElement);
@@ -6202,17 +6238,24 @@ async function showSpellCheckSuggestions(element, word) {
         popup.innerHTML = '<div class="spell-check-suggestion-item">Error loading suggestions</div>';
     }
     
-    // Close popup when clicking outside
+    // Close popup when clicking outside (but not on the popup itself)
     const closePopup = (e) => {
-        if (!popup.contains(e.target) && !element.contains(e.target)) {
-            popup.remove();
-            document.removeEventListener('click', closePopup);
+        // Don't close if clicking on the popup or the misspelled word
+        if (popup.contains(e.target) || element.contains(e.target)) {
+            return;
         }
+        
+        // Close the popup
+        popup.remove();
+        document.removeEventListener('click', closePopup);
+        console.log('🔒 Suggestion popup closed');
     };
     
+    // Add a small delay before adding the click listener to prevent immediate closure
     setTimeout(() => {
         document.addEventListener('click', closePopup);
-    }, 100);
+        console.log('👂 Added click listener for popup');
+    }, 200);
 }
 
 // Show context menu for spell check
