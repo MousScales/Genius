@@ -71,7 +71,7 @@
             // Test 1: Check if we're on Vercel
             tests.push({
                 name: 'Vercel Deployment',
-                test: () => window.location.hostname.includes('vercel.app'),
+                test: () => window.location.hostname.includes('vercel.app') || window.location.hostname.includes('genius-site.com'),
                 message: 'Running on Vercel domain'
             });
             
