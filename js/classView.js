@@ -27,8 +27,7 @@ function showClassView(classData) {
     console.log('Opening class view:', classData);
     
     // Start loading documents immediately, before UI changes
-    console.log('🚀 Pre-loading documents for:', classData.name);
-    preloadClassContent(classData);
+    console.log('🚀 Opening class view for:', classData.name);
     
     // Hide dashboard content
     const dashboardContent = document.querySelector('.dashboard-content');
@@ -313,7 +312,7 @@ function createClassView(classData) {
         setupCalendarActions(classData);
         
         // Load documents and study guides
-        loadClassContent(classData);
+        loadDocuments(classData);
     }, 300);
     
     return viewContainer;
@@ -344,13 +343,6 @@ function setupDocumentActions(classData) {
         newDocBtn.addEventListener('click', async () => {
             console.log('New Document button clicked!');
             console.log('Class data:', classData);
-            
-            // First check if global function is available (from preload)
-            if (window.openDocumentEditor) {
-                console.log('Using preloaded global function');
-                window.openDocumentEditor(classData);
-                return;
-            }
             
             // Use global function
             if (typeof window.openDocumentEditor === 'function') {
@@ -530,122 +522,18 @@ function readFileAsDataURL(file) {
 }
 
 
-// PRELOAD SYSTEM - Start loading before UI is ready
-let preloadedData = new Map(); // Store preloaded data by class ID
 
-async function preloadClassContent(classData) {
-    console.log('🚀 Pre-loading content for:', classData.name);
-    
-    try {
-        // Load documents and study guides in parallel
-        const [documents, folders, studyGuides] = await Promise.all([
-            loadDocumentsFromFirebase(classData),
-            loadFoldersFromFirebase(classData),
-            loadStudyGuidesFromFirebase(classData)
-        ]);
-        
-        // Store preloaded data
-        preloadedData.set(classData.id, {
-            documents,
-            folders,
-            studyGuides,
-            loadedAt: Date.now()
-        });
-        
-        console.log('✅ Pre-loaded content:', {
-            documents: documents.length,
-            folders: folders.length,
-            studyGuides: studyGuides.length
-        });
-        
-    } catch (error) {
-        console.error('❌ Error pre-loading content:', error);
-        // Store empty data so we don't retry
-        preloadedData.set(classData.id, {
-            documents: [],
-            folders: [],
-            studyGuides: [],
-            error: error.message
-        });
-    }
-}
 
-// SIMPLE AND RELIABLE DOCUMENT LOADING SYSTEM
-async function loadClassContent(classData) {
-    console.log('🚀 Loading class content for:', classData.name);
-    
-    // Check if we have preloaded data
-    const preloaded = preloadedData.get(classData.id);
-    if (preloaded) {
-        console.log('📦 Using preloaded data');
-        // Use preloaded data
-        renderPreloadedContent(preloaded, classData);
-        // Setup event listeners
-        setupDocumentUpdateListener(classData);
-        return;
-    }
-    
-    // Fallback to normal loading if no preloaded data
-    try {
-        // Load documents
-        await loadDocuments(classData);
-        
-        // Load study guides
-        await loadStudyGuides(classData);
-        
-        console.log('✅ Class content loaded successfully');
-    } catch (error) {
-        console.error('❌ Error loading class content:', error);
-    }
-}
-
-// Helper functions for preloading
-async function loadDocumentsFromFirebase(classData) {
-    const { documentService } = await getFirebaseServices();
-    return await documentService.getDocuments(classData.userId, classData.id);
-}
-
-async function loadFoldersFromFirebase(classData) {
-    return await getFolders(classData);
-}
-
-async function loadStudyGuidesFromFirebase(classData) {
-    const { studyGuideService } = await getFirebaseServices();
-    return await studyGuideService.getStudyGuides(classData.userId, classData.id);
-}
-
-// Render preloaded content
-function renderPreloadedContent(preloaded, classData) {
-    console.log('🎨 Rendering preloaded content...');
-    
-    // Render documents
-    const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-    const viewMode = localStorage.getItem(viewModeKey) || 'list';
-    
-    renderDocuments(preloaded.documents, preloaded.folders, viewMode, classData);
-    
-    // Render study guides
-    renderStudyGuides(preloaded.studyGuides, classData, viewMode);
-    
-    console.log('✅ Preloaded content rendered');
-}
 
 async function loadDocuments(classData) {
-    console.log('📄 Loading documents...');
+    console.log('📄 Loading documents for:', classData.name);
     
-    let documentsList = document.getElementById('documentsList');
+    const documentsList = document.getElementById('documentsList');
     const emptyDocuments = document.getElementById('emptyDocuments');
     
     if (!documentsList) {
-        console.error('❌ documentsList not found - UI not ready yet');
-        // Wait a bit and try again
-        await new Promise(resolve => setTimeout(resolve, 200));
-        documentsList = document.getElementById('documentsList');
-        if (!documentsList) {
-            console.error('❌ documentsList still not found after retry');
-            return;
-        }
-        console.log('✅ documentsList found on retry');
+        console.error('❌ documentsList not found');
+        return;
     }
     
     // Show loading
@@ -653,20 +541,29 @@ async function loadDocuments(classData) {
     if (emptyDocuments) emptyDocuments.style.display = 'none';
     
     try {
-        // Get view mode
-        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-        const viewMode = localStorage.getItem(viewModeKey) || 'list';
+        // Load documents from Firebase (same pattern as classes)
+        const db = window.firebase.firestore();
+        const documentsRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('documents');
+        const querySnapshot = await documentsRef.orderBy('createdAt', 'desc').get();
         
-        // Load from Firebase
-        const { documentService } = await getFirebaseServices();
-        const documents = await documentService.getDocuments(classData.userId, classData.id);
+        const documents = [];
+        querySnapshot.forEach((doc) => {
+            documents.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
         
-        console.log('📄 Loaded documents:', documents.length);
+        console.log('📄 Loaded documents from Firebase:', documents.length);
         
         // Load folders
         const folders = await getFolders(classData);
         
-        // Render
+        // Get view mode
+        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
+        const viewMode = localStorage.getItem(viewModeKey) || 'list';
+        
+        // Render documents
         renderDocuments(documents, folders, viewMode, classData);
         
         // Setup event listener for updates
@@ -853,9 +750,7 @@ function setupDocumentUpdateListener(classData) {
     window.addEventListener('documentsUpdated', handleDocumentsUpdated);
     
     function handleDocumentsUpdated() {
-        console.log('🔄 Documents updated, clearing cache and reloading...');
-        // Clear preloaded data for this class
-        preloadedData.delete(classData.id);
+        console.log('🔄 Documents updated, reloading...');
         // Reload documents
         loadDocuments(classData);
     }
