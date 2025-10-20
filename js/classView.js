@@ -314,7 +314,7 @@ function createClassView(classData) {
         
         // Load documents and study guides
         loadClassContent(classData);
-    }, 100);
+    }, 300);
     
     return viewContainer;
 }
@@ -633,12 +633,19 @@ function renderPreloadedContent(preloaded, classData) {
 async function loadDocuments(classData) {
     console.log('📄 Loading documents...');
     
-    const documentsList = document.getElementById('documentsList');
+    let documentsList = document.getElementById('documentsList');
     const emptyDocuments = document.getElementById('emptyDocuments');
     
     if (!documentsList) {
-        console.error('❌ documentsList not found');
-        return;
+        console.error('❌ documentsList not found - UI not ready yet');
+        // Wait a bit and try again
+        await new Promise(resolve => setTimeout(resolve, 200));
+        documentsList = document.getElementById('documentsList');
+        if (!documentsList) {
+            console.error('❌ documentsList still not found after retry');
+            return;
+        }
+        console.log('✅ documentsList found on retry');
     }
     
     // Show loading
