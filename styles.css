@@ -5064,16 +5064,106 @@ body.document-editor-open {
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-width: 120px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    padding-right: 30px;
 }
 
 .toolbar-select:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
 }
 
 .toolbar-select:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(74, 158, 255, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+}
+
+.toolbar-select option {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    padding: 8px 12px;
+    border: none;
+    font-size: 13px;
+}
+
+.toolbar-select option:hover {
+    background: rgba(74, 158, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.toolbar-select option:checked {
+    background: rgba(74, 158, 255, 0.3) !important;
+    color: #4a9eff !important;
+}
+
+.toolbar-select option:focus {
+    background: rgba(74, 158, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+/* Force dark theme for all select dropdowns */
+select.toolbar-select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+}
+
+select.toolbar-select option {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+/* Additional browser-specific fixes */
+.toolbar-select::-webkit-scrollbar {
+    width: 8px;
+}
+
+.toolbar-select::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.toolbar-select::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.toolbar-select::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Firefox specific */
+@-moz-document url-prefix() {
+    .toolbar-select option {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+    }
+}
+
+/* Additional fixes for dropdown visibility */
+.toolbar-select:focus option {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+/* Ensure dropdown list is dark */
+.toolbar-select option:not(:checked) {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+/* Override any browser defaults */
+.toolbar-select option[selected] {
+    background-color: rgba(74, 158, 255, 0.3) !important;
+    color: #4a9eff !important;
 }
 
 .toolbar-color {
@@ -5084,6 +5174,21 @@ body.document-editor-open {
     cursor: pointer;
     background: transparent;
     transition: all 0.2s ease;
+}
+
+/* Font size select specific styling */
+#fontSizeSelect {
+    min-width: 80px;
+}
+
+/* Font select specific styling */
+#fontSelect {
+    min-width: 140px;
+}
+
+/* Heading select specific styling */
+#headingSelect {
+    min-width: 120px;
 }
 
 .toolbar-color:hover {

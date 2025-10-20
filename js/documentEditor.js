@@ -225,59 +225,38 @@ function createEditorScreen(classData, existingDoc) {
         
         <div class="doc-editor-toolbar">
             <div class="toolbar-group">
-                <button class="toolbar-btn dropdown-btn" id="fontBtn" title="Font Family">
-                    <span class="btn-text">Font</span>
-                    <span class="dropdown-arrow">▼</span>
-                </button>
-                <button class="toolbar-btn dropdown-btn" id="fontSizeBtn" title="Font Size">
-                    <span class="btn-text">Size</span>
-                    <span class="dropdown-arrow">▼</span>
-                </button>
-                <button class="toolbar-btn dropdown-btn" id="headingBtn" title="Text Style">
-                    <span class="btn-text">Style</span>
-                    <span class="dropdown-arrow">▼</span>
-                </button>
-            </div>
-            
-            <!-- Dropdown Menus -->
-            <div class="dropdown-overlay" id="dropdownOverlay"></div>
-            
-            <div class="dropdown-menu" id="fontMenu">
-                <div class="dropdown-header">Font Family</div>
-                <div class="dropdown-item" data-value="Arial">Arial</div>
-                <div class="dropdown-item" data-value="Times New Roman">Times New Roman</div>
-                <div class="dropdown-item" data-value="Courier New">Courier New</div>
-                <div class="dropdown-item" data-value="Georgia">Georgia</div>
-                <div class="dropdown-item" data-value="Verdana">Verdana</div>
-                <div class="dropdown-item active" data-value="Segoe UI">Segoe UI</div>
-            </div>
-            
-            <div class="dropdown-menu" id="fontSizeMenu">
-                <div class="dropdown-header">Font Size</div>
-                <div class="dropdown-item" data-value="10">10px</div>
-                <div class="dropdown-item" data-value="12">12px</div>
-                <div class="dropdown-item" data-value="14">14px</div>
-                <div class="dropdown-item active" data-value="16">16px</div>
-                <div class="dropdown-item" data-value="18">18px</div>
-                <div class="dropdown-item" data-value="20">20px</div>
-                <div class="dropdown-item" data-value="24">24px</div>
-                <div class="dropdown-item" data-value="28">28px</div>
-                <div class="dropdown-item" data-value="32">32px</div>
-                <div class="dropdown-item" data-value="36">36px</div>
-                <div class="dropdown-item" data-value="48">48px</div>
-            </div>
-            
-            <div class="dropdown-menu" id="headingMenu">
-                <div class="dropdown-header">Text Style</div>
-                <div class="dropdown-item active" data-value="p">Normal Text</div>
-                <div class="dropdown-item" data-value="h1">Title</div>
-                <div class="dropdown-item" data-value="h2">Subtitle</div>
-                <div class="dropdown-item" data-value="h3">Heading 1</div>
-                <div class="dropdown-item" data-value="h4">Heading 2</div>
-                <div class="dropdown-item" data-value="h5">Heading 3</div>
-                <div class="dropdown-item" data-value="h6">Heading 4</div>
-                <div class="dropdown-item" data-value="blockquote">Quote</div>
-                <div class="dropdown-item" data-value="code">Code</div>
+                <select class="toolbar-select" id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Segoe UI" selected>Segoe UI</option>
+                </select>
+                <select class="toolbar-select" id="fontSizeSelect">
+                    <option value="10">10</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16" selected>16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="24">24</option>
+                    <option value="28">28</option>
+                    <option value="32">32</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                </select>
+                <select class="toolbar-select" id="headingSelect">
+                    <option value="p">Normal Text</option>
+                    <option value="h1">Title</option>
+                    <option value="h2">Subtitle</option>
+                    <option value="h3">Heading 1</option>
+                    <option value="h4">Heading 2</option>
+                    <option value="h5">Heading 3</option>
+                    <option value="h6">Heading 4</option>
+                    <option value="blockquote">Quote</option>
+                    <option value="code">Code</option>
+                </select>
             </div>
             
             <div class="toolbar-divider"></div>
@@ -712,20 +691,6 @@ function selectAllInElement(element) {
 function setupToolbarButtons() {
     console.log('setupToolbarButtons called');
     
-    // Helper function to close all dropdowns
-    const closeAllDropdowns = () => {
-        document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
-            dropdown.classList.remove('open');
-        });
-    };
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.custom-dropdown')) {
-            closeAllDropdowns();
-        }
-    });
-    
     // Helper function to execute command and maintain focus
     const executeCommand = (command, value = null) => {
         console.log('Executing command:', command, value);
@@ -807,9 +772,8 @@ function setupToolbarButtons() {
         }
         
         // Update font dropdown to show current font
-        const fontTrigger = document.getElementById('fontTrigger');
-        const fontMenu = document.getElementById('fontMenu');
-        if (fontTrigger && fontMenu) {
+        const fontSelect = document.getElementById('fontSelect');
+        if (fontSelect) {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -821,13 +785,9 @@ function setupToolbarButtons() {
                     const fontFamily = computedStyle.fontFamily;
                     
                     // Find matching option
-                    const items = fontMenu.querySelectorAll('.dropdown-item');
-                    for (let item of items) {
-                        if (fontFamily.includes(item.dataset.value)) {
-                            fontTrigger.querySelector('.dropdown-text').textContent = item.textContent;
-                            // Update active state
-                            items.forEach(i => i.classList.remove('active'));
-                            item.classList.add('active');
+                    for (let option of fontSelect.options) {
+                        if (fontFamily.includes(option.value)) {
+                            fontSelect.value = option.value;
                             break;
                         }
                     }
@@ -836,9 +796,8 @@ function setupToolbarButtons() {
         }
         
         // Update font size dropdown to show current size
-        const fontSizeTrigger = document.getElementById('fontSizeTrigger');
-        const fontSizeMenu = document.getElementById('fontSizeMenu');
-        if (fontSizeTrigger && fontSizeMenu) {
+        const fontSizeSelect = document.getElementById('fontSizeSelect');
+        if (fontSizeSelect) {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -851,13 +810,9 @@ function setupToolbarButtons() {
                     const sizeValue = parseInt(fontSize);
                     
                     // Find matching option
-                    const items = fontSizeMenu.querySelectorAll('.dropdown-item');
-                    for (let item of items) {
-                        if (parseInt(item.dataset.value) === sizeValue) {
-                            fontSizeTrigger.querySelector('.dropdown-text').textContent = item.textContent;
-                            // Update active state
-                            items.forEach(i => i.classList.remove('active'));
-                            item.classList.add('active');
+                    for (let option of fontSizeSelect.options) {
+                        if (parseInt(option.value) === sizeValue) {
+                            fontSizeSelect.value = option.value;
                             break;
                         }
                     }
@@ -866,9 +821,8 @@ function setupToolbarButtons() {
         }
         
         // Update heading dropdown to show current heading style
-        const headingTrigger = document.getElementById('headingTrigger');
-        const headingMenu = document.getElementById('headingMenu');
-        if (headingTrigger && headingMenu) {
+        const headingSelect = document.getElementById('headingSelect');
+        if (headingSelect) {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -877,28 +831,17 @@ function setupToolbarButtons() {
                 
                 if (element) {
                     const tagName = element.tagName.toLowerCase();
-                    let currentTag = 'p'; // Default to paragraph
                     
                     // Check if it's a heading, paragraph, blockquote, or code
                     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'blockquote', 'code'].includes(tagName)) {
-                        currentTag = tagName;
+                        headingSelect.value = tagName;
                     } else {
                         // Check if it's inside a heading element
                         const headingElement = element.closest('h1, h2, h3, h4, h5, h6, p, blockquote, code');
                         if (headingElement) {
-                            currentTag = headingElement.tagName.toLowerCase();
-                        }
-                    }
-                    
-                    // Find matching option and update UI
-                    const items = headingMenu.querySelectorAll('.dropdown-item');
-                    for (let item of items) {
-                        if (item.dataset.value === currentTag) {
-                            headingTrigger.querySelector('.dropdown-text').textContent = item.textContent;
-                            // Update active state
-                            items.forEach(i => i.classList.remove('active'));
-                            item.classList.add('active');
-                            break;
+                            headingSelect.value = headingElement.tagName.toLowerCase();
+                        } else {
+                            headingSelect.value = 'p'; // Default to paragraph
                         }
                     }
                 }
@@ -975,64 +918,86 @@ function setupToolbarButtons() {
         content.addEventListener('mouseup', updateButtonStates);
     }
     
-    // Custom Font Dropdown
-    const fontDropdown = document.getElementById('fontDropdown');
-    const fontTrigger = document.getElementById('fontTrigger');
-    const fontMenu = document.getElementById('fontMenu');
-    
-    if (fontDropdown && fontTrigger && fontMenu) {
-        // Toggle dropdown
-        fontTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeAllDropdowns();
-            fontDropdown.classList.toggle('open');
-        });
-        
-        // Handle item selection
-        fontMenu.addEventListener('click', (e) => {
-            if (e.target.classList.contains('dropdown-item')) {
-                const selectedFont = e.target.dataset.value;
-                const fontText = e.target.textContent;
-                
-                // Update trigger text
-                fontTrigger.querySelector('.dropdown-text').textContent = fontText;
-                
-                // Remove active class from all items
-                fontMenu.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
-                // Add active class to selected item
-                e.target.classList.add('active');
-                
-                // Close dropdown
-                fontDropdown.classList.remove('open');
-                
-                console.log('Font changed to:', selectedFont);
-                
-                // Focus content first
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    activeContent.focus();
+    // Font select
+    const fontSelect = document.getElementById('fontSelect');
+    console.log('Font select found:', !!fontSelect);
+    if (fontSelect) {
+        fontSelect.addEventListener('change', (e) => {
+            const selectedFont = e.target.value;
+            console.log('Font changed to:', selectedFont);
+            
+            // Focus content first
+            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+            if (activeContent) {
+                activeContent.focus();
+            }
+            
+            // Apply font to selection or current element
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                // Apply to selection
+                const success = document.execCommand('fontName', false, selectedFont);
+                console.log('Font command executed on selection:', success);
+            } else {
+                // Apply to current paragraph or create a span
+                const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+                if (range) {
+                    const span = document.createElement('span');
+                    span.style.fontFamily = selectedFont;
+                    try {
+                        range.surroundContents(span);
+                        console.log('Font applied via span');
+                    } catch (e) {
+                        // If we can't surround, insert the span
+                        range.insertNode(span);
+                        range.collapse(false);
+                        console.log('Font applied via insert');
+                    }
                 }
-                
-                // Apply font to selection or current element
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0 && !selection.isCollapsed) {
-                    // Apply to selection
-                    const success = document.execCommand('fontName', false, selectedFont);
-                    console.log('Font command executed on selection:', success);
+            }
+            
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
+            }
+        });
+    }
+    
+    // Font size select
+    const fontSizeSelect = document.getElementById('fontSizeSelect');
+    if (fontSizeSelect) {
+        fontSizeSelect.addEventListener('change', (e) => {
+            const size = e.target.value;
+            console.log('Changing font size to:', size);
+            
+            // Focus content first
+            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+            if (activeContent) {
+                activeContent.focus();
+            }
+            
+            // Use a more reliable method for font size
+            const success = document.execCommand('fontSize', false, '7');
+            console.log('Font size command executed:', success);
+            
+            setTimeout(() => {
+                // Find the most recent font element and update it
+                const fontElements = document.querySelectorAll('font[size="7"]');
+                if (fontElements.length > 0) {
+                    const lastFontElement = fontElements[fontElements.length - 1];
+                    lastFontElement.removeAttribute('size');
+                    lastFontElement.style.fontSize = size + 'px';
+                    console.log('Updated font size to:', size + 'px');
                 } else {
-                    // Apply to current paragraph or create a span
-                    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-                    if (range) {
+                    // Fallback: apply to selection or current element
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
                         const span = document.createElement('span');
-                        span.style.fontFamily = selectedFont;
+                        span.style.fontSize = size + 'px';
                         try {
                             range.surroundContents(span);
-                            console.log('Font applied via span');
                         } catch (e) {
-                            // If we can't surround, insert the span
-                            range.insertNode(span);
-                            range.collapse(false);
-                            console.log('Font applied via insert');
+                            console.log('Could not apply font size directly:', e);
                         }
                     }
                 }
@@ -1040,226 +1005,127 @@ function setupToolbarButtons() {
                 if (typeof triggerFormattingSave === 'function') {
                     triggerFormattingSave();
                 }
-            }
+            }, 50);
         });
     }
     
-    // Custom Font Size Dropdown
-    const fontSizeDropdown = document.getElementById('fontSizeDropdown');
-    const fontSizeTrigger = document.getElementById('fontSizeTrigger');
-    const fontSizeMenu = document.getElementById('fontSizeMenu');
-    
-    if (fontSizeDropdown && fontSizeTrigger && fontSizeMenu) {
-        // Toggle dropdown
-        fontSizeTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeAllDropdowns();
-            fontSizeDropdown.classList.toggle('open');
-        });
-        
-        // Handle item selection
-        fontSizeMenu.addEventListener('click', (e) => {
-            if (e.target.classList.contains('dropdown-item')) {
-                const size = e.target.dataset.value;
-                const sizeText = e.target.textContent;
-                
-                // Update trigger text
-                fontSizeTrigger.querySelector('.dropdown-text').textContent = sizeText;
-                
-                // Remove active class from all items
-                fontSizeMenu.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
-                // Add active class to selected item
-                e.target.classList.add('active');
-                
-                // Close dropdown
-                fontSizeDropdown.classList.remove('open');
-                
-                console.log('Changing font size to:', size);
-                
-                // Focus content first
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    activeContent.focus();
-                }
-                
-                // Use a more reliable method for font size
-                const success = document.execCommand('fontSize', false, '7');
-                console.log('Font size command executed:', success);
-                
-                setTimeout(() => {
-                    // Find the most recent font element and update it
-                    const fontElements = document.querySelectorAll('font[size="7"]');
-                    if (fontElements.length > 0) {
-                        const lastFontElement = fontElements[fontElements.length - 1];
-                        lastFontElement.removeAttribute('size');
-                        lastFontElement.style.fontSize = size + 'px';
-                        console.log('Updated font size to:', size + 'px');
-                    } else {
-                        // Fallback: apply to selection or current element
-                        const selection = window.getSelection();
-                        if (selection.rangeCount > 0) {
-                            const range = selection.getRangeAt(0);
-                            const span = document.createElement('span');
-                            span.style.fontSize = size + 'px';
-                            try {
-                                range.surroundContents(span);
-                            } catch (e) {
-                                console.log('Could not apply font size directly:', e);
-                            }
-                        }
-                    }
-                    
-                    if (typeof triggerFormattingSave === 'function') {
-                        triggerFormattingSave();
-                    }
-                }, 50);
+    // Heading style select
+    const headingSelect = document.getElementById('headingSelect');
+    if (headingSelect) {
+        headingSelect.addEventListener('change', (e) => {
+            const selectedHeading = e.target.value;
+            console.log('Heading changed to:', selectedHeading);
+            
+            // Focus content first
+            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+            if (activeContent) {
+                activeContent.focus();
             }
-        });
-    }
-    
-    // Custom Heading Dropdown
-    const headingDropdown = document.getElementById('headingDropdown');
-    const headingTrigger = document.getElementById('headingTrigger');
-    const headingMenu = document.getElementById('headingMenu');
-    
-    if (headingDropdown && headingTrigger && headingMenu) {
-        // Toggle dropdown
-        headingTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeAllDropdowns();
-            headingDropdown.classList.toggle('open');
-        });
-        
-        // Handle item selection
-        headingMenu.addEventListener('click', (e) => {
-            if (e.target.classList.contains('dropdown-item')) {
-                const selectedHeading = e.target.dataset.value;
-                const headingText = e.target.textContent;
+            
+            // Apply heading style
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
                 
-                // Update trigger text
-                headingTrigger.querySelector('.dropdown-text').textContent = headingText;
-                
-                // Remove active class from all items
-                headingMenu.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
-                // Add active class to selected item
-                e.target.classList.add('active');
-                
-                // Close dropdown
-                headingDropdown.classList.remove('open');
-                
-                console.log('Heading changed to:', selectedHeading);
-                
-                // Focus content first
-                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-                if (activeContent) {
-                    activeContent.focus();
-                }
-                
-                // Apply heading style
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
+                if (selectedHeading === 'p') {
+                    // Convert to paragraph
+                    const p = document.createElement('p');
+                    try {
+                        range.surroundContents(p);
+                    } catch (e) {
+                        // If we can't surround, wrap the content
+                        const contents = range.extractContents();
+                        p.appendChild(contents);
+                        range.insertNode(p);
+                    }
+                } else if (selectedHeading === 'blockquote') {
+                    // Convert to blockquote
+                    const blockquote = document.createElement('blockquote');
+                    blockquote.style.borderLeft = '4px solid #4a9eff';
+                    blockquote.style.paddingLeft = '16px';
+                    blockquote.style.margin = '8px 0';
+                    blockquote.style.fontStyle = 'italic';
+                    blockquote.style.color = '#cccccc';
+                    try {
+                        range.surroundContents(blockquote);
+                    } catch (e) {
+                        const contents = range.extractContents();
+                        blockquote.appendChild(contents);
+                        range.insertNode(blockquote);
+                    }
+                } else if (selectedHeading === 'code') {
+                    // Convert to code
+                    const code = document.createElement('code');
+                    code.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    code.style.padding = '2px 4px';
+                    code.style.borderRadius = '3px';
+                    code.style.fontFamily = 'monospace';
+                    code.style.fontSize = '14px';
+                    try {
+                        range.surroundContents(code);
+                    } catch (e) {
+                        const contents = range.extractContents();
+                        code.appendChild(contents);
+                        range.insertNode(code);
+                    }
+                } else {
+                    // Convert to heading (h1, h2, h3, h4, h5, h6)
+                    const heading = document.createElement(selectedHeading);
                     
-                    if (selectedHeading === 'p') {
-                        // Convert to paragraph
-                        const p = document.createElement('p');
-                        try {
-                            range.surroundContents(p);
-                        } catch (e) {
-                            // If we can't surround, wrap the content
-                            const contents = range.extractContents();
-                            p.appendChild(contents);
-                            range.insertNode(p);
-                        }
-                    } else if (selectedHeading === 'blockquote') {
-                        // Convert to blockquote
-                        const blockquote = document.createElement('blockquote');
-                        blockquote.style.borderLeft = '4px solid #4a9eff';
-                        blockquote.style.paddingLeft = '16px';
-                        blockquote.style.margin = '8px 0';
-                        blockquote.style.fontStyle = 'italic';
-                        blockquote.style.color = '#cccccc';
-                        try {
-                            range.surroundContents(blockquote);
-                        } catch (e) {
-                            const contents = range.extractContents();
-                            blockquote.appendChild(contents);
-                            range.insertNode(blockquote);
-                        }
-                    } else if (selectedHeading === 'code') {
-                        // Convert to code
-                        const code = document.createElement('code');
-                        code.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                        code.style.padding = '2px 4px';
-                        code.style.borderRadius = '3px';
-                        code.style.fontFamily = 'monospace';
-                        code.style.fontSize = '14px';
-                        try {
-                            range.surroundContents(code);
-                        } catch (e) {
-                            const contents = range.extractContents();
-                            code.appendChild(contents);
-                            range.insertNode(code);
-                        }
-                    } else {
-                        // Convert to heading (h1, h2, h3, h4, h5, h6)
-                        const heading = document.createElement(selectedHeading);
-                        
-                        // Apply different styles based on heading level
-                        switch(selectedHeading) {
-                            case 'h1':
-                                heading.style.fontSize = '32px';
-                                heading.style.fontWeight = 'bold';
-                                heading.style.margin = '16px 0 8px 0';
-                                heading.style.color = '#ffffff';
-                                break;
-                            case 'h2':
-                                heading.style.fontSize = '28px';
-                                heading.style.fontWeight = 'bold';
-                                heading.style.margin = '14px 0 6px 0';
-                                heading.style.color = '#ffffff';
-                                break;
-                            case 'h3':
-                                heading.style.fontSize = '24px';
-                                heading.style.fontWeight = 'bold';
-                                heading.style.margin = '12px 0 4px 0';
-                                heading.style.color = '#ffffff';
-                                break;
-                            case 'h4':
-                                heading.style.fontSize = '20px';
-                                heading.style.fontWeight = 'bold';
-                                heading.style.margin = '10px 0 4px 0';
-                                heading.style.color = '#ffffff';
-                                break;
-                            case 'h5':
-                                heading.style.fontSize = '18px';
-                                heading.style.fontWeight = 'bold';
-                                heading.style.margin = '8px 0 4px 0';
-                                heading.style.color = '#ffffff';
-                                break;
-                            case 'h6':
-                                heading.style.fontSize = '16px';
-                                heading.style.fontWeight = 'bold';
-                                heading.style.margin = '6px 0 4px 0';
-                                heading.style.color = '#ffffff';
-                                break;
-                        }
-                        
-                        try {
-                            range.surroundContents(heading);
-                        } catch (e) {
-                            const contents = range.extractContents();
-                            heading.appendChild(contents);
-                            range.insertNode(heading);
-                        }
+                    // Apply different styles based on heading level
+                    switch(selectedHeading) {
+                        case 'h1':
+                            heading.style.fontSize = '32px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '16px 0 8px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h2':
+                            heading.style.fontSize = '28px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '14px 0 6px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h3':
+                            heading.style.fontSize = '24px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '12px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h4':
+                            heading.style.fontSize = '20px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '10px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h5':
+                            heading.style.fontSize = '18px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '8px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h6':
+                            heading.style.fontSize = '16px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '6px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
                     }
                     
-                    console.log('Heading style applied:', selectedHeading);
+                    try {
+                        range.surroundContents(heading);
+                    } catch (e) {
+                        const contents = range.extractContents();
+                        heading.appendChild(contents);
+                        range.insertNode(heading);
+                    }
                 }
                 
-                if (typeof triggerFormattingSave === 'function') {
-                    triggerFormattingSave();
-                }
+                console.log('Heading style applied:', selectedHeading);
+            }
+            
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
             }
         });
     }
@@ -5882,73 +5748,41 @@ function debounce(func, wait) {
 
 // Main spell check function
 function performSpellCheck() {
-    console.log('🔍 Starting spell check...');
-    
-    if (!spellCheckEnabled) {
-        console.log('❌ Spell check disabled');
-        return;
-    }
+    if (!spellCheckEnabled) return;
     
     const contentElement = document.getElementById('docEditorContent');
-    if (!contentElement) {
-        console.log('❌ Content element not found');
-        return;
-    }
+    if (!contentElement) return;
     
     // Skip spell check if user is actively typing (cursor is in the editor)
-    // But only skip if the user is actually typing (not just focused)
-    const isTyping = document.activeElement === contentElement && 
-                     contentElement.selectionStart !== contentElement.selectionEnd;
-    
-    if (isTyping) {
-        console.log('⏸️ Skipping spell check - user is actively typing');
+    if (document.activeElement === contentElement) {
         return;
     }
     
-    console.log('🧹 Clearing existing spell check markers...');
-    // Only clear markers if there's no active suggestion popup
-    const existingPopup = document.querySelector('.spell-check-suggestion-popup');
-    if (!existingPopup) {
-        clearSpellCheckMarkers();
-    } else {
-        console.log('⏸️ Keeping existing markers due to active popup');
-    }
+    // Clear existing spell check markers
+    clearSpellCheckMarkers();
     
     // Get all text nodes in the content
     const textNodes = getTextNodes(contentElement);
-    console.log('📝 Found text nodes:', textNodes.length);
     
-    textNodes.forEach((node, index) => {
+    textNodes.forEach(node => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-            console.log(`🔍 Checking text node ${index}:`, node.textContent);
             checkTextNode(node);
         }
     });
-    
-    console.log('✅ Spell check completed');
 }
 
 // Get all text nodes in an element
 function getTextNodes(element) {
-    console.log('🔍 getTextNodes called with element:', element);
-    console.log('🔍 element type:', typeof element);
-    console.log('🔍 element.nodeType:', element?.nodeType);
-    
     const textNodes = [];
     const walker = document.createTreeWalker(
         element,
         NodeFilter.SHOW_TEXT,
         {
             acceptNode: (node) => {
-                console.log('🔍 TreeWalker found node:', node);
-                console.log('🔍 Node type:', node.nodeType);
-                console.log('🔍 Node text content:', node.textContent);
                 // Skip text nodes that are inside spell check markers
                 if (node.parentElement && node.parentElement.classList.contains('spell-check-error')) {
-                    console.log('🔍 Rejecting node (inside spell check marker)');
                     return NodeFilter.FILTER_REJECT;
                 }
-                console.log('🔍 Accepting node');
                 return NodeFilter.FILTER_ACCEPT;
             }
         }
@@ -5956,48 +5790,34 @@ function getTextNodes(element) {
     
     let node;
     while (node = walker.nextNode()) {
-        console.log('🔍 Adding node to array:', node);
-        console.log('🔍 Node text content:', node.textContent);
         textNodes.push(node);
     }
     
-    console.log('🔍 Final textNodes array:', textNodes);
     return textNodes;
 }
 
 // Check a text node for spelling errors
 function checkTextNode(textNode) {
     const text = textNode.textContent;
-    if (!text || text.trim().length === 0) {
-        console.log('📝 Empty text node, skipping');
-        return;
-    }
+    if (!text || text.trim().length === 0) return;
     
-    console.log('📝 Checking text:', text);
     const words = text.split(/(\s+)/);
-    console.log('📝 Split words:', words);
     
     let currentOffset = 0;
-    words.forEach((word, index) => {
+    words.forEach(word => {
         if (word.trim() && isWord(word)) {
-            console.log(`📝 Processing word ${index}:`, word);
             const wordStart = text.indexOf(word, currentOffset);
             const wordEnd = wordStart + word.length;
-            
-            console.log(`📝 Word position: ${wordStart}-${wordEnd}`);
             
             // Validate word position and check if already marked
             if (wordStart >= 0 && wordEnd <= text.length && 
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
-                console.log('✅ Marking word as misspelled:', word);
                 try {
                     markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
                 } catch (error) {
-                    console.log('❌ Spell check error (ignoring):', error.message);
+                    console.log('Spell check error (ignoring):', error.message);
                 }
-            } else {
-                console.log('⏭️ Skipping word:', word);
             }
         }
         currentOffset += word.length;
@@ -6032,26 +5852,12 @@ function isWord(str) {
 
 // Check if a word is misspelled using multiple methods
 function isMisspelled(word) {
-    console.log('Checking word for misspelling:', word);
-    
-    if (ignoredWords.has(word.toLowerCase())) {
-        console.log('Word ignored:', word);
-        return false;
-    }
-    if (customDictionary.has(word.toLowerCase())) {
-        console.log('Word in custom dictionary:', word);
-        return false;
-    }
+    if (ignoredWords.has(word.toLowerCase())) return false;
+    if (customDictionary.has(word.toLowerCase())) return false;
     
     // Basic word validation
-    if (word.length < 2) {
-        console.log('Word too short:', word);
-        return false;
-    }
-    if (!/^[a-zA-Z]+$/.test(word)) {
-        console.log('Word contains non-letters:', word);
-        return false;
-    }
+    if (word.length < 2) return false;
+    if (!/^[a-zA-Z]+$/.test(word)) return false;
     
     // Check against common English words dictionary
     const commonWords = [
@@ -6067,10 +5873,7 @@ function isMisspelled(word) {
         'large', 'next', 'early', 'young', 'important', 'few', 'public', 'same', 'able'
     ];
     
-    if (commonWords.includes(word.toLowerCase())) {
-        console.log('Word is common:', word);
-        return false;
-    }
+    if (commonWords.includes(word.toLowerCase())) return false;
     
     // Use a simple spell check algorithm for common misspellings
     const misspelledWords = [
@@ -6083,19 +5886,24 @@ function isMisspelled(word) {
         'usefull', 'usefullness', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen'
     ];
     
-    if (misspelledWords.includes(word.toLowerCase())) {
-        console.log('Word is known misspelling:', word);
-        return true;
+    if (misspelledWords.includes(word.toLowerCase())) return true;
+    
+    // Check for common patterns of misspelling
+    const patterns = [
+        /([a-z])\1{2,}/, // Triple letters (aaa, bbb)
+        /^[a-z]*[aeiou]{3,}[a-z]*$/i, // Multiple vowels in a row
+        /^[a-z]*[bcdfghjklmnpqrstvwxyz]{4,}[a-z]*$/i, // Multiple consonants in a row
+        /^[a-z]{1,2}$/i, // Very short words (likely abbreviations)
+    ];
+    
+    for (const pattern of patterns) {
+        if (pattern.test(word)) {
+            return false; // Don't mark as misspelled for these patterns
+        }
     }
     
-    // Mark words that are not in the common words list as potentially misspelled
-    if (word.length > 2 && !commonWords.includes(word.toLowerCase())) {
-        console.log('Word marked as potentially misspelled:', word);
-        return true;
-    }
-    
-    console.log('Word not marked as misspelled:', word);
-    return false;
+    // If word is not in common words and not obviously misspelled, check with AI
+    return true; // For now, mark as potentially misspelled for AI checking
 }
 
 // Mark a misspelled word with red underline
@@ -6244,24 +6052,17 @@ async function showSpellCheckSuggestions(element, word) {
         popup.innerHTML = '<div class="spell-check-suggestion-item">Error loading suggestions</div>';
     }
     
-    // Close popup when clicking outside (but not on the popup itself)
+    // Close popup when clicking outside
     const closePopup = (e) => {
-        // Don't close if clicking on the popup or the misspelled word
-        if (popup.contains(e.target) || element.contains(e.target)) {
-            return;
+        if (!popup.contains(e.target) && !element.contains(e.target)) {
+            popup.remove();
+            document.removeEventListener('click', closePopup);
         }
-        
-        // Close the popup
-        popup.remove();
-        document.removeEventListener('click', closePopup);
-        console.log('🔒 Suggestion popup closed');
     };
     
-    // Add a small delay before adding the click listener to prevent immediate closure
     setTimeout(() => {
         document.addEventListener('click', closePopup);
-        console.log('👂 Added click listener for popup');
-    }, 200);
+    }, 100);
 }
 
 // Show context menu for spell check
