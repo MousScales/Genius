@@ -819,6 +819,34 @@ function setupToolbarButtons() {
                 }
             }
         }
+        
+        // Update heading dropdown to show current heading style
+        const headingSelect = document.getElementById('headingSelect');
+        if (headingSelect) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.commonAncestorContainer;
+                const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                
+                if (element) {
+                    const tagName = element.tagName.toLowerCase();
+                    
+                    // Check if it's a heading, paragraph, blockquote, or code
+                    if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'blockquote', 'code'].includes(tagName)) {
+                        headingSelect.value = tagName;
+                    } else {
+                        // Check if it's inside a heading element
+                        const headingElement = element.closest('h1, h2, h3, h4, h5, h6, p, blockquote, code');
+                        if (headingElement) {
+                            headingSelect.value = headingElement.tagName.toLowerCase();
+                        } else {
+                            headingSelect.value = 'p'; // Default to paragraph
+                        }
+                    }
+                }
+            }
+        }
     };
     
     // Add keyboard shortcuts
@@ -978,6 +1006,127 @@ function setupToolbarButtons() {
                     triggerFormattingSave();
                 }
             }, 50);
+        });
+    }
+    
+    // Heading style select
+    const headingSelect = document.getElementById('headingSelect');
+    if (headingSelect) {
+        headingSelect.addEventListener('change', (e) => {
+            const selectedHeading = e.target.value;
+            console.log('Heading changed to:', selectedHeading);
+            
+            // Focus content first
+            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+            if (activeContent) {
+                activeContent.focus();
+            }
+            
+            // Apply heading style
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                
+                if (selectedHeading === 'p') {
+                    // Convert to paragraph
+                    const p = document.createElement('p');
+                    try {
+                        range.surroundContents(p);
+                    } catch (e) {
+                        // If we can't surround, wrap the content
+                        const contents = range.extractContents();
+                        p.appendChild(contents);
+                        range.insertNode(p);
+                    }
+                } else if (selectedHeading === 'blockquote') {
+                    // Convert to blockquote
+                    const blockquote = document.createElement('blockquote');
+                    blockquote.style.borderLeft = '4px solid #4a9eff';
+                    blockquote.style.paddingLeft = '16px';
+                    blockquote.style.margin = '8px 0';
+                    blockquote.style.fontStyle = 'italic';
+                    blockquote.style.color = '#cccccc';
+                    try {
+                        range.surroundContents(blockquote);
+                    } catch (e) {
+                        const contents = range.extractContents();
+                        blockquote.appendChild(contents);
+                        range.insertNode(blockquote);
+                    }
+                } else if (selectedHeading === 'code') {
+                    // Convert to code
+                    const code = document.createElement('code');
+                    code.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    code.style.padding = '2px 4px';
+                    code.style.borderRadius = '3px';
+                    code.style.fontFamily = 'monospace';
+                    code.style.fontSize = '14px';
+                    try {
+                        range.surroundContents(code);
+                    } catch (e) {
+                        const contents = range.extractContents();
+                        code.appendChild(contents);
+                        range.insertNode(code);
+                    }
+                } else {
+                    // Convert to heading (h1, h2, h3, h4, h5, h6)
+                    const heading = document.createElement(selectedHeading);
+                    
+                    // Apply different styles based on heading level
+                    switch(selectedHeading) {
+                        case 'h1':
+                            heading.style.fontSize = '32px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '16px 0 8px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h2':
+                            heading.style.fontSize = '28px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '14px 0 6px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h3':
+                            heading.style.fontSize = '24px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '12px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h4':
+                            heading.style.fontSize = '20px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '10px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h5':
+                            heading.style.fontSize = '18px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '8px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                        case 'h6':
+                            heading.style.fontSize = '16px';
+                            heading.style.fontWeight = 'bold';
+                            heading.style.margin = '6px 0 4px 0';
+                            heading.style.color = '#ffffff';
+                            break;
+                    }
+                    
+                    try {
+                        range.surroundContents(heading);
+                    } catch (e) {
+                        const contents = range.extractContents();
+                        heading.appendChild(contents);
+                        range.insertNode(heading);
+                    }
+                }
+                
+                console.log('Heading style applied:', selectedHeading);
+            }
+            
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
+            }
         });
     }
     
@@ -5599,27 +5748,41 @@ function debounce(func, wait) {
 
 // Main spell check function
 function performSpellCheck() {
-    if (!spellCheckEnabled) return;
+    console.log('🔍 Starting spell check...');
     
-    const contentElement = document.getElementById('docEditorContent');
-    if (!contentElement) return;
-    
-    // Skip spell check if user is actively typing (cursor is in the editor)
-    if (document.activeElement === contentElement) {
+    if (!spellCheckEnabled) {
+        console.log('❌ Spell check disabled');
         return;
     }
     
+    const contentElement = document.getElementById('docEditorContent');
+    if (!contentElement) {
+        console.log('❌ Content element not found');
+        return;
+    }
+    
+    // Skip spell check if user is actively typing (cursor is in the editor)
+    if (document.activeElement === contentElement) {
+        console.log('⏸️ Skipping spell check - user is typing');
+        return;
+    }
+    
+    console.log('🧹 Clearing existing spell check markers...');
     // Clear existing spell check markers
     clearSpellCheckMarkers();
     
     // Get all text nodes in the content
     const textNodes = getTextNodes(contentElement);
+    console.log('📝 Found text nodes:', textNodes.length);
     
-    textNodes.forEach(node => {
+    textNodes.forEach((node, index) => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            console.log(`🔍 Checking text node ${index}:`, node.textContent);
             checkTextNode(node);
         }
     });
+    
+    console.log('✅ Spell check completed');
 }
 
 // Get all text nodes in an element
@@ -5650,25 +5813,36 @@ function getTextNodes(element) {
 // Check a text node for spelling errors
 function checkTextNode(textNode) {
     const text = textNode.textContent;
-    if (!text || text.trim().length === 0) return;
+    if (!text || text.trim().length === 0) {
+        console.log('📝 Empty text node, skipping');
+        return;
+    }
     
+    console.log('📝 Checking text:', text);
     const words = text.split(/(\s+)/);
+    console.log('📝 Split words:', words);
     
     let currentOffset = 0;
-    words.forEach(word => {
+    words.forEach((word, index) => {
         if (word.trim() && isWord(word)) {
+            console.log(`📝 Processing word ${index}:`, word);
             const wordStart = text.indexOf(word, currentOffset);
             const wordEnd = wordStart + word.length;
+            
+            console.log(`📝 Word position: ${wordStart}-${wordEnd}`);
             
             // Validate word position and check if already marked
             if (wordStart >= 0 && wordEnd <= text.length && 
                 !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
                 isMisspelled(word.trim())) {
+                console.log('✅ Marking word as misspelled:', word);
                 try {
                     markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
                 } catch (error) {
-                    console.log('Spell check error (ignoring):', error.message);
+                    console.log('❌ Spell check error (ignoring):', error.message);
                 }
+            } else {
+                console.log('⏭️ Skipping word:', word);
             }
         }
         currentOffset += word.length;
@@ -5703,12 +5877,26 @@ function isWord(str) {
 
 // Check if a word is misspelled using multiple methods
 function isMisspelled(word) {
-    if (ignoredWords.has(word.toLowerCase())) return false;
-    if (customDictionary.has(word.toLowerCase())) return false;
+    console.log('Checking word for misspelling:', word);
+    
+    if (ignoredWords.has(word.toLowerCase())) {
+        console.log('Word ignored:', word);
+        return false;
+    }
+    if (customDictionary.has(word.toLowerCase())) {
+        console.log('Word in custom dictionary:', word);
+        return false;
+    }
     
     // Basic word validation
-    if (word.length < 2) return false;
-    if (!/^[a-zA-Z]+$/.test(word)) return false;
+    if (word.length < 2) {
+        console.log('Word too short:', word);
+        return false;
+    }
+    if (!/^[a-zA-Z]+$/.test(word)) {
+        console.log('Word contains non-letters:', word);
+        return false;
+    }
     
     // Check against common English words dictionary
     const commonWords = [
@@ -5724,7 +5912,10 @@ function isMisspelled(word) {
         'large', 'next', 'early', 'young', 'important', 'few', 'public', 'same', 'able'
     ];
     
-    if (commonWords.includes(word.toLowerCase())) return false;
+    if (commonWords.includes(word.toLowerCase())) {
+        console.log('Word is common:', word);
+        return false;
+    }
     
     // Use a simple spell check algorithm for common misspellings
     const misspelledWords = [
@@ -5737,24 +5928,22 @@ function isMisspelled(word) {
         'usefull', 'usefullness', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen', 'writting', 'writen'
     ];
     
-    if (misspelledWords.includes(word.toLowerCase())) return true;
+    if (misspelledWords.includes(word.toLowerCase())) {
+        console.log('Word is known misspelling:', word);
+        return true;
+    }
     
-    // Check for common patterns of misspelling
-    const patterns = [
-        /([a-z])\1{2,}/, // Triple letters (aaa, bbb)
-        /^[a-z]*[aeiou]{3,}[a-z]*$/i, // Multiple vowels in a row
-        /^[a-z]*[bcdfghjklmnpqrstvwxyz]{4,}[a-z]*$/i, // Multiple consonants in a row
-        /^[a-z]{1,2}$/i, // Very short words (likely abbreviations)
-    ];
-    
-    for (const pattern of patterns) {
-        if (pattern.test(word)) {
-            return false; // Don't mark as misspelled for these patterns
+    // For testing, let's mark some obvious misspellings
+    if (word.length > 2 && !commonWords.includes(word.toLowerCase())) {
+        // Mark words that look like they might be misspelled
+        if (word.includes('ie') || word.includes('ei') || word.length > 8) {
+            console.log('Word marked as potentially misspelled:', word);
+            return true;
         }
     }
     
-    // If word is not in common words and not obviously misspelled, check with AI
-    return true; // For now, mark as potentially misspelled for AI checking
+    console.log('Word not marked as misspelled:', word);
+    return false;
 }
 
 // Mark a misspelled word with red underline
