@@ -336,7 +336,6 @@ function createEditorScreen(classData, existingDoc) {
                 <button class="toolbar-btn" id="imageBtn" title="Insert Image" tabindex="-1">
                     🖼️
                 </button>
-                <input type="color" class="toolbar-color" id="textColorBtn" title="Text Color" tabindex="-1">
             </div>
             
             <div class="toolbar-divider"></div>
@@ -354,28 +353,15 @@ function createEditorScreen(classData, existingDoc) {
             
             <div class="toolbar-group">
                 <button class="toolbar-btn" id="removeSuggestionsBtn" title="Remove All Suggestions" tabindex="-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
+                    Remove Suggestions
                 </button>
             </div>
             
             <div class="toolbar-divider"></div>
             
             <div class="toolbar-group">
-                <button class="toolbar-btn" id="clearFormatBtn" title="Clear Formatting" tabindex="-1">
-                    ✖️
-                </button>
-            </div>
-            
-            <div class="toolbar-divider"></div>
-            
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="spellCheckBtn" title="Toggle Spell Check" tabindex="-1">
-                    ✓
-                </button>
                 <button class="toolbar-btn" id="findReplaceBtn" title="Find and Replace (Ctrl+H)" tabindex="-1">
-                    🔍
+                    Find and Replace
                 </button>
             </div>
             
@@ -495,7 +481,8 @@ function setupEditorControls(classData, existingDoc) {
     // Setup clickable placeholder examples
     setupPlaceholderExamples(classData, existingDoc);
     
-    // Initialize undo/redo functionality - function removed, no longer needed
+    // Initialize undo/redo functionality
+    initializeUndoRedo();
     
     // Store the document ID to ensure we always update the same document
     let currentDocId = existingDoc ? existingDoc.id : Date.now().toString();
@@ -1260,17 +1247,7 @@ function setupToolbarButtons() {
     }
     
     // Text Color Picker
-    const textColorBtn = document.getElementById('textColorBtn');
-    if (textColorBtn) {
-        textColorBtn.value = '#ffffff'; // Default white color
-        textColorBtn.addEventListener('change', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const color = e.target.value;
-            executeCommand('foreColor', color);
-            triggerFormattingSave();
-        });
-    }
+    // Text color button removed
     
     // Image
     const imageBtn = document.getElementById('imageBtn');
@@ -1473,36 +1450,7 @@ function setupToolbarButtons() {
     }
     
     // Clear Formatting button
-    const clearFormatBtn = document.getElementById('clearFormatBtn');
-    if (clearFormatBtn) {
-        clearFormatBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Clear formatting button clicked!');
-            executeCommand('removeFormat');
-        });
-    }
-    
-    // Spell Check toggle button
-    const spellCheckBtn = document.getElementById('spellCheckBtn');
-    if (spellCheckBtn) {
-        spellCheckBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleSpellCheck();
-            
-            // Update button appearance
-            if (spellCheckEnabled) {
-                spellCheckBtn.style.background = 'rgba(0, 255, 136, 0.2)';
-                spellCheckBtn.style.borderColor = 'rgba(0, 255, 136, 0.4)';
-                spellCheckBtn.title = 'Spell Check: ON';
-            } else {
-                spellCheckBtn.style.background = 'rgba(255, 255, 255, 0.05)';
-                spellCheckBtn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                spellCheckBtn.title = 'Spell Check: OFF';
-            }
-        });
-    }
+    // Clear formatting and spell check buttons removed
     
     // Find and Replace button
     const findReplaceBtn = document.getElementById('findReplaceBtn');
