@@ -709,6 +709,20 @@ function selectAllInElement(element) {
 function setupToolbarButtons() {
     console.log('setupToolbarButtons called');
     
+    // Helper function to close all dropdowns
+    const closeAllDropdowns = () => {
+        document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+            dropdown.classList.remove('open');
+        });
+    };
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-dropdown')) {
+            closeAllDropdowns();
+        }
+    });
+    
     // Helper function to execute command and maintain focus
     const executeCommand = (command, value = null) => {
         console.log('Executing command:', command, value);
@@ -936,86 +950,64 @@ function setupToolbarButtons() {
         content.addEventListener('mouseup', updateButtonStates);
     }
     
-    // Font select
-    const fontSelect = document.getElementById('fontSelect');
-    console.log('Font select found:', !!fontSelect);
-    if (fontSelect) {
-        fontSelect.addEventListener('change', (e) => {
-            const selectedFont = e.target.value;
-            console.log('Font changed to:', selectedFont);
-            
-            // Focus content first
-            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-            if (activeContent) {
-                activeContent.focus();
-            }
-            
-            // Apply font to selection or current element
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0 && !selection.isCollapsed) {
-                // Apply to selection
-                const success = document.execCommand('fontName', false, selectedFont);
-                console.log('Font command executed on selection:', success);
-            } else {
-                // Apply to current paragraph or create a span
-                const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-                if (range) {
-                    const span = document.createElement('span');
-                    span.style.fontFamily = selectedFont;
-                    try {
-                        range.surroundContents(span);
-                        console.log('Font applied via span');
-                    } catch (e) {
-                        // If we can't surround, insert the span
-                        range.insertNode(span);
-                        range.collapse(false);
-                        console.log('Font applied via insert');
-                    }
-                }
-            }
-            
-            if (typeof triggerFormattingSave === 'function') {
-                triggerFormattingSave();
-            }
-        });
-    }
+    // Custom Font Dropdown
+    const fontDropdown = document.getElementById('fontDropdown');
+    const fontTrigger = document.getElementById('fontTrigger');
+    const fontMenu = document.getElementById('fontMenu');
     
-    // Font size select
-    const fontSizeSelect = document.getElementById('fontSizeSelect');
-    if (fontSizeSelect) {
-        fontSizeSelect.addEventListener('change', (e) => {
-            const size = e.target.value;
-            console.log('Changing font size to:', size);
-            
-            // Focus content first
-            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-            if (activeContent) {
-                activeContent.focus();
-            }
-            
-            // Use a more reliable method for font size
-            const success = document.execCommand('fontSize', false, '7');
-            console.log('Font size command executed:', success);
-            
-            setTimeout(() => {
-                // Find the most recent font element and update it
-                const fontElements = document.querySelectorAll('font[size="7"]');
-                if (fontElements.length > 0) {
-                    const lastFontElement = fontElements[fontElements.length - 1];
-                    lastFontElement.removeAttribute('size');
-                    lastFontElement.style.fontSize = size + 'px';
-                    console.log('Updated font size to:', size + 'px');
+    if (fontDropdown && fontTrigger && fontMenu) {
+        // Toggle dropdown
+        fontTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            fontDropdown.classList.toggle('open');
+        });
+        
+        // Handle item selection
+        fontMenu.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dropdown-item')) {
+                const selectedFont = e.target.dataset.value;
+                const fontText = e.target.textContent;
+                
+                // Update trigger text
+                fontTrigger.querySelector('.dropdown-text').textContent = fontText;
+                
+                // Remove active class from all items
+                fontMenu.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+                // Add active class to selected item
+                e.target.classList.add('active');
+                
+                // Close dropdown
+                fontDropdown.classList.remove('open');
+                
+                console.log('Font changed to:', selectedFont);
+                
+                // Focus content first
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    activeContent.focus();
+                }
+                
+                // Apply font to selection or current element
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                    // Apply to selection
+                    const success = document.execCommand('fontName', false, selectedFont);
+                    console.log('Font command executed on selection:', success);
                 } else {
-                    // Fallback: apply to selection or current element
-                    const selection = window.getSelection();
-                    if (selection.rangeCount > 0) {
-                        const range = selection.getRangeAt(0);
+                    // Apply to current paragraph or create a span
+                    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+                    if (range) {
                         const span = document.createElement('span');
-                        span.style.fontSize = size + 'px';
+                        span.style.fontFamily = selectedFont;
                         try {
                             range.surroundContents(span);
+                            console.log('Font applied via span');
                         } catch (e) {
-                            console.log('Could not apply font size directly:', e);
+                            // If we can't surround, insert the span
+                            range.insertNode(span);
+                            range.collapse(false);
+                            console.log('Font applied via insert');
                         }
                     }
                 }
@@ -1023,127 +1015,226 @@ function setupToolbarButtons() {
                 if (typeof triggerFormattingSave === 'function') {
                     triggerFormattingSave();
                 }
-            }, 50);
+            }
         });
     }
     
-    // Heading style select
-    const headingSelect = document.getElementById('headingSelect');
-    if (headingSelect) {
-        headingSelect.addEventListener('change', (e) => {
-            const selectedHeading = e.target.value;
-            console.log('Heading changed to:', selectedHeading);
-            
-            // Focus content first
-            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
-            if (activeContent) {
-                activeContent.focus();
-            }
-            
-            // Apply heading style
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
+    // Custom Font Size Dropdown
+    const fontSizeDropdown = document.getElementById('fontSizeDropdown');
+    const fontSizeTrigger = document.getElementById('fontSizeTrigger');
+    const fontSizeMenu = document.getElementById('fontSizeMenu');
+    
+    if (fontSizeDropdown && fontSizeTrigger && fontSizeMenu) {
+        // Toggle dropdown
+        fontSizeTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            fontSizeDropdown.classList.toggle('open');
+        });
+        
+        // Handle item selection
+        fontSizeMenu.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dropdown-item')) {
+                const size = e.target.dataset.value;
+                const sizeText = e.target.textContent;
                 
-                if (selectedHeading === 'p') {
-                    // Convert to paragraph
-                    const p = document.createElement('p');
-                    try {
-                        range.surroundContents(p);
-                    } catch (e) {
-                        // If we can't surround, wrap the content
-                        const contents = range.extractContents();
-                        p.appendChild(contents);
-                        range.insertNode(p);
-                    }
-                } else if (selectedHeading === 'blockquote') {
-                    // Convert to blockquote
-                    const blockquote = document.createElement('blockquote');
-                    blockquote.style.borderLeft = '4px solid #4a9eff';
-                    blockquote.style.paddingLeft = '16px';
-                    blockquote.style.margin = '8px 0';
-                    blockquote.style.fontStyle = 'italic';
-                    blockquote.style.color = '#cccccc';
-                    try {
-                        range.surroundContents(blockquote);
-                    } catch (e) {
-                        const contents = range.extractContents();
-                        blockquote.appendChild(contents);
-                        range.insertNode(blockquote);
-                    }
-                } else if (selectedHeading === 'code') {
-                    // Convert to code
-                    const code = document.createElement('code');
-                    code.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                    code.style.padding = '2px 4px';
-                    code.style.borderRadius = '3px';
-                    code.style.fontFamily = 'monospace';
-                    code.style.fontSize = '14px';
-                    try {
-                        range.surroundContents(code);
-                    } catch (e) {
-                        const contents = range.extractContents();
-                        code.appendChild(contents);
-                        range.insertNode(code);
-                    }
-                } else {
-                    // Convert to heading (h1, h2, h3, h4, h5, h6)
-                    const heading = document.createElement(selectedHeading);
-                    
-                    // Apply different styles based on heading level
-                    switch(selectedHeading) {
-                        case 'h1':
-                            heading.style.fontSize = '32px';
-                            heading.style.fontWeight = 'bold';
-                            heading.style.margin = '16px 0 8px 0';
-                            heading.style.color = '#ffffff';
-                            break;
-                        case 'h2':
-                            heading.style.fontSize = '28px';
-                            heading.style.fontWeight = 'bold';
-                            heading.style.margin = '14px 0 6px 0';
-                            heading.style.color = '#ffffff';
-                            break;
-                        case 'h3':
-                            heading.style.fontSize = '24px';
-                            heading.style.fontWeight = 'bold';
-                            heading.style.margin = '12px 0 4px 0';
-                            heading.style.color = '#ffffff';
-                            break;
-                        case 'h4':
-                            heading.style.fontSize = '20px';
-                            heading.style.fontWeight = 'bold';
-                            heading.style.margin = '10px 0 4px 0';
-                            heading.style.color = '#ffffff';
-                            break;
-                        case 'h5':
-                            heading.style.fontSize = '18px';
-                            heading.style.fontWeight = 'bold';
-                            heading.style.margin = '8px 0 4px 0';
-                            heading.style.color = '#ffffff';
-                            break;
-                        case 'h6':
-                            heading.style.fontSize = '16px';
-                            heading.style.fontWeight = 'bold';
-                            heading.style.margin = '6px 0 4px 0';
-                            heading.style.color = '#ffffff';
-                            break;
-                    }
-                    
-                    try {
-                        range.surroundContents(heading);
-                    } catch (e) {
-                        const contents = range.extractContents();
-                        heading.appendChild(contents);
-                        range.insertNode(heading);
-                    }
+                // Update trigger text
+                fontSizeTrigger.querySelector('.dropdown-text').textContent = sizeText;
+                
+                // Remove active class from all items
+                fontSizeMenu.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+                // Add active class to selected item
+                e.target.classList.add('active');
+                
+                // Close dropdown
+                fontSizeDropdown.classList.remove('open');
+                
+                console.log('Changing font size to:', size);
+                
+                // Focus content first
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    activeContent.focus();
                 }
                 
-                console.log('Heading style applied:', selectedHeading);
+                // Use a more reliable method for font size
+                const success = document.execCommand('fontSize', false, '7');
+                console.log('Font size command executed:', success);
+                
+                setTimeout(() => {
+                    // Find the most recent font element and update it
+                    const fontElements = document.querySelectorAll('font[size="7"]');
+                    if (fontElements.length > 0) {
+                        const lastFontElement = fontElements[fontElements.length - 1];
+                        lastFontElement.removeAttribute('size');
+                        lastFontElement.style.fontSize = size + 'px';
+                        console.log('Updated font size to:', size + 'px');
+                    } else {
+                        // Fallback: apply to selection or current element
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            const span = document.createElement('span');
+                            span.style.fontSize = size + 'px';
+                            try {
+                                range.surroundContents(span);
+                            } catch (e) {
+                                console.log('Could not apply font size directly:', e);
+                            }
+                        }
+                    }
+                    
+                    if (typeof triggerFormattingSave === 'function') {
+                        triggerFormattingSave();
+                    }
+                }, 50);
             }
-            
-            if (typeof triggerFormattingSave === 'function') {
-                triggerFormattingSave();
+        });
+    }
+    
+    // Custom Heading Dropdown
+    const headingDropdown = document.getElementById('headingDropdown');
+    const headingTrigger = document.getElementById('headingTrigger');
+    const headingMenu = document.getElementById('headingMenu');
+    
+    if (headingDropdown && headingTrigger && headingMenu) {
+        // Toggle dropdown
+        headingTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            headingDropdown.classList.toggle('open');
+        });
+        
+        // Handle item selection
+        headingMenu.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dropdown-item')) {
+                const selectedHeading = e.target.dataset.value;
+                const headingText = e.target.textContent;
+                
+                // Update trigger text
+                headingTrigger.querySelector('.dropdown-text').textContent = headingText;
+                
+                // Remove active class from all items
+                headingMenu.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+                // Add active class to selected item
+                e.target.classList.add('active');
+                
+                // Close dropdown
+                headingDropdown.classList.remove('open');
+                
+                console.log('Heading changed to:', selectedHeading);
+                
+                // Focus content first
+                const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+                if (activeContent) {
+                    activeContent.focus();
+                }
+                
+                // Apply heading style
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    
+                    if (selectedHeading === 'p') {
+                        // Convert to paragraph
+                        const p = document.createElement('p');
+                        try {
+                            range.surroundContents(p);
+                        } catch (e) {
+                            // If we can't surround, wrap the content
+                            const contents = range.extractContents();
+                            p.appendChild(contents);
+                            range.insertNode(p);
+                        }
+                    } else if (selectedHeading === 'blockquote') {
+                        // Convert to blockquote
+                        const blockquote = document.createElement('blockquote');
+                        blockquote.style.borderLeft = '4px solid #4a9eff';
+                        blockquote.style.paddingLeft = '16px';
+                        blockquote.style.margin = '8px 0';
+                        blockquote.style.fontStyle = 'italic';
+                        blockquote.style.color = '#cccccc';
+                        try {
+                            range.surroundContents(blockquote);
+                        } catch (e) {
+                            const contents = range.extractContents();
+                            blockquote.appendChild(contents);
+                            range.insertNode(blockquote);
+                        }
+                    } else if (selectedHeading === 'code') {
+                        // Convert to code
+                        const code = document.createElement('code');
+                        code.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                        code.style.padding = '2px 4px';
+                        code.style.borderRadius = '3px';
+                        code.style.fontFamily = 'monospace';
+                        code.style.fontSize = '14px';
+                        try {
+                            range.surroundContents(code);
+                        } catch (e) {
+                            const contents = range.extractContents();
+                            code.appendChild(contents);
+                            range.insertNode(code);
+                        }
+                    } else {
+                        // Convert to heading (h1, h2, h3, h4, h5, h6)
+                        const heading = document.createElement(selectedHeading);
+                        
+                        // Apply different styles based on heading level
+                        switch(selectedHeading) {
+                            case 'h1':
+                                heading.style.fontSize = '32px';
+                                heading.style.fontWeight = 'bold';
+                                heading.style.margin = '16px 0 8px 0';
+                                heading.style.color = '#ffffff';
+                                break;
+                            case 'h2':
+                                heading.style.fontSize = '28px';
+                                heading.style.fontWeight = 'bold';
+                                heading.style.margin = '14px 0 6px 0';
+                                heading.style.color = '#ffffff';
+                                break;
+                            case 'h3':
+                                heading.style.fontSize = '24px';
+                                heading.style.fontWeight = 'bold';
+                                heading.style.margin = '12px 0 4px 0';
+                                heading.style.color = '#ffffff';
+                                break;
+                            case 'h4':
+                                heading.style.fontSize = '20px';
+                                heading.style.fontWeight = 'bold';
+                                heading.style.margin = '10px 0 4px 0';
+                                heading.style.color = '#ffffff';
+                                break;
+                            case 'h5':
+                                heading.style.fontSize = '18px';
+                                heading.style.fontWeight = 'bold';
+                                heading.style.margin = '8px 0 4px 0';
+                                heading.style.color = '#ffffff';
+                                break;
+                            case 'h6':
+                                heading.style.fontSize = '16px';
+                                heading.style.fontWeight = 'bold';
+                                heading.style.margin = '6px 0 4px 0';
+                                heading.style.color = '#ffffff';
+                                break;
+                        }
+                        
+                        try {
+                            range.surroundContents(heading);
+                        } catch (e) {
+                            const contents = range.extractContents();
+                            heading.appendChild(contents);
+                            range.insertNode(heading);
+                        }
+                    }
+                    
+                    console.log('Heading style applied:', selectedHeading);
+                }
+                
+                if (typeof triggerFormattingSave === 'function') {
+                    triggerFormattingSave();
+                }
             }
         });
     }
@@ -5780,8 +5871,12 @@ function performSpellCheck() {
     }
     
     // Skip spell check if user is actively typing (cursor is in the editor)
-    if (document.activeElement === contentElement) {
-        console.log('⏸️ Skipping spell check - user is typing');
+    // But only skip if the user is actually typing (not just focused)
+    const isTyping = document.activeElement === contentElement && 
+                     contentElement.selectionStart !== contentElement.selectionEnd;
+    
+    if (isTyping) {
+        console.log('⏸️ Skipping spell check - user is actively typing');
         return;
     }
     
