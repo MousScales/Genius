@@ -541,10 +541,36 @@ async function loadDocuments(classData) {
     if (emptyDocuments) emptyDocuments.style.display = 'none';
     
     try {
-        // Load documents from Firebase (same pattern as classes)
+        console.log('📄 Starting document loading for class:', classData.name);
+        console.log('📄 Class data:', { userId: classData.userId, classId: classData.id });
+        
+        // Load documents from Firebase with timeout protection
         const db = window.firebase.firestore();
         const documentsRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('documents');
-        const querySnapshot = await documentsRef.orderBy('createdAt', 'desc').get();
+        
+        console.log('📄 Firebase query starting...');
+        
+        // Try with orderBy first, fallback to simple query if it fails
+        let querySnapshot;
+        try {
+            const queryPromise = documentsRef.orderBy('createdAt', 'desc').get();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Document query timeout after 10 seconds')), 10000)
+            );
+            
+            querySnapshot = await Promise.race([queryPromise, timeoutPromise]);
+            console.log('📄 Firebase query with orderBy completed');
+        } catch (orderByError) {
+            console.warn('⚠️ OrderBy query failed, trying simple query:', orderByError.message);
+            // Fallback to simple query without orderBy
+            const simpleQueryPromise = documentsRef.get();
+            const simpleTimeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Simple query timeout after 10 seconds')), 10000)
+            );
+            
+            querySnapshot = await Promise.race([simpleQueryPromise, simpleTimeoutPromise]);
+            console.log('📄 Firebase simple query completed');
+        }
         
         const documents = [];
         querySnapshot.forEach((doc) => {
@@ -556,21 +582,32 @@ async function loadDocuments(classData) {
         
         console.log('📄 Loaded documents from Firebase:', documents.length);
         
-        // Load folders
-        const folders = await getFolders(classData);
+        // Load folders with timeout protection
+        console.log('📄 Loading folders...');
+        const foldersPromise = getFolders(classData);
+        const foldersTimeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Folders query timeout after 5 seconds')), 5000)
+        );
+        
+        const folders = await Promise.race([foldersPromise, foldersTimeoutPromise]);
+        console.log('📄 Loaded folders:', folders.length);
         
         // Get view mode
         const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
         const viewMode = localStorage.getItem(viewModeKey) || 'list';
         
+        console.log('📄 Rendering documents...');
         // Render documents
         renderDocuments(documents, folders, viewMode, classData);
         
         // Setup event listener for updates
         setupDocumentUpdateListener(classData);
         
+        console.log('✅ Document loading completed successfully');
+        
     } catch (error) {
         console.error('❌ Error loading documents:', error);
+        console.error('❌ Error details:', error.message);
         documentsList.innerHTML = `
             <div class="error-message">
                 <h3>Error Loading Documents</h3>
