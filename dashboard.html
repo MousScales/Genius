@@ -28,6 +28,7 @@
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
+                <img src="assets/darkgenius.png" alt="Genius" class="sidebar-logo">
                 <h2 class="sidebar-title">Genius</h2>
             </div>
             <nav class="sidebar-nav">
@@ -41,7 +42,7 @@
                     <span class="nav-shortcut">⌘/</span>
                 </a>
                 <a href="#" class="nav-item" id="calculatorNav">
-                    <span class="nav-icon">🧮</span>
+                    <span class="nav-icon">📱</span>
                     <span class="nav-text">Calculator</span>
                     <span class="nav-shortcut">⌘C</span>
                 </a>
@@ -665,7 +666,7 @@
                     // Generate subject icon based on class name
                     const getSubjectIcon = (name) => {
                         const lowerName = name.toLowerCase();
-                        if (lowerName.includes('math') || lowerName.includes('calculus') || lowerName.includes('algebra')) return '🧮';
+                        if (lowerName.includes('math') || lowerName.includes('calculus') || lowerName.includes('algebra')) return '📱';
                         if (lowerName.includes('science') || lowerName.includes('physics') || lowerName.includes('chemistry') || lowerName.includes('biology')) return '🔬';
                         if (lowerName.includes('english') || lowerName.includes('literature') || lowerName.includes('writing')) return '📚';
                         if (lowerName.includes('history') || lowerName.includes('social')) return '🏛️';
