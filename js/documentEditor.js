@@ -835,9 +835,42 @@ function setupToolbarButtons() {
     console.log('Font select found:', !!fontSelect);
     if (fontSelect) {
         fontSelect.addEventListener('change', (e) => {
-            console.log('Font changed to:', e.target.value);
-            executeCommand('fontName', e.target.value);
-            triggerFormattingSave();
+            const selectedFont = e.target.value;
+            console.log('Font changed to:', selectedFont);
+            
+            // Focus content first
+            const activeContent = document.querySelector('.doc-editor-content:focus') || document.querySelector('.doc-editor-content');
+            if (activeContent) {
+                activeContent.focus();
+            }
+            
+            // Apply font to selection or current element
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                // Apply to selection
+                const success = document.execCommand('fontName', false, selectedFont);
+                console.log('Font command executed on selection:', success);
+            } else {
+                // Apply to current paragraph or create a span
+                const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+                if (range) {
+                    const span = document.createElement('span');
+                    span.style.fontFamily = selectedFont;
+                    try {
+                        range.surroundContents(span);
+                        console.log('Font applied via span');
+                    } catch (e) {
+                        // If we can't surround, insert the span
+                        range.insertNode(span);
+                        range.collapse(false);
+                        console.log('Font applied via insert');
+                    }
+                }
+            }
+            
+            if (typeof triggerFormattingSave === 'function') {
+                triggerFormattingSave();
+            }
         });
     }
     
@@ -5464,9 +5497,14 @@ function initializeSpellCheck() {
     contentElement.setAttribute('spellcheck', 'false');
     
     // Add event listeners for real-time spell checking with faster response
-    contentElement.addEventListener('input', debounce(performSpellCheck, 200));
+    contentElement.addEventListener('input', (e) => {
+        // Clear spell check markers when user starts typing
+        clearSpellCheckMarkers();
+        debounce(performSpellCheck, 200)();
+    });
     contentElement.addEventListener('keyup', debounce(performSpellCheck, 150));
     contentElement.addEventListener('paste', () => {
+        clearSpellCheckMarkers();
         setTimeout(performSpellCheck, 50);
     });
     
@@ -5475,6 +5513,11 @@ function initializeSpellCheck() {
         if (e.key === ' ' || e.key === '.' || e.key === ',' || e.key === '!' || e.key === '?' || e.key === '\n') {
             setTimeout(performSpellCheck, 100);
         }
+    });
+    
+    // Clear spell check markers when user focuses on editor
+    contentElement.addEventListener('focus', () => {
+        clearSpellCheckMarkers();
     });
     
     // Initial spell check
@@ -5500,6 +5543,11 @@ function performSpellCheck() {
     
     const contentElement = document.getElementById('docEditorContent');
     if (!contentElement) return;
+    
+    // Skip spell check if user is actively typing (cursor is in the editor)
+    if (document.activeElement === contentElement) {
+        return;
+    }
     
     // Clear existing spell check markers
     clearSpellCheckMarkers();
@@ -5542,6 +5590,8 @@ function getTextNodes(element) {
 // Check a text node for spelling errors
 function checkTextNode(textNode) {
     const text = textNode.textContent;
+    if (!text || text.trim().length === 0) return;
+    
     const words = text.split(/(\s+)/);
     
     let currentOffset = 0;
@@ -5550,12 +5600,40 @@ function checkTextNode(textNode) {
             const wordStart = text.indexOf(word, currentOffset);
             const wordEnd = wordStart + word.length;
             
-            if (isMisspelled(word.trim())) {
-                markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
+            // Validate word position and check if already marked
+            if (wordStart >= 0 && wordEnd <= text.length && 
+                !isWordAlreadyMarked(textNode, wordStart, wordEnd) && 
+                isMisspelled(word.trim())) {
+                try {
+                    markMisspelledWord(textNode, wordStart, wordEnd, word.trim());
+                } catch (error) {
+                    console.log('Spell check error (ignoring):', error.message);
+                }
             }
         }
         currentOffset += word.length;
     });
+}
+
+// Check if a word is already marked as misspelled
+function isWordAlreadyMarked(textNode, startOffset, endOffset) {
+    // Check if the text node is already inside a spell-check-error span
+    if (textNode.parentElement && textNode.parentElement.classList.contains('spell-check-error')) {
+        return true;
+    }
+    
+    // Check if there are any spell-check-error spans in the parent element
+    const parent = textNode.parentElement;
+    if (parent) {
+        const existingErrors = parent.querySelectorAll('.spell-check-error');
+        for (let error of existingErrors) {
+            if (error.textContent === textNode.textContent.substring(startOffset, endOffset)) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }
 
 // Check if a string is a word (contains only letters)
@@ -5621,16 +5699,22 @@ function isMisspelled(word) {
 
 // Mark a misspelled word with red underline
 function markMisspelledWord(textNode, startOffset, endOffset, word) {
+    // Validate inputs
+    if (!textNode || startOffset < 0 || endOffset <= startOffset || endOffset > textNode.textContent.length) {
+        console.log('Invalid parameters for markMisspelledWord:', { textNode, startOffset, endOffset, word });
+        return;
+    }
+    
     const range = document.createRange();
-    range.setStart(textNode, startOffset);
-    range.setEnd(textNode, endOffset);
-    
-    const span = document.createElement('span');
-    span.className = 'spell-check-error';
-    span.setAttribute('data-word', word);
-    span.setAttribute('data-original-text', word);
-    
     try {
+        range.setStart(textNode, startOffset);
+        range.setEnd(textNode, endOffset);
+        
+        const span = document.createElement('span');
+        span.className = 'spell-check-error';
+        span.setAttribute('data-word', word);
+        span.setAttribute('data-original-text', word);
+        
         range.surroundContents(span);
         
         // Add click event for suggestions
@@ -5647,7 +5731,47 @@ function markMisspelledWord(textNode, startOffset, endOffset, word) {
             showSpellCheckContextMenu(e, span, word);
         });
     } catch (error) {
-        console.log('Could not mark word as misspelled:', error);
+        console.log('Could not mark word as misspelled:', error.message);
+        // Try alternative approach for complex DOM structures
+        try {
+            const parent = textNode.parentNode;
+            if (parent && parent.nodeType === Node.ELEMENT_NODE) {
+                const beforeText = textNode.textContent.substring(0, startOffset);
+                const afterText = textNode.textContent.substring(endOffset);
+                const wordText = textNode.textContent.substring(startOffset, endOffset);
+                
+                const span = document.createElement('span');
+                span.className = 'spell-check-error';
+                span.setAttribute('data-word', word);
+                span.setAttribute('data-original-text', word);
+                span.textContent = wordText;
+                
+                // Create new text nodes
+                const beforeNode = document.createTextNode(beforeText);
+                const afterNode = document.createTextNode(afterText);
+                
+                // Replace the original text node
+                parent.insertBefore(beforeNode, textNode);
+                parent.insertBefore(span, textNode);
+                parent.insertBefore(afterNode, textNode);
+                parent.removeChild(textNode);
+                
+                // Add event listeners
+                span.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showSpellCheckSuggestions(span, word);
+                });
+                
+                span.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showSpellCheckContextMenu(e, span, word);
+                });
+            }
+        } catch (fallbackError) {
+            console.log('Fallback spell check marking also failed:', fallbackError.message);
+        }
     }
 }
 
