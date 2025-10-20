@@ -473,9 +473,9 @@ function createEditorScreen(classData, existingDoc) {
              loadSavedSuggestions(classData, existingDoc);
          }, 300);
          
-         // Initialize spell check
-         loadSpellCheckSettings();
-         initializeSpellCheck();
+        // Initialize spell check
+        console.log('🚀 About to initialize spell check...');
+        initializeSpellCheck();
     }, 100);
     
     return container;
@@ -5695,10 +5695,20 @@ let spellCheckEnabled = true;
 
 // Initialize spell check when document editor opens
 function initializeSpellCheck() {
-    if (!spellCheckEnabled) return;
+    console.log('🚀 initializeSpellCheck called, enabled:', spellCheckEnabled);
+    
+    if (!spellCheckEnabled) {
+        console.log('❌ Spell check disabled, not initializing');
+        return;
+    }
     
     const contentElement = document.getElementById('docEditorContent');
-    if (!contentElement) return;
+    if (!contentElement) {
+        console.log('❌ Content element not found, cannot initialize spell check');
+        return;
+    }
+    
+    console.log('✅ Content element found, initializing spell check...');
     
     // Disable browser's built-in spell check
     contentElement.setAttribute('spellcheck', 'false');
@@ -5709,8 +5719,13 @@ function initializeSpellCheck() {
         setTimeout(performSpellCheck, 200);
     });
     
+    console.log('⏰ Setting up initial spell check timeout...');
+    
     // Initial spell check
-    setTimeout(performSpellCheck, 1000);
+    setTimeout(() => {
+        console.log('⏰ Initial spell check timeout triggered');
+        performSpellCheck();
+    }, 1000);
 }
 
 // Debounce function
@@ -5977,10 +5992,20 @@ function toggleSpellCheck() {
 
 // Initialize spell check when document editor opens
 function initializeSpellCheck() {
-    if (!spellCheckEnabled) return;
+    console.log('🚀 initializeSpellCheck called, enabled:', spellCheckEnabled);
+    
+    if (!spellCheckEnabled) {
+        console.log('❌ Spell check disabled, not initializing');
+        return;
+    }
     
     const contentElement = document.getElementById('docEditorContent');
-    if (!contentElement) return;
+    if (!contentElement) {
+        console.log('❌ Content element not found, cannot initialize spell check');
+        return;
+    }
+    
+    console.log('✅ Content element found, initializing spell check...');
     
     // Disable browser's built-in spell check
     contentElement.setAttribute('spellcheck', 'false');
@@ -5991,8 +6016,13 @@ function initializeSpellCheck() {
         setTimeout(performSpellCheck, 200);
     });
     
+    console.log('⏰ Setting up initial spell check timeout...');
+    
     // Initial spell check
-    setTimeout(performSpellCheck, 1000);
+    setTimeout(() => {
+        console.log('⏰ Initial spell check timeout triggered');
+        performSpellCheck();
+    }, 1000);
 }
 
 // Debounce function to limit spell check frequency
