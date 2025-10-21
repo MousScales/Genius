@@ -375,7 +375,11 @@ function createEditorScreen(classData, existingDoc) {
                 <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
                 <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
                 <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
-                    <span class="mode-icon" id="modeIcon" style="font-size: 20px; font-weight: bold;">?</span>
+                    <svg class="mode-icon" id="modeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
                 </div>
             </div>
         </div>
