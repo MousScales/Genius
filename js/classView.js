@@ -770,6 +770,8 @@ function setupDocumentInteractions(documents, classData) {
                 if (isGridMenu) {
                     menu.classList.add('grid-popup');
                 } else {
+                    // Smart positioning for list view dropdowns
+                    positionDropdownSmart(btn, menu);
                     menu.classList.toggle('show');
                 }
             }
@@ -1650,6 +1652,57 @@ function closeAllMenus() {
     document.querySelectorAll('.doc-menu-dropdown').forEach(m => {
         m.classList.remove('show', 'grid-popup');
     });
+}
+
+function positionDropdownSmart(button, dropdown) {
+    // Reset any previous positioning
+    dropdown.style.top = '';
+    dropdown.style.bottom = '';
+    dropdown.style.transform = '';
+    
+    // Get button and dropdown dimensions
+    const buttonRect = button.getBoundingClientRect();
+    const dropdownRect = dropdown.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Calculate available space below and above the button
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    
+    // Estimate dropdown height (approximate)
+    const estimatedDropdownHeight = 300; // Approximate height for 6-7 menu items
+    
+    // Check if dropdown would be cut off at the bottom
+    if (spaceBelow < estimatedDropdownHeight && spaceAbove > estimatedDropdownHeight) {
+        // Position above the button
+        dropdown.style.top = 'auto';
+        dropdown.style.bottom = '100%';
+        dropdown.style.marginTop = '0';
+        dropdown.style.marginBottom = '4px';
+        dropdown.style.transform = 'translateY(10px) scale(0.95)';
+    } else {
+        // Position below the button (default)
+        dropdown.style.top = '100%';
+        dropdown.style.bottom = 'auto';
+        dropdown.style.marginTop = '4px';
+        dropdown.style.marginBottom = '0';
+        dropdown.style.transform = 'translateY(-10px) scale(0.95)';
+    }
+    
+    // Check if dropdown would be cut off on the right side
+    const spaceRight = viewportWidth - buttonRect.right;
+    const estimatedDropdownWidth = 200;
+    
+    if (spaceRight < estimatedDropdownWidth) {
+        // Position to the left of the button
+        dropdown.style.right = 'auto';
+        dropdown.style.left = '0';
+    } else {
+        // Position to the right of the button (default)
+        dropdown.style.right = '0';
+        dropdown.style.left = 'auto';
+    }
 }
 
 

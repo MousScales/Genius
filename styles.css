@@ -4802,13 +4802,15 @@ body {
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     min-width: 200px;
-    z-index: 9999;
+    z-index: 99999;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px) scale(0.95);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
     overflow: visible;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 /* Grid view popup - positioned over document card */
@@ -4825,6 +4827,11 @@ body {
 .doc-menu-dropdown.show {
     opacity: 1;
     visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* Upward positioned dropdown */
+.doc-menu-dropdown.show[style*="bottom"] {
     transform: translateY(0) scale(1);
 }
 
