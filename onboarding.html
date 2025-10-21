@@ -127,7 +127,7 @@
         input[type="text"],
         select {
             width: 100%;
-            padding: 15px 20px;
+            padding: 15px 80px 15px 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             font-size: 16px;
@@ -189,7 +189,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
+            right: 80px;
             bottom: 0;
             padding: 15px 20px;
             color: rgba(255, 255, 255, 0.3);
@@ -204,12 +204,15 @@
         .search-indicator {
             position: absolute;
             top: 50%;
-            right: 15px;
+            right: 20px;
             transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
             pointer-events: none;
-            z-index: 2;
+            z-index: 3;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
 
         .ai-powered {
@@ -1222,14 +1225,17 @@
             
             // Update search indicator
             if (searchSource === 'ai') {
-                searchIndicator.textContent = '🤖 AI Powered';
+                searchIndicator.textContent = '🤖 AI';
                 searchIndicator.className = 'search-indicator ai-powered';
+                searchIndicator.style.display = 'block';
             } else if (searchSource === 'api') {
-                searchIndicator.textContent = '🌐 API Powered';
+                searchIndicator.textContent = '🌐 API';
                 searchIndicator.className = 'search-indicator api-powered';
+                searchIndicator.style.display = 'block';
             } else {
                 searchIndicator.textContent = '📚 Local';
                 searchIndicator.className = 'search-indicator';
+                searchIndicator.style.display = 'block';
             }
             
             return uniqueResults.slice(0, 8); // Limit to 8 suggestions
@@ -1249,7 +1255,7 @@
                 if (value.length === 0) {
                     hideSuggestions();
                     hideGhostText();
-                    searchIndicator.textContent = '';
+                    searchIndicator.style.display = 'none';
                     return;
                 }
 
@@ -1257,6 +1263,7 @@
                 if (value.length >= 3) {
                     suggestionsDiv.innerHTML = '<div class="autocomplete-suggestion">🔍 Searching colleges...</div>';
                     suggestionsDiv.style.display = 'block';
+                    searchIndicator.style.display = 'block';
                 }
 
                 try {
@@ -1269,7 +1276,7 @@
                     } else {
                         hideSuggestions();
                         hideGhostText();
-                        searchIndicator.textContent = '';
+                        searchIndicator.style.display = 'none';
                     }
                 } catch (error) {
                     console.log('Search error:', error);
@@ -1286,7 +1293,7 @@
                     } else {
                         hideSuggestions();
                         hideGhostText();
-                        searchIndicator.textContent = '';
+                        searchIndicator.style.display = 'none';
                     }
                 }
             });
