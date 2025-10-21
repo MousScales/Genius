@@ -135,6 +135,9 @@ function openDocumentEditor(classData, existingDoc = null) {
             removeGhostText();
             triggerAutoSave();
         });
+        content.addEventListener('keydown', () => {
+            removeGhostText();
+        });
         content.addEventListener('keyup', triggerAutoSave);
         content.addEventListener('paste', () => {
             removeGhostText();
@@ -200,7 +203,6 @@ function generatePages(content) {
              spellcheck="true" 
              tabindex="0">
             ${hasContent ? content : ''}
-            ${!hasContent ? '<div class="ghost-text-hint" style="display: block;">Click the ? to switch to edit with Genius to write your essay for you</div>' : ''}
         </div>
     `;
 }
@@ -468,7 +470,12 @@ function setupEditorControls(classData, existingDoc) {
     
     // Initialize placeholder visibility with a small delay to ensure DOM is ready
     setTimeout(() => {
-    updatePlaceholderVisibility();
+        updatePlaceholderVisibility();
+        // Ensure content is properly editable
+        if (content) {
+            content.setAttribute('contenteditable', 'true');
+            content.setAttribute('spellcheck', 'true');
+        }
         // No periodic check needed - event-driven updates are sufficient
     }, 100);
     
@@ -2775,7 +2782,14 @@ function updatePlaceholderVisibility() {
         } else {
             // Always show genius essay writing text when document is empty
             if (!content.querySelector('.ghost-text-hint')) {
-                content.innerHTML = '<div class="ghost-text-hint" style="display: block;">Click the ? to switch to edit with Genius to write your essay for you</div>';
+                // Add ghost text without replacing the entire content
+                const ghostText = document.createElement('div');
+                ghostText.className = 'ghost-text-hint';
+                ghostText.style.display = 'block';
+                ghostText.style.pointerEvents = 'none';
+                ghostText.style.userSelect = 'none';
+                ghostText.textContent = 'Click the ? to switch to edit with Genius to write your essay for you';
+                content.appendChild(ghostText);
             }
         }
 }
