@@ -138,9 +138,6 @@
                         <label for="majorField" class="settings-label">Major/Field of Study</label>
                         <input type="text" id="majorField" placeholder="Enter your major" class="settings-input">
                     </div>
-                    <button id="saveAcademicInfoBtn" class="settings-action-btn">
-                        Save Academic Info
-                    </button>
                 </div>
 
                 <!-- <div class="settings-section">
@@ -159,7 +156,6 @@
             </div>
             <div class="settings-footer">
                 <button id="saveSettingsBtn" class="save-settings-btn">Save Settings</button>
-                <button id="cancelSettingsBtn" class="cancel-settings-btn">Cancel</button>
             </div>
         </div>
     </div>
@@ -463,7 +459,6 @@
 
         // Settings modal event listeners
         document.getElementById('closeSettingsBtn').addEventListener('click', closeSettingsModal);
-        document.getElementById('cancelSettingsBtn').addEventListener('click', closeSettingsModal);
         
         // Close modal when clicking outside
         document.getElementById('settingsModal').addEventListener('click', (e) => {
@@ -491,8 +486,10 @@
             alert('Subscription management is coming soon! Stay tuned for updates.');
         });
 
-        // Save academic information
-        document.getElementById('saveAcademicInfoBtn').addEventListener('click', async () => {
+
+        // Save settings
+        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+            // Get academic information
             const schoolName = document.getElementById('schoolName').value.trim();
             const majorField = document.getElementById('majorField').value.trim();
             
@@ -511,7 +508,7 @@
                 const currentUser = JSON.parse(currentUserData);
                 const db = window.firebase.firestore();
                 
-                // Update Firebase profile
+                // Update Firebase profile with academic info
                 await db.collection('users').doc(currentUser.uid).set({
                     collegeName: schoolName,
                     school: schoolName, // Keep both for compatibility
@@ -527,43 +524,12 @@
 
                 // Update profile display
                 loadProfileInfo();
-
-                alert('Academic information saved successfully!');
-            } catch (error) {
-                console.error('Error saving academic info:', error);
-                alert('Failed to save academic information. Please try again.');
-            }
-        });
-
-        // Save settings
-        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-            // const apiKey = document.getElementById('openaiApiKey').value.trim(); // COMMENTED OUT
-            
-            // if (!apiKey) {
-            //     alert('Please enter your OpenAI API key.');
-            //     return;
-            // }
-
-            try {
-                const currentUserData = localStorage.getItem('currentUser');
-                if (currentUserData) {
-                    const currentUser = JSON.parse(currentUserData);
-                    // currentUser.openaiApiKey = apiKey; // COMMENTED OUT
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    // Also save to Firebase profile
-                    const db = window.firebase.firestore();
-                    await db.collection('users').doc(currentUser.uid).set({
-                        // openaiApiKey: apiKey, // COMMENTED OUT
-                        updatedAt: new Date()
-                    }, { merge: true });
-                    
-                    console.log('Settings saved successfully');
-                    closeSettingsModal();
-                    
-                    // Show success message
-                    alert('Settings saved successfully!');
-                }
+                
+                console.log('Settings saved successfully');
+                closeSettingsModal();
+                
+                // Show success message
+                alert('Settings saved successfully!');
             } catch (error) {
                 console.error('Error saving settings:', error);
                 alert('Error saving settings. Please try again.');
