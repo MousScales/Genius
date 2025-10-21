@@ -8,6 +8,19 @@ function openDocumentEditor(classData, existingDoc = null) {
     window.currentClassData = classData;
     window.currentExistingDoc = existingDoc;
     
+    // Add beforeunload event listener to prevent data loss
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Set up periodic auto-save (every 30 seconds)
+    window.autoSaveInterval = setInterval(() => {
+        if (document.getElementById('documentEditorScreen')) {
+            console.log('Auto-saving document...');
+            saveDocument(classData, existingDoc).catch(error => {
+                console.error('Auto-save error:', error);
+            });
+        }
+    }, 30000); // 30 seconds
+    
     // Hide class view
     const classView = document.getElementById('classViewContainer');
     if (classView) {
@@ -1717,17 +1730,61 @@ async function saveDocument(classData, existingDoc) {
     }
 }
 
-function closeDocumentEditor() {
+// Handle beforeunload event to prevent data loss
+function handleBeforeUnload(event) {
+    // Check if document editor is open
+    const editorScreen = document.getElementById('documentEditorScreen');
+    if (editorScreen) {
+        // Try to save synchronously (this is limited but better than nothing)
+        try {
+            // Trigger a quick save
+            if (typeof window.autoSaveDocument === 'function') {
+                window.autoSaveDocument(window.currentClassData, window.currentExistingDoc);
+            }
+        } catch (error) {
+            console.error('Error in beforeunload save:', error);
+        }
+        
+        // Show warning to user
+        event.preventDefault();
+        event.returnValue = 'You have unsaved changes in your document. Are you sure you want to leave?';
+        return 'You have unsaved changes in your document. Are you sure you want to leave?';
+    }
+}
+
+async function closeDocumentEditor() {
     console.log('closeDocumentEditor called');
     const editorScreen = document.getElementById('documentEditorScreen');
     console.log('Editor screen found:', editorScreen);
+    
     if (editorScreen) {
+        try {
+            // Auto-save document before closing to prevent data loss
+            console.log('Auto-saving document before closing...');
+            await saveDocument(window.currentClassData, window.currentExistingDoc);
+            console.log('Document auto-saved successfully');
+        } catch (error) {
+            console.error('Error auto-saving document:', error);
+            // Show user-friendly error message
+            alert('Warning: Could not save your document automatically. Your changes may be lost. Please try saving manually before closing.');
+        }
+        
         // Save any pending suggestions before closing
         if (typeof window.saveCurrentSuggestions === 'function') {
-        window.saveCurrentSuggestions();
+            window.saveCurrentSuggestions();
         }
+        
         editorScreen.remove();
         console.log('Editor screen removed');
+    }
+    
+    // Remove beforeunload event listener
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    
+    // Clear auto-save interval
+    if (window.autoSaveInterval) {
+        clearInterval(window.autoSaveInterval);
+        window.autoSaveInterval = null;
     }
     
     // Show class view again
