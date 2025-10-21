@@ -904,7 +904,7 @@ body {
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    display: flex;
+    display: none; /* Hidden by default until loaded */
     align-items: center;
     gap: 8px;
 }
@@ -1311,7 +1311,7 @@ body {
     letter-spacing: 0.5px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 50;
-    display: flex;
+    display: none; /* Hidden by default until loaded */
     align-items: center;
     gap: 8px;
 }

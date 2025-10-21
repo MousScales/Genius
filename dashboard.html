@@ -506,16 +506,16 @@
                 }
 
                 const currentUser = JSON.parse(currentUserData);
-                const db = window.firebase.firestore();
+                    const db = window.firebase.firestore();
                 
                 // Update Firebase profile with academic info
-                await db.collection('users').doc(currentUser.uid).set({
+                    await db.collection('users').doc(currentUser.uid).set({
                     collegeName: schoolName,
                     school: schoolName, // Keep both for compatibility
                     major: majorField,
-                    updatedAt: new Date()
-                }, { merge: true });
-
+                        updatedAt: new Date()
+                    }, { merge: true });
+                    
                 // Update localStorage
                 currentUser.collegeName = schoolName;
                 currentUser.school = schoolName; // Keep both for compatibility
@@ -526,15 +526,30 @@
                 loadProfileInfo();
                 
                 console.log('Settings saved successfully');
-                closeSettingsModal();
-                
-                // Show success message
+                    closeSettingsModal();
+                    
+                    // Show success message
                 alert('Settings saved successfully!');
             } catch (error) {
                 console.error('Error saving settings:', error);
                 alert('Error saving settings. Please try again.');
             }
         });
+
+        // Show header buttons after loading is complete
+        function showHeaderButtons() {
+            const addClassBtn = document.getElementById('addClassBtn');
+            const profileBtn = document.getElementById('profileBtn');
+            
+            if (addClassBtn) {
+                addClassBtn.style.display = 'flex';
+            }
+            if (profileBtn) {
+                profileBtn.style.display = 'flex';
+            }
+            
+            console.log('Header buttons shown after loading complete');
+        }
 
         // Load and display classes
         async function loadClasses() {
@@ -548,11 +563,13 @@
             const classesGrid = document.getElementById('classesGrid');
             const emptyState = document.getElementById('emptyState');
             const addClassBtn = document.getElementById('addClassBtn');
+            const profileBtn = document.getElementById('profileBtn');
             
             loadingState.style.display = 'flex';
             classesGrid.style.display = 'none';
             emptyState.style.display = 'none';
             addClassBtn.style.display = 'none';
+            if (profileBtn) profileBtn.style.display = 'none';
 
             // Wait for class modules to be loaded
             if (typeof window.showClassView !== 'function') {
@@ -592,6 +609,9 @@
             
             // Hide loading state and show appropriate content
             loadingState.style.display = 'none';
+            
+            // Show buttons after loading is complete
+            showHeaderButtons();
             
             if (classes.length === 0) {
                 emptyState.style.display = 'flex';
