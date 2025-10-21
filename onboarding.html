@@ -127,7 +127,7 @@
         input[type="text"],
         select {
             width: 100%;
-            padding: 15px 80px 15px 20px;
+            padding: 15px 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             font-size: 16px;
@@ -189,7 +189,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 80px;
+            right: 0;
             bottom: 0;
             padding: 15px 20px;
             color: rgba(255, 255, 255, 0.3);
@@ -201,27 +201,6 @@
             z-index: 1;
         }
 
-        .search-indicator {
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 10px;
-            pointer-events: none;
-            z-index: 3;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .ai-powered {
-            color: #4a9eff;
-        }
-
-        .api-powered {
-            color: #00d4aa;
-        }
 
         select option {
             background: #1a1a1a;
@@ -376,7 +355,6 @@
                     <div class="autocomplete-container">
                         <input type="text" id="collegeName" required>
                         <div class="ghost-text" id="ghostText"></div>
-                        <div class="search-indicator" id="searchIndicator"></div>
                         <div class="autocomplete-suggestions" id="suggestions"></div>
                     </div>
                 </div>
@@ -1180,8 +1158,6 @@
 
         // Enhanced college search combining local, API, and AI results
         async function searchColleges(query) {
-            const searchIndicator = document.getElementById('searchIndicator');
-            
             // Show local results first for immediate feedback
             const localResults = universities.filter(uni => 
                 uni.toLowerCase().includes(query.toLowerCase())
@@ -1189,17 +1165,11 @@
 
             let apiResults = [];
             let aiResults = [];
-            let searchSource = 'local';
 
             // Try AI search first if available
             if (isApiEnabled && query.length >= 3) {
                 try {
-                    searchIndicator.textContent = '🤖 AI';
-                    searchIndicator.className = 'search-indicator ai-powered';
                     aiResults = await searchCollegesWithAI(query);
-                    if (aiResults.length > 0) {
-                        searchSource = 'ai';
-                    }
                 } catch (error) {
                     console.log('AI search error:', error);
                 }
@@ -1208,12 +1178,7 @@
             // Try API search as fallback
             if (aiResults.length === 0 && query.length >= 3) {
                 try {
-                    searchIndicator.textContent = '🌐 API';
-                    searchIndicator.className = 'search-indicator api-powered';
                     apiResults = await searchCollegesWithAPI(query);
-                    if (apiResults.length > 0) {
-                        searchSource = 'api';
-                    }
                 } catch (error) {
                     console.log('API search error:', error);
                 }
@@ -1222,21 +1187,6 @@
             // Combine and deduplicate results
             const allResults = [...localResults, ...aiResults, ...apiResults];
             const uniqueResults = [...new Set(allResults)];
-            
-            // Update search indicator
-            if (searchSource === 'ai') {
-                searchIndicator.textContent = '🤖 AI';
-                searchIndicator.className = 'search-indicator ai-powered';
-                searchIndicator.style.display = 'block';
-            } else if (searchSource === 'api') {
-                searchIndicator.textContent = '🌐 API';
-                searchIndicator.className = 'search-indicator api-powered';
-                searchIndicator.style.display = 'block';
-            } else {
-                searchIndicator.textContent = '📚 Local';
-                searchIndicator.className = 'search-indicator';
-                searchIndicator.style.display = 'block';
-            }
             
             return uniqueResults.slice(0, 8); // Limit to 8 suggestions
         }
@@ -1250,12 +1200,10 @@
 
             collegeInput.addEventListener('input', async function(e) {
                 const value = e.target.value.toLowerCase();
-                const searchIndicator = document.getElementById('searchIndicator');
                 
                 if (value.length === 0) {
                     hideSuggestions();
                     hideGhostText();
-                    searchIndicator.style.display = 'none';
                     return;
                 }
 
@@ -1263,7 +1211,6 @@
                 if (value.length >= 3) {
                     suggestionsDiv.innerHTML = '<div class="autocomplete-suggestion">🔍 Searching colleges...</div>';
                     suggestionsDiv.style.display = 'block';
-                    searchIndicator.style.display = 'block';
                 }
 
                 try {
@@ -1276,7 +1223,6 @@
                     } else {
                         hideSuggestions();
                         hideGhostText();
-                        searchIndicator.style.display = 'none';
                     }
                 } catch (error) {
                     console.log('Search error:', error);
@@ -1288,12 +1234,9 @@
                     if (currentSuggestions.length > 0) {
                         showSuggestions();
                         updateGhostText(value, currentSuggestions[0]);
-                        searchIndicator.textContent = '📚 Local';
-                        searchIndicator.className = 'search-indicator';
                     } else {
                         hideSuggestions();
                         hideGhostText();
-                        searchIndicator.style.display = 'none';
                     }
                 }
             });
