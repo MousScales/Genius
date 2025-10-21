@@ -407,7 +407,7 @@
         async function checkOnboardingStatus(user) {
             try {
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists()) {
+                if (userDoc.exists) {
                     console.log('User has already completed onboarding, redirecting to dashboard');
                     window.location.href = 'dashboard.html';
                     return true;
@@ -594,7 +594,10 @@
                     }
                 } else {
                     console.log('No user authenticated, redirecting to login');
-                    window.location.href = 'login.html';
+                    // Only redirect if we're not already on the login page
+                    if (!window.location.pathname.includes('login.html')) {
+                        window.location.href = 'login.html';
+                    }
                 }
             });
         });

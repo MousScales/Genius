@@ -444,7 +444,7 @@
                 const db = window.firebase.firestore();
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 
-                if (userDoc.exists()) {
+                if (userDoc.exists) {
                     const userData = userDoc.data();
                     document.getElementById('schoolName').value = userData.school || '';
                     document.getElementById('majorField').value = userData.major || '';
