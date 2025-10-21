@@ -188,8 +188,6 @@
         .ghost-text {
             position: absolute;
             top: 0;
-            left: 0;
-            right: 0;
             bottom: 0;
             padding: 15px 20px;
             color: rgba(255, 255, 255, 0.3);
@@ -199,6 +197,7 @@
             border-radius: 8px;
             background: transparent;
             z-index: 1;
+            display: none;
         }
 
 
@@ -1324,12 +1323,32 @@
 
         function updateGhostText(inputValue, suggestion) {
             const ghostTextDiv = document.getElementById('ghostText');
-            if (!ghostTextDiv) return;
+            const collegeInput = document.getElementById('collegeName');
+            if (!ghostTextDiv || !collegeInput) return;
 
             if (suggestion && suggestion.toLowerCase().startsWith(inputValue.toLowerCase())) {
                 const remaining = suggestion.substring(inputValue.length);
                 ghostTextDiv.textContent = remaining;
                 ghostTextDiv.style.display = 'block';
+                
+                // Position ghost text to start where user's text ends
+                // Create a temporary span to measure the width of the user's text
+                const tempSpan = document.createElement('span');
+                tempSpan.style.visibility = 'hidden';
+                tempSpan.style.position = 'absolute';
+                tempSpan.style.fontSize = getComputedStyle(collegeInput).fontSize;
+                tempSpan.style.fontFamily = getComputedStyle(collegeInput).fontFamily;
+                tempSpan.style.fontWeight = getComputedStyle(collegeInput).fontWeight;
+                tempSpan.style.letterSpacing = getComputedStyle(collegeInput).letterSpacing;
+                tempSpan.textContent = inputValue;
+                document.body.appendChild(tempSpan);
+                
+                const textWidth = tempSpan.offsetWidth;
+                document.body.removeChild(tempSpan);
+                
+                // Position ghost text to start after the user's text
+                ghostTextDiv.style.left = (20 + textWidth) + 'px';
+                ghostTextDiv.style.right = '20px';
             } else {
                 hideGhostText();
             }
