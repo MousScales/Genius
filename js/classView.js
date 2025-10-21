@@ -1976,13 +1976,37 @@ window.toggleFolderExpansion = async function(folderId, classData) {
             folder.isExpanded = !folder.isExpanded;
             await saveFolders(classData, folders);
             
-            // Reload documents to update UI
-            const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-            const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
-            loadDocuments(classData, currentViewMode);
+            // Update UI directly without reloading
+            updateFolderUI(folderId, folder.isExpanded);
         }
     } catch (error) {
         console.error('Error toggling folder expansion:', error);
+    }
+}
+
+// Function to update folder UI without reloading
+function updateFolderUI(folderId, isExpanded) {
+    // Find the folder element
+    const folderElement = document.querySelector(`[data-folder-id="${folderId}"]`);
+    if (!folderElement) return;
+    
+    // Find the folder documents container
+    const folderDocuments = folderElement.querySelector('.folder-documents');
+    if (!folderDocuments) return;
+    
+    // Toggle classes for smooth CSS transitions
+    if (isExpanded) {
+        folderDocuments.classList.remove('collapsed');
+        folderDocuments.classList.add('expanded');
+    } else {
+        folderDocuments.classList.remove('expanded');
+        folderDocuments.classList.add('collapsed');
+    }
+    
+    // Update the expand/collapse icon
+    const expandIcon = folderElement.querySelector('.folder-expand-icon');
+    if (expandIcon) {
+        expandIcon.textContent = isExpanded ? '▼' : '▶';
     }
 }
 
