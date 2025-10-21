@@ -138,15 +138,24 @@ function openDocumentEditor(classData, existingDoc = null) {
         content.addEventListener('keydown', () => {
             removeGhostText();
         });
-        content.addEventListener('keyup', triggerAutoSave);
+        content.addEventListener('keyup', () => {
+            removeGhostText();
+            triggerAutoSave();
+        });
         content.addEventListener('paste', () => {
             removeGhostText();
             setTimeout(triggerAutoSave, 100); // Small delay for paste content to be processed
+        });
+        content.addEventListener('keypress', () => {
+            removeGhostText();
         });
         
         // Ensure content can be focused and selected
         content.addEventListener('click', () => {
             content.focus();
+        });
+        content.addEventListener('focus', () => {
+            removeGhostText();
         });
         
         // Enable text selection on mouse events
@@ -2752,6 +2761,19 @@ function removeGhostText() {
     const ghostText = content.querySelector('.ghost-text-hint');
     if (ghostText) {
         ghostText.remove();
+        console.log('Ghost text removed');
+    }
+    
+    // Also check if there's any actual text content and remove ghost text if so
+    const textContent = content.textContent || content.innerText || '';
+    const hasRealContent = textContent.trim().length > 0 && !textContent.includes('Click the ? to switch to edit with Genius');
+    
+    if (hasRealContent) {
+        const remainingGhostText = content.querySelector('.ghost-text-hint');
+        if (remainingGhostText) {
+            remainingGhostText.remove();
+            console.log('Ghost text removed due to content detection');
+        }
     }
 }
 
