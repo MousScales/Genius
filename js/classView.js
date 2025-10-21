@@ -2937,17 +2937,54 @@ async function showFolderSelectionDialog(classData, format) {
     });
 }
 
+function calculateOptimalFlashcardCount(documents) {
+    if (!documents || documents.length === 0) {
+        return 15; // Default for no documents
+    }
+    
+    let totalContentLength = 0;
+    let documentCount = documents.length;
+    
+    // Calculate total content length
+    documents.forEach(doc => {
+        if (doc.content) {
+            // Remove HTML tags and count words
+            const textContent = doc.content.replace(/<[^>]*>/g, ' ').trim();
+            totalContentLength += textContent.length;
+        }
+    });
+    
+    // Base calculation: 1 flashcard per 200-300 characters of content
+    let baseCount = Math.floor(totalContentLength / 250);
+    
+    // Adjust based on number of documents
+    if (documentCount === 1) {
+        // Single document: 15-25 flashcards
+        baseCount = Math.max(15, Math.min(25, baseCount));
+    } else if (documentCount <= 3) {
+        // 2-3 documents: 20-35 flashcards
+        baseCount = Math.max(20, Math.min(35, baseCount));
+    } else if (documentCount <= 5) {
+        // 4-5 documents: 25-45 flashcards
+        baseCount = Math.max(25, Math.min(45, baseCount));
+    } else {
+        // 6+ documents: 30-50 flashcards
+        baseCount = Math.max(30, Math.min(50, baseCount));
+    }
+    
+    // Ensure minimum and maximum bounds
+    return Math.max(15, Math.min(50, baseCount));
+}
+
 async function showStudyGuideNamingDialog(classData, format, folderId) {
     const isFlashcard = format === 'flashcards';
     
-    // For flashcards, show study scale prompt first
+    // For flashcards, automatically determine optimal count based on document content
     let flashcardCount = null;
     if (isFlashcard) {
         try {
-            const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-            const flashcardService = new CSharpFlashcardService();
-            
-            // Get documents to show count in prompt
+            // Get documents to determine appropriate count
+            const { documentService } = await getFirebaseServices();
             const documents = await documentService.getDocuments(classData.userId, classData.id);
             let sourceDocuments = [];
             if (folderId === 'all') {
@@ -2956,17 +2993,13 @@ async function showStudyGuideNamingDialog(classData, format, folderId) {
                 sourceDocuments = documents.filter(doc => doc.folderId === folderId);
             }
             
-            flashcardCount = await flashcardService.showStudyScalePrompt(
-                folderId === 'all' ? 'All Documents' : `Folder with ${sourceDocuments.length} documents`
-            );
-            
-            if (flashcardCount === null) {
-                return; // User cancelled
-            }
+            // Calculate optimal flashcard count based on document content
+            flashcardCount = calculateOptimalFlashcardCount(sourceDocuments);
+            console.log(`📊 Calculated optimal flashcard count: ${flashcardCount} for ${sourceDocuments.length} documents`);
         } catch (error) {
-            console.error('Error showing study scale prompt:', error);
-            alert('Error showing study options. Please try again.');
-            return;
+            console.error('Error calculating flashcard count:', error);
+            // Fallback to default count
+            flashcardCount = 30;
         }
     }
     
@@ -3068,9 +3101,9 @@ async function createStudyGuide(classData, format, folderId, customName = null, 
         return;
     }
     
-    // Use default flashcard count if not provided
+    // Flashcard count should already be calculated automatically
     if (format === 'flashcards' && !flashcardCount) {
-        flashcardCount = 25; // Default to light study
+        flashcardCount = 30; // Fallback if calculation failed
     }
     
     // Show brain icon thinking effect
@@ -3141,7 +3174,7 @@ async function createBasicStudyGuide(classData, sourceDocuments, customName = nu
     }
 }
 
-async function createFlashcardSet(classData, sourceDocuments, customName = null, flashcardCount = 25) {
+async function createFlashcardSet(classData, sourceDocuments, customName = null, flashcardCount = null) {
     try {
         // Generate AI-powered flashcard content
         const flashcards = await generateFlashcardContent(sourceDocuments, flashcardCount);
@@ -3549,8 +3582,14 @@ function base64ToFile(base64Data, filename, mimeType) {
     return new File([bytes], filename, { type: mimeType });
 }
 
-async function generateFlashcardContent(documents, flashcardCount = 25) {
+async function generateFlashcardContent(documents, flashcardCount = null) {
     try {
+        // Calculate optimal flashcard count if not provided
+        if (!flashcardCount) {
+            flashcardCount = calculateOptimalFlashcardCount(documents);
+            console.log(`📊 Auto-calculated flashcard count: ${flashcardCount} for ${documents.length} documents`);
+        }
+        
         // Import the C# flashcard service directly
         const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
         const flashcardService = new CSharpFlashcardService();
