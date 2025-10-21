@@ -2117,6 +2117,21 @@ function showFlashcardExplanationDialog(classData) {
         document.body.removeChild(modal);
         await createFlashcardsFromExplanation(classData, explanation);
     });
+    
+    // Enter key handler for textarea
+    document.getElementById('flashcardExplanation').addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const explanation = document.getElementById('flashcardExplanation').value.trim();
+            if (!explanation) {
+                alert('Please describe what flashcards you want to create.');
+                return;
+            }
+            
+            document.body.removeChild(modal);
+            await createFlashcardsFromExplanation(classData, explanation);
+        }
+    });
 }
 
 async function createFlashcardsFromExplanation(classData, explanation) {
