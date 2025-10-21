@@ -351,10 +351,7 @@ function createEditorScreen(classData, existingDoc) {
             
             <div class="toolbar-divider"></div>
             
-            <div class="toolbar-group toolbar-vertical-stack">
-                <button class="toolbar-btn toolbar-text-btn" id="findReplaceBtn" title="Find and Replace (Ctrl+H)" tabindex="-1">
-                    Find and Replace
-                </button>
+            <div class="toolbar-group">
                 <button class="toolbar-btn toolbar-text-btn" id="removeSuggestionsBtn" title="Remove All Suggestions" tabindex="-1">
                     Remove Suggestions
                 </button>
@@ -1452,15 +1449,7 @@ function setupToolbarButtons() {
     // Clear Formatting button
     // Clear formatting and spell check buttons removed
     
-    // Find and Replace button
-    const findReplaceBtn = document.getElementById('findReplaceBtn');
-    if (findReplaceBtn) {
-        findReplaceBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showFindReplaceDialog();
-        });
-    }
+    // Find and Replace button removed
     
     // Remove all suggestions button
     const removeSuggestionsBtn = document.getElementById('removeSuggestionsBtn');
@@ -6661,26 +6650,12 @@ function toggleSpellCheck() {
     }
 }
 
-// Find and Replace Functionality
-let findReplaceDialog = null;
-let currentFindIndex = 0;
-let findResults = [];
-
-function showFindDialog() {
-    const findText = prompt('Find:', '');
-    if (findText) {
-        findTextInDocument(findText);
-    }
-}
-
+// Find and Replace functionality removed
 function showFindReplaceDialog() {
-    // Remove existing dialog
-    if (findReplaceDialog) {
-        findReplaceDialog.remove();
-    }
-    
-    // Create dialog
-    findReplaceDialog = document.createElement('div');
+    // Function removed - no longer available
+    return;
+}
+// All find and replace code removed
     findReplaceDialog.className = 'find-replace-dialog';
     findReplaceDialog.style.cssText = `
         position: fixed;
@@ -6987,9 +6962,7 @@ window.initializeSpellCheck = initializeSpellCheck;
 window.toggleSpellCheck = toggleSpellCheck;
 window.clearSpellCheckMarkers = clearSpellCheckMarkers;
 
-// Make find and replace functions globally available
-window.showFindDialog = showFindDialog;
-window.showFindReplaceDialog = showFindReplaceDialog;
+// Find and replace functions removed
 
 // Make main functions globally available
 window.openDocumentEditor = openDocumentEditor;
