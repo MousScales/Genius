@@ -3312,21 +3312,23 @@ body {
 .genius-chat-input-wrapper {
     position: relative;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
     padding: 12px 20px;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 80%;
+    width: 60px;
     overflow: hidden;
     max-width: 600px;
+    cursor: pointer;
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    cursor: default;
 }
 
 .file-attachments {
@@ -3485,6 +3487,15 @@ body {
     min-height: 24px;
     max-height: 200px;
     min-width: 0;
+    width: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.genius-chat-input-wrapper.expanded .genius-chat-input {
+    pointer-events: auto;
+    opacity: 1;
 }
 
 .genius-chat-input::placeholder {
@@ -6049,12 +6060,14 @@ select.toolbar-select option {
     padding: 8px 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 80%;
+    width: 60px;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
+    cursor: default;
 }
 
 .genius-chat-container.focused .genius-chat-input-wrapper {
@@ -6087,6 +6100,15 @@ select.toolbar-select option {
     outline: none;
     flex: 1;
     min-width: 0;
+    width: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.genius-chat-input-wrapper.expanded .genius-chat-input {
+    pointer-events: auto;
+    opacity: 1;
 }
 
 .genius-chat-input::placeholder {
@@ -11347,12 +11369,14 @@ img {
     border-radius: 50px;
     padding: 12px;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 80%;
+    width: 60px;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
+    cursor: default;
 }
 
 .genius-chat-input-wrapper:focus-within {
@@ -11372,6 +11396,15 @@ img {
     min-height: 20px;
     max-height: 120px;
     font-family: inherit;
+    width: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.genius-chat-input-wrapper.expanded .genius-chat-input {
+    pointer-events: auto;
+    opacity: 1;
 }
 
 .genius-chat-input::placeholder {

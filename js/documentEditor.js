@@ -2880,6 +2880,25 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         console.log('Input wrapper initialized in collapsed state');
     }
     
+    // Add click handler to wrapper to expand it
+    if (inputWrapper) {
+        inputWrapper.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!inputWrapper.classList.contains('expanded')) {
+                inputWrapper.classList.add('expanded');
+                console.log('Input wrapper expanded');
+                // Focus the input after a short delay to allow animation
+                setTimeout(() => {
+                    if (chatInput) {
+                        chatInput.focus();
+                        console.log('Input focused after expansion');
+                    }
+                }, 100);
+            }
+        });
+    }
+    
     const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
     
     // Mode state: 'help' or 'edit'
@@ -2915,10 +2934,10 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     chatInput.addEventListener('focus', () => {
         chatContainer.classList.add('focused');
         console.log('Genius input focused');
-        // Expand input wrapper when focused
-        if (inputWrapper) {
-            console.log('Adding expanded class to input wrapper');
+        // Ensure input wrapper is expanded when focused
+        if (inputWrapper && !inputWrapper.classList.contains('expanded')) {
             inputWrapper.classList.add('expanded');
+            console.log('Input wrapper expanded on focus');
         }
     });
     
