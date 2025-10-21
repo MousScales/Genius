@@ -913,26 +913,98 @@ function downloadDocument(doc) {
 }
 
 function shareDocument(doc) {
-    // Create a shareable link (in a real app, this would generate a public link)
-    const shareText = `Check out my document: ${doc.title}`;
-    
-    // Try to use the Web Share API if available
-    if (navigator.share) {
-        navigator.share({
-            title: doc.title,
-            text: shareText
-        }).catch(err => console.log('Share cancelled'));
-    } else {
-        // Fallback: copy to clipboard
-        const tempInput = document.createElement('input');
-        tempInput.value = shareText;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
+    // Generate PDF and share it
+    generateAndSharePDF(doc);
+}
+
+function generateAndSharePDF(doc) {
+    try {
+        // Create a temporary container for PDF generation
+        const printContainer = document.createElement('div');
+        printContainer.style.cssText = `
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 8.5in;
+            background: white;
+            color: black;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        `;
         
-        alert('Share link copied to clipboard!');
+        // Add title
+        const titleEl = document.createElement('h1');
+        titleEl.textContent = doc.title;
+        titleEl.style.cssText = 'color: black; margin-bottom: 20px; font-size: 24px; text-align: center;';
+        printContainer.appendChild(titleEl);
+        
+        // Add content
+        const contentEl = document.createElement('div');
+        contentEl.innerHTML = doc.content;
+        contentEl.style.cssText = `
+            color: black;
+            background: white;
+            padding: 1in;
+            min-height: 9.5in;
+            page-break-after: auto;
+            line-height: 1.6;
+        `;
+        printContainer.appendChild(contentEl);
+        
+        document.body.appendChild(printContainer);
+        
+        // Use browser's print dialog with the container
+        const originalContents = document.body.innerHTML;
+        const originalTitle = document.title;
+        document.body.innerHTML = printContainer.innerHTML;
+        document.title = doc.title; // Set the filename
+        
+        // Try to use the Web Share API with PDF
+        if (navigator.share) {
+            // For now, we'll use the print dialog and then try to share
+            window.print();
+            
+            // After printing, try to share
+            setTimeout(() => {
+                navigator.share({
+                    title: doc.title,
+                    text: `Check out my document: ${doc.title}`,
+                    files: [] // Note: Web Share API doesn't support PDF files directly in all browsers
+                }).catch(err => {
+                    console.log('Share cancelled or not supported');
+                    // Fallback to clipboard
+                    copyToClipboard(`Check out my document: ${doc.title}`);
+                });
+            }, 1000);
+        } else {
+            // Fallback: show print dialog and copy text to clipboard
+            window.print();
+            setTimeout(() => {
+                copyToClipboard(`Check out my document: ${doc.title}`);
+            }, 1000);
+        }
+        
+        // Restore original content
+        setTimeout(() => {
+            document.body.innerHTML = originalContents;
+            document.title = originalTitle;
+            document.body.removeChild(printContainer);
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
     }
+}
+
+function copyToClipboard(text) {
+    const tempInput = document.createElement('input');
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    
+    alert('Document PDF is ready to print! Share text copied to clipboard.');
 }
 
 async function deleteDocument(classData, docId) {
