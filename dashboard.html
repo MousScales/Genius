@@ -585,7 +585,7 @@
             
             let classes = [];
             
-            // Try to load from Firebase first
+            // Load classes from Firebase
             try {
                 const db = window.firebase.firestore();
                 const classesRef = db.collection('users').doc(currentUser.uid).collection('classes');
@@ -598,46 +598,10 @@
                     });
                 });
                 console.log('Loaded classes from Firebase:', classes);
-                
-                // If no classes in Firebase, try to migrate from localStorage
-                if (classes.length === 0) {
-                    const localClasses = JSON.parse(localStorage.getItem(`classes_${currentUser.uid}`) || '[]');
-                    // Also check old format
-                    const oldLocalClasses = JSON.parse(localStorage.getItem('classes') || '[]');
-                    const classesToMigrate = localClasses.length > 0 ? localClasses : oldLocalClasses;
-                    
-                    if (classesToMigrate.length > 0) {
-                        console.log('Migrating classes to Firebase...');
-                        for (const classData of classesToMigrate) {
-                            try {
-                                await db.collection('users').doc(currentUser.uid).collection('classes').add({
-                                    ...classData,
-                                    createdAt: new Date(),
-                                    updatedAt: new Date()
-                                });
-                            } catch (err) {
-                                console.log('Error migrating class:', err);
-                            }
-                        }
-                        // Reload from Firebase after migration
-                        const newQuerySnapshot = await classesRef.orderBy('createdAt', 'desc').get();
-                        classes = [];
-                        newQuerySnapshot.forEach((doc) => {
-                            classes.push({
-                                id: doc.id,
-                                ...doc.data()
-                            });
-                        });
-                        console.log('Classes migrated successfully!');
-                    }
-                }
-                
-                // Update localStorage cache with user-specific key
-                localStorage.setItem(`classes_${currentUser.uid}`, JSON.stringify(classes));
             } catch (error) {
-                console.log('Loading from localStorage fallback:', error);
-                // Fall back to localStorage (user-specific first, then old format)
-                classes = JSON.parse(localStorage.getItem(`classes_${currentUser.uid}`) || localStorage.getItem('classes') || '[]');
+                console.error('Error loading classes from Firebase:', error);
+                alert('Error loading classes. Please refresh the page and try again.');
+                classes = [];
             }
             
             const classesGrid = document.getElementById('classesGrid');
@@ -2623,60 +2587,317 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
         }
 
         function showEditClassModal(classData, classIndex) {
-            // Create modal
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content edit-class-modal">
-                    <div class="modal-header">
-                        <h2>Edit Class</h2>
-                        <button class="close-modal-btn" onclick="closeEditClassModal()">✕</button>
+            // Show class creation form with preloaded data
+            showEditClassForm(classData, classIndex);
+        }
+
+        function showEditClassForm(classData, classIndex) {
+            // Store the class data and index for editing
+            window.editingClassData = classData;
+            window.editingClassIndex = classIndex;
+            
+            // Create the class form with preloaded data
+            const formContainer = document.createElement('div');
+            formContainer.className = 'class-form-container';
+            formContainer.innerHTML = `
+                <div class="form-column">
+                    <div class="form-header-custom">
+                        <button type="button" class="back-btn-custom" id="backBtnCustom">
+                            <span class="back-icon">←</span> <span class="back-text">Back</span>
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <form id="editClassForm">
+                    <div class="form-section">
+                        <h2>Edit Class Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="classImage">Class Image</label>
+                            <div class="image-upload-area" onclick="document.getElementById('classImage').click()">
+                                <input type="file" id="classImage" accept="image/*" style="display: none;">
+                                <div class="image-preview" id="imagePreview">
+                                    ${classData.imageUrl ? 
+                                        `<img src="${classData.imageUrl}" alt="Class Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` :
+                                        `<span>📷</span><p>Click to upload image</p>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="className">Class Name *</label>
+                            <input type="text" id="className" placeholder="Enter class name" value="${classData.name || ''}" required>
+                        </div>
+                        
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="editClassName">Class Name</label>
-                                <input type="text" id="editClassName" value="${classData.name}" required>
+                                <label for="classInstructor">Instructor</label>
+                                <input type="text" id="classInstructor" placeholder="Instructor name" value="${classData.instructor || ''}">
                             </div>
                             <div class="form-group">
-                                <label for="editClassInstructor">Instructor</label>
-                                <input type="text" id="editClassInstructor" value="${classData.instructor || ''}">
+                                <label for="classLevel">Level *</label>
+                                <select id="classLevel" required>
+                                    <option value="">Select level</option>
+                                    <option value="Regular" ${classData.level === 'Regular' ? 'selected' : ''}>Regular</option>
+                                    <option value="College Prep" ${classData.level === 'College Prep' ? 'selected' : ''}>College Prep</option>
+                                    <option value="Honors" ${classData.level === 'Honors' ? 'selected' : ''}>Honors</option>
+                                    <option value="AP" ${classData.level === 'AP' ? 'selected' : ''}>AP</option>
+                                    <option value="IB" ${classData.level === 'IB' ? 'selected' : ''}>IB</option>
+                                    <option value="Advanced" ${classData.level === 'Advanced' ? 'selected' : ''}>Advanced</option>
+                                    <option value="Graduate" ${classData.level === 'Graduate' ? 'selected' : ''}>Graduate</option>
+                                </select>
                             </div>
+                        </div>
+                        
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="editClassTerm">Term</label>
-                                <select id="editClassTerm">
+                                <label for="classTerm">Term *</label>
+                                <select id="classTerm" required>
+                                    <option value="">Select term</option>
                                     <option value="Fall" ${classData.term === 'Fall' ? 'selected' : ''}>Fall</option>
                                     <option value="Spring" ${classData.term === 'Spring' ? 'selected' : ''}>Spring</option>
+                                    <option value="Winter" ${classData.term === 'Winter' ? 'selected' : ''}>Winter</option>
                                     <option value="Summer" ${classData.term === 'Summer' ? 'selected' : ''}>Summer</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="editClassYear">Year</label>
-                                <input type="number" id="editClassYear" value="${classData.year || new Date().getFullYear()}" min="2020" max="2030">
+                                <label for="classYear">Year *</label>
+                                <input type="number" id="classYear" placeholder="2025" min="2024" max="2030" value="${classData.year || new Date().getFullYear()}" required>
                             </div>
-                            <div class="form-group">
-                                <label for="editClassLevel">Level</label>
-                                <select id="editClassLevel">
-                                    <option value="Undergraduate" ${classData.level === 'Undergraduate' ? 'selected' : ''}>Undergraduate</option>
-                                    <option value="Graduate" ${classData.level === 'Graduate' ? 'selected' : ''}>Graduate</option>
-                                </select>
-                            </div>
-                        </form>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="classRoom">Room/Location</label>
+                            <input type="text" id="classRoom" placeholder="e.g., Room 101, Online" value="${classData.room || ''}">
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button class="modal-btn secondary" onclick="closeEditClassModal()">Cancel</button>
-                        <button class="modal-btn primary" onclick="saveEditedClass(${classIndex})">Save Changes</button>
+                    
+                    <div class="form-section">
+                        <h2>Schedule</h2>
+                        <p>Select the days and times for this class</p>
+                        
+                        <div class="days-container">
+                            <div class="day-item" data-day="Monday">
+                                <input type="checkbox" id="monday" class="day-checkbox" value="Monday" ${classData.schedule && classData.schedule.Monday ? 'checked' : ''}>
+                                <label for="monday" class="day-label">Monday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Monday ? classData.schedule.Monday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Monday ? classData.schedule.Monday.end : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="day-item" data-day="Tuesday">
+                                <input type="checkbox" id="tuesday" class="day-checkbox" value="Tuesday" ${classData.schedule && classData.schedule.Tuesday ? 'checked' : ''}>
+                                <label for="tuesday" class="day-label">Tuesday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Tuesday ? classData.schedule.Tuesday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Tuesday ? classData.schedule.Tuesday.end : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="day-item" data-day="Wednesday">
+                                <input type="checkbox" id="wednesday" class="day-checkbox" value="Wednesday" ${classData.schedule && classData.schedule.Wednesday ? 'checked' : ''}>
+                                <label for="wednesday" class="day-label">Wednesday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Wednesday ? classData.schedule.Wednesday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Wednesday ? classData.schedule.Wednesday.end : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="day-item" data-day="Thursday">
+                                <input type="checkbox" id="thursday" class="day-checkbox" value="Thursday" ${classData.schedule && classData.schedule.Thursday ? 'checked' : ''}>
+                                <label for="thursday" class="day-label">Thursday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Thursday ? classData.schedule.Thursday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Thursday ? classData.schedule.Thursday.end : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="day-item" data-day="Friday">
+                                <input type="checkbox" id="friday" class="day-checkbox" value="Friday" ${classData.schedule && classData.schedule.Friday ? 'checked' : ''}>
+                                <label for="friday" class="day-label">Friday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Friday ? classData.schedule.Friday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Friday ? classData.schedule.Friday.end : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="day-item" data-day="Saturday">
+                                <input type="checkbox" id="saturday" class="day-checkbox" value="Saturday" ${classData.schedule && classData.schedule.Saturday ? 'checked' : ''}>
+                                <label for="saturday" class="day-label">Saturday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Saturday ? classData.schedule.Saturday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Saturday ? classData.schedule.Saturday.end : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="day-item" data-day="Sunday">
+                                <input type="checkbox" id="sunday" class="day-checkbox" value="Sunday" ${classData.schedule && classData.schedule.Sunday ? 'checked' : ''}>
+                                <label for="sunday" class="day-label">Sunday</label>
+                                <div class="day-times">
+                                    <input type="text" class="day-start-time" placeholder="9:00 AM" value="${classData.schedule && classData.schedule.Sunday ? classData.schedule.Sunday.start : ''}">
+                                    <input type="text" class="day-end-time" placeholder="10:30 AM" value="${classData.schedule && classData.schedule.Sunday ? classData.schedule.Sunday.end : ''}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h2>Additional Information</h2>
+                        
+                        <div class="form-group">
+                            <label for="classMaterials">Materials Needed</label>
+                            <textarea id="classMaterials" placeholder="List any materials, textbooks, or supplies needed for this class" rows="3">${classData.materials || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="classDescription">Description</label>
+                            <textarea id="classDescription" placeholder="Brief description of the class" rows="3">${classData.description || ''}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                        <button type="button" class="btn-primary" id="createBtn">Update Class</button>
                     </div>
                 </div>
             `;
             
-            document.body.appendChild(modal);
+            document.body.appendChild(formContainer);
+            
+            // Setup event listeners
+            setupEditClassFormListeners();
+        }
+
+        function setupEditClassFormListeners() {
+            // Back button
+            const backBtn = document.getElementById('backBtnCustom');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    document.querySelector('.class-form-container').remove();
+                });
+            }
+            
+            // Cancel button
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    document.querySelector('.class-form-container').remove();
+                });
+            }
+            
+            // Update button (instead of create)
+            const updateBtn = document.getElementById('createBtn');
+            if (updateBtn) {
+                updateBtn.addEventListener('click', updateClass);
+            }
+            
+            // Image upload
+            const imageInput = document.getElementById('classImage');
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImageUpload);
+            }
+        }
+
+        async function updateClass() {
+            try {
+                // Get form values
+                const name = document.getElementById('className').value.trim();
+                const instructor = document.getElementById('classInstructor').value.trim();
+                const level = document.getElementById('classLevel').value;
+                const term = document.getElementById('classTerm').value;
+                const year = parseInt(document.getElementById('classYear').value);
+                const room = document.getElementById('classRoom').value.trim();
+                const materials = document.getElementById('classMaterials').value.trim();
+                const description = document.getElementById('classDescription').value.trim();
+                
+                // Validate required fields
+                if (!name) {
+                    alert('Please enter a class name');
+                    return;
+                }
+                if (!level) {
+                    alert('Please select a level');
+                    return;
+                }
+                if (!term) {
+                    alert('Please select a term');
+                    return;
+                }
+                if (!year) {
+                    alert('Please enter a year');
+                    return;
+                }
+                
+                // Collect schedule data
+                const schedule = {};
+                const dayItems = document.querySelectorAll('.day-item');
+                dayItems.forEach(dayItem => {
+                    const checkbox = dayItem.querySelector('.day-checkbox');
+                    const startTime = dayItem.querySelector('.day-start-time').value.trim();
+                    const endTime = dayItem.querySelector('.day-end-time').value.trim();
+                    
+                    if (checkbox.checked && startTime && endTime) {
+                        schedule[checkbox.value] = {
+                            start: startTime,
+                            end: endTime
+                        };
+                    }
+                });
+                
+                // Get image URL
+                const imageUrl = window.uploadedImageUrl || window.editingClassData.imageUrl || null;
+                
+                // Update class in Firebase
+                const db = window.firebase.firestore();
+                await db.collection('users').doc(currentUser.uid).collection('classes').doc(window.editingClassData.id).update({
+                    name: name,
+                    instructor: instructor,
+                    level: level,
+                    term: term,
+                    year: year,
+                    room: room,
+                    materials: materials,
+                    description: description,
+                    schedule: schedule,
+                    imageUrl: imageUrl,
+                    updatedAt: new Date()
+                });
+                
+                // Close form
+                document.querySelector('.class-form-container').remove();
+                
+                // Reload classes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error updating class:', error);
+                alert('Error updating class. Please try again.');
+            }
         }
 
         function closeEditClassModal() {
             const modal = document.querySelector('.edit-class-modal').closest('.modal-overlay');
             if (modal) {
                 modal.remove();
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageUrl = e.target.result;
+                    window.uploadedImageUrl = imageUrl;
+                    
+                    // Update the image preview
+                    const imagePreview = document.getElementById('imagePreview');
+                    if (imagePreview) {
+                        imagePreview.innerHTML = `<img src="${imageUrl}" alt="Class Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+                    }
+                };
+                reader.readAsDataURL(file);
             }
         }
 
