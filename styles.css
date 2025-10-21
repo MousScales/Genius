@@ -5013,7 +5013,19 @@ body.document-editor-open {
     color: #888888;
     font-size: 13px;
     padding: 6px 12px;
-    cursor: default;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.doc-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+#manualSaveBtn, #downloadPdfBtn {
+    pointer-events: auto;
+    position: relative;
+    z-index: 10;
 }
 
 .doc-chat-toggle-btn {

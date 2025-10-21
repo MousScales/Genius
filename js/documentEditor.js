@@ -544,8 +544,11 @@ function setupEditorControls(classData, existingDoc) {
     // Simple save button setup
     setTimeout(() => {
         const saveBtn = document.getElementById('manualSaveBtn');
+        console.log('Save button found:', saveBtn);
         if (saveBtn) {
-            saveBtn.onclick = async () => {
+            saveBtn.onclick = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('Save clicked');
                 const classData = window.currentClassData;
                 const existingDoc = window.currentExistingDoc;
@@ -553,18 +556,27 @@ function setupEditorControls(classData, existingDoc) {
                     await saveDocument(classData, existingDoc);
                 }
             };
+            console.log('Save button onclick set');
+        } else {
+            console.error('Save button not found!');
         }
     }, 150);
     
     // Simple PDF button setup
     setTimeout(() => {
         const pdfBtn = document.getElementById('downloadPdfBtn');
+        console.log('PDF button found:', pdfBtn);
         if (pdfBtn) {
-            pdfBtn.onclick = () => {
+            pdfBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('PDF clicked');
-            downloadAsPDF();
+                downloadAsPDF();
             };
-    }
+            console.log('PDF button onclick set');
+        } else {
+            console.error('PDF button not found!');
+        }
     }, 200);
     
     // Simple humanize button setup
