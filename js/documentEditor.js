@@ -15,7 +15,7 @@ function openDocumentEditor(classData, existingDoc = null) {
     window.autoSaveInterval = setInterval(() => {
         if (document.getElementById('documentEditorScreen')) {
             console.log('Auto-saving document...');
-            saveDocument(classData, existingDoc).catch(error => {
+            saveDocument(window.currentClassData, window.currentExistingDoc).catch(error => {
                 console.error('Auto-save error:', error);
             });
         }
@@ -126,7 +126,7 @@ function openDocumentEditor(classData, existingDoc = null) {
         const triggerAutoSave = () => {
             clearTimeout(window.autoSaveTimeout);
             window.autoSaveTimeout = setTimeout(() => {
-                autoSaveDocument(classData, existingDoc);
+                autoSaveDocument(window.currentClassData, window.currentExistingDoc);
             }, 500); // Reduced debounce time for more responsive saving
         };
         
@@ -166,7 +166,7 @@ function openDocumentEditor(classData, existingDoc = null) {
         const triggerTitleAutoSave = () => {
             clearTimeout(window.titleAutoSaveTimeout);
             window.titleAutoSaveTimeout = setTimeout(() => {
-                autoSaveDocument(classData, existingDoc);
+                autoSaveDocument(window.currentClassData, window.currentExistingDoc);
             }, 500);
         };
         
@@ -472,7 +472,7 @@ function setupEditorControls(classData, existingDoc) {
     
     // Initialize placeholder visibility with a small delay to ensure DOM is ready
     setTimeout(() => {
-        updatePlaceholderVisibility();
+    updatePlaceholderVisibility();
         // No periodic check needed - event-driven updates are sufficient
     }, 100);
     
@@ -1393,6 +1393,11 @@ function removeAllSuggestions() {
 
 async function saveDocument(classData, existingDoc) {
     try {
+        // Use global reference if available
+        if (window.currentExistingDoc && !existingDoc) {
+            existingDoc = window.currentExistingDoc;
+        }
+        
         const title = document.getElementById('docEditorTitle').value.trim() || 'Untitled Document';
         
         // Collect content from all pages - preserve all HTML and styling
@@ -1488,6 +1493,9 @@ async function saveDocument(classData, existingDoc) {
                     folderId: doc.folderId
                 };
             }
+            
+            // Update the global existingDoc reference for future auto-saves
+            window.currentExistingDoc = existingDoc;
             
             // Update localStorage with the new Firebase document ID
             const currentUserData = localStorage.getItem('currentUser');
@@ -1632,6 +1640,11 @@ async function closeDocumentEditor() {
 // Global function to auto-save document content
 window.autoSaveDocument = function(classData, existingDoc) {
     try {
+        // Use global reference if available
+        if (window.currentExistingDoc && !existingDoc) {
+            existingDoc = window.currentExistingDoc;
+        }
+        
         const title = document.getElementById('docEditorTitle')?.value?.trim() || 'Untitled Document';
         const content = getDocumentContent(false); // Get full document content
         
@@ -1701,6 +1714,9 @@ window.autoSaveDocument = function(classData, existingDoc) {
                         existingDoc.id = newDocId;
                     }
                     
+                    // Update the global existingDoc reference
+                    window.currentExistingDoc = existingDoc;
+                    
                     // Update localStorage with the new Firebase document ID
                     const docIndex = documents.findIndex(d => d.id === existingDoc?.id || d.id.startsWith('new-document-'));
                     
@@ -1710,14 +1726,14 @@ window.autoSaveDocument = function(classData, existingDoc) {
                         documents[docIndex].title = title;
                         documents[docIndex].content = content;
                         documents[docIndex].lastModified = new Date().toISOString();
-        } else {
+                    } else {
                         // Add new document to localStorage
                         documents.push({
-                id: newDocId,
-                title: title,
-                content: content,
+                            id: newDocId,
+                            title: title,
+                            content: content,
                             type: 'text',
-                createdAt: new Date().toISOString(),
+                            createdAt: new Date().toISOString(),
                             lastModified: new Date().toISOString(),
                             folderId: existingDoc?.folderId || null
                         });
