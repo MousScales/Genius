@@ -604,13 +604,9 @@
                 return;
             }
 
-            // Check if user is already logged in
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    console.log('User already logged in:', user.uid);
-                    handleSuccessfulLogin(user);
-                }
-            });
+            // Note: Removed automatic redirect for already logged-in users
+            // Users can now stay on login screen even if they have an account
+            // They will only be redirected when they actually click the login button
         });
     </script>
 </body>
