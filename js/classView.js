@@ -102,7 +102,7 @@ function showClassView(classData) {
 
 function createClassView(classData) {
     const viewContainer = document.createElement('div');
-    viewContainer.className = 'class-view-container';
+    viewContainer.className = 'class-view-container screen-container';
     viewContainer.id = 'classViewContainer';
     
     // Format days for display
@@ -765,6 +765,15 @@ function renderDocuments(documents, folders, viewMode, classData) {
     
     // Update DOM
     documentsList.innerHTML = html;
+    
+    // Add staggered animations to document cards
+    setTimeout(() => {
+        const cards = documentsList.querySelectorAll('.document-card, .class-card, .study-guide-card, .flashcard-set-card');
+        cards.forEach((card, index) => {
+            card.classList.add('stagger-item');
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    }, 100);
     
     // Setup interactions
     setupDocumentInteractions(documents, classData);

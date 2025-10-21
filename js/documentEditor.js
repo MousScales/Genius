@@ -209,7 +209,7 @@ function generatePages(content) {
 
 function createEditorScreen(classData, existingDoc) {
     const container = document.createElement('div');
-    container.className = 'document-editor-screen';
+    container.className = 'document-editor-screen screen-container';
     container.id = 'documentEditorScreen';
     
     const docTitle = existingDoc ? existingDoc.title : 'Untitled Document';
