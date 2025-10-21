@@ -3316,18 +3316,18 @@ body {
     gap: 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
+    border-radius: 50px;
     padding: 12px 20px;
-    transition: all 0.3s ease;
-    width: 60px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 80%;
     overflow: hidden;
     max-width: 600px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
-}
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 .file-attachments {
