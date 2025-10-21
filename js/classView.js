@@ -533,6 +533,9 @@ async function handleFileUpload(event, classData) {
     if (!files.length) return;
     
     try {
+        // Get Firebase services
+        const { documentService } = await getFirebaseServices();
+        
         // Show loading indicator
         const loadingElement = document.createElement('div');
         loadingElement.className = 'loading-indicator';
@@ -1016,6 +1019,7 @@ function copyToClipboard(text) {
 
 async function deleteDocument(classData, docId) {
     try {
+        const { documentService } = await getFirebaseServices();
         await documentService.deleteDocument(classData.userId, classData.id, docId);
     
     // Reload with current view mode
@@ -2890,6 +2894,7 @@ function showStudyGuideFormatDialog(classData) {
 
 async function showFolderSelectionDialog(classData, format) {
     const folders = await getFolders(classData) || [];
+    const { documentService } = await getFirebaseServices();
     const documents = await documentService.getDocuments(classData.userId, classData.id);
     
     // Create modal for folder selection
