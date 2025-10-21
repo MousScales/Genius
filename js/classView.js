@@ -2161,56 +2161,95 @@ async function createFlashcardsFromExplanation(classData, explanation) {
 }
 
 function showManualFlashcardCreator(classData) {
-    // Create modal for manual flashcard creation
+    // Create a blank flashcard set for manual creation
+    const blankFlashcardSet = {
+        id: 'manual-' + Date.now(), // Temporary ID for new set
+        title: `Manual Flashcards - ${new Date().toLocaleDateString()}`,
+        flashcards: [], // Start with empty flashcards
+        totalCards: 0,
+        createdAt: new Date().toISOString()
+    };
+    
+    // Use the existing edit flashcard modal with blank data
+    showEditFlashcardModal(blankFlashcardSet, classData);
+}
+
+function showEditFlashcardModal(flashcardSet, classData) {
+    // Create edit modal with dark theme study-like interface
     const modal = document.createElement('div');
-    modal.className = 'manual-flashcard-modal';
+    modal.className = 'flashcard-edit-modal';
     modal.innerHTML = `
-        <div class="manual-flashcard-modal-content">
-            <div class="manual-flashcard-modal-header">
-                <h3>Create Flashcards Manually</h3>
-                <button class="close-modal-btn" id="closeManualFlashcardModal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+        <!-- Save and Exit Button -->
+        <button class="save-and-exit-flashcard-edit" onclick="saveNewFlashcardSet('${flashcardSet.id}', '${classData.userId}', '${classData.id}')">Save and Exit</button>
+        
+        <!-- Main Layout Container -->
+        <div class="flashcard-edit-layout-container">
+            <!-- Left Side - Card List -->
+            <div class="flashcard-edit-left-panel">
+                <div class="edit-panel-header">
+                    <h3>Flashcard Set: ${flashcardSet.title}</h3>
+                    <div class="edit-card-count">${flashcardSet.flashcards.length} Cards</div>
+                </div>
+                
+                <!-- Card List -->
+                <div class="flashcard-edit-list" id="flashcardEditList">
+                    ${flashcardSet.flashcards.map((card, index) => `
+                        <div class="flashcard-edit-item ${index === 0 ? 'selected' : ''}" data-index="${index}" onclick="selectEditCard(${index})">
+                            <div class="edit-card-number">${index + 1}</div>
+                            <div class="edit-card-preview">
+                                <div class="edit-card-question-preview">${card.question.substring(0, 40)}${card.question.length > 40 ? '...' : ''}</div>
+                                <div class="edit-card-answer-preview">${card.answer.substring(0, 40)}${card.answer.length > 40 ? '...' : ''}</div>
+                            </div>
+                            <button class="remove-edit-card-btn" onclick="removeEditCard(${index})" title="Remove card">✕</button>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <!-- Add Card Button -->
+                <button class="add-edit-card-btn" onclick="addEditCard()">+ Add New Card</button>
             </div>
-            <div class="manual-flashcard-modal-body">
-                <div class="flashcard-set-info">
-                    <div class="input-group">
-                        <label for="flashcardSetTitle">Set Title:</label>
-                        <input type="text" id="flashcardSetTitle" placeholder="Enter flashcard set title" value="Manual Flashcards - ${new Date().toLocaleDateString()}">
-                    </div>
+            
+            <!-- Center - Study Interface -->
+            <div class="flashcard-edit-center">
+                <!-- Title Input -->
+                <div class="flashcard-edit-title-section">
+                    <input type="text" id="editFlashcardSetTitle" value="${flashcardSet.title}" placeholder="Enter flashcard set title" class="flashcard-edit-title-input">
                 </div>
-                <div class="flashcards-container" id="flashcardsContainer">
-                    <div class="flashcard-item" data-index="0">
-                        <div class="flashcard-inputs">
-                            <div class="flashcard-card front">
-                                <div class="flashcard-card-header front">
-                                    <div class="card-icon">?</div>
-                                    <span>Question</span>
+                
+                <!-- Main Card Display -->
+                <div class="flashcard-edit-card-display" id="flashcardEditCardDisplay">
+                    <div class="flashcard-edit-card" id="main-edit-flashcard">
+                        <div class="flashcard-edit-inner">
+                            <div class="flashcard-edit-front">
+                                <div class="flashcard-edit-header">
+                                    <span class="edit-card-label">Question</span>
                                 </div>
-                                <textarea class="flashcard-question-input" placeholder="Enter your question here..." rows="3"></textarea>
+                                <textarea id="editCardQuestion" class="flashcard-edit-textarea" placeholder="Enter question..." rows="4"></textarea>
                             </div>
-                            <div class="flashcard-card back">
-                                <div class="flashcard-card-header back">
-                                    <div class="card-icon">!</div>
-                                    <span>Answer</span>
+                            <div class="flashcard-edit-back">
+                                <div class="flashcard-edit-header">
+                                    <span class="edit-card-label">Answer</span>
                                 </div>
-                                <textarea class="flashcard-answer-input" placeholder="Enter your answer here..." rows="3"></textarea>
+                                <textarea id="editCardAnswer" class="flashcard-edit-textarea" placeholder="Enter answer..." rows="4"></textarea>
                             </div>
                         </div>
-                        <div class="flashcard-actions">
-                            <button class="remove-flashcard-btn" onclick="removeFlashcard(this)" style="display: none;">Remove</button>
+                    </div>
+                    
+                    <!-- Card Navigation -->
+                    <div class="flashcard-edit-navigation">
+                        <button class="edit-nav-btn" id="prevEditCard" onclick="navigateEditCard(-1)">
+                            <span>←</span>
+                        </button>
+                        <div class="edit-card-info">
+                            <span class="edit-card-counter" id="editCardCounter">1 / ${flashcardSet.flashcards.length || 1}</span>
                         </div>
+                        <button class="edit-nav-btn" id="nextEditCard" onclick="navigateEditCard(1)">
+                            <span>→</span>
+                        </button>
                     </div>
-                </div>
-                <div class="manual-flashcard-actions">
-                    <button class="add-flashcard-btn" id="addFlashcardBtn">+ Add Another Card</button>
-                    <div class="modal-actions">
-                        <button class="modal-btn secondary" id="cancelManualFlashcards">Cancel</button>
-                        <button class="modal-btn primary" id="saveManualFlashcards">Create Flashcards</button>
-                    </div>
+                    
+                    <!-- Card Position Indicator -->
+                    <div class="edit-card-position" id="editCardPosition">Card 1 of ${flashcardSet.flashcards.length || 1}</div>
                 </div>
             </div>
         </div>
@@ -2218,29 +2257,66 @@ function showManualFlashcardCreator(classData) {
     
     document.body.appendChild(modal);
     
-    // Add event listeners
-    document.getElementById('closeManualFlashcardModal').addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
+    // Initialize edit interface
+    editCards = [...flashcardSet.flashcards];
+    currentEditCardIndex = 0;
     
-    document.getElementById('cancelManualFlashcards').addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-    
-    document.getElementById('addFlashcardBtn').addEventListener('click', () => {
-        addFlashcardItem();
-    });
-    
-    document.getElementById('saveManualFlashcards').addEventListener('click', async () => {
-        await saveManualFlashcards(classData);
-    });
-    
-    // Close on overlay click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            document.body.removeChild(modal);
+    // Add event listeners for the edit modal after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        setupFlashcardEditListeners();
+        updateEditCardDisplay();
+    }, 100);
+}
+
+async function saveNewFlashcardSet(flashcardSetId, userId, classId) {
+    try {
+        const title = document.getElementById('editFlashcardSetTitle').value.trim();
+        if (!title) {
+            alert('Please enter a title for the flashcard set.');
+            return;
         }
-    });
+        
+        if (editCards.length === 0) {
+            alert('Please add at least one flashcard.');
+            return;
+        }
+        
+        console.log('💾 Saving new flashcard set:', title);
+        
+        // Create new flashcard set
+        const flashcardSet = {
+            title: title,
+            type: 'flashcards',
+            isFlashcardSet: true,
+            sourceDocuments: [],
+            flashcards: editCards,
+            currentCardIndex: 0,
+            correctAnswers: 0,
+            totalCards: editCards.length,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Save to Firebase
+        const db = window.firebase.firestore();
+        await db.collection('users').doc(userId).collection('classes').doc(classId).collection('studyGuides').add(flashcardSet);
+        
+        console.log('✅ New flashcard set created successfully');
+        
+        // Close modal
+        const modal = document.querySelector('.flashcard-edit-modal');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Reload study guides to show changes
+        const classData = { userId, id: classId };
+        loadStudyGuides(classData);
+        
+    } catch (error) {
+        console.error('Error saving new flashcard set:', error);
+        alert('Error saving flashcard set. Please try again.');
+    }
 }
 
 function addFlashcardItem() {
@@ -2726,12 +2802,13 @@ function showStudyGuideFormatDialog(classData) {
                 </button>
             </div>
             <div class="study-guide-modal-body">
-                <p>Choose a study guide format:</p>
+                <p>Create flashcards for studying:</p>
                 <div class="format-options">
-                    <div class="format-option" data-format="basic">
+                    <!-- Basic Study Guide option commented out - users only see flashcards -->
+                    <!-- <div class="format-option" data-format="basic">
                         <h4>Basic Study Guide</h4>
                         <p>Text-based document with structured bullet points, headings, and summaries</p>
-                    </div>
+                    </div> -->
                     <div class="format-option" data-format="flashcards">
                         <h4>Flashcards</h4>
                         <p>Interactive flashcards for self-quizzing and memorization</p>

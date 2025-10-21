@@ -1349,11 +1349,11 @@ class CSharpFlashcardService {
     }
 }
 
-// Export the class for use in other modules
-export { CSharpFlashcardService };
-
-// Also make it available globally for compatibility
+// Make it available globally for compatibility
 if (typeof window !== 'undefined') {
     window.CSharpFlashcardService = CSharpFlashcardService;
 }
+
+// ES6 module export
+export { CSharpFlashcardService };
 
