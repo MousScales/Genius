@@ -1557,10 +1557,10 @@
             showGeniusThinkingEffect();
             
             try {
-                // Get API key
-                const apiKey = getOpenAIApiKey();
+                // Get API key using the same method as other parts of the app
+                const apiKey = window.getOpenAIApiKey() || window.APP_CONFIG?.OPENAI_API_KEY;
                 if (!apiKey) {
-                    throw new Error('OpenAI API key not found');
+                    throw new Error('OpenAI API key not found. Please add your API key in the profile settings.');
                 }
                 
                 // Convert file to base64
@@ -1865,10 +1865,10 @@ IMPORTANT: Respond with ONLY the JSON object, no markdown formatting, no code bl
             showGeniusTypingIndicator();
             
             try {
-                // Get API key
-                const apiKey = getOpenAIApiKey();
+                // Get API key using the same method as other parts of the app
+                const apiKey = window.getOpenAIApiKey() || window.APP_CONFIG?.OPENAI_API_KEY;
                 if (!apiKey) {
-                    throw new Error('OpenAI API key not found');
+                    throw new Error('OpenAI API key not found. Please add your API key in the profile settings.');
                 }
                 
                 // Send to OpenAI with math-focused system prompt
