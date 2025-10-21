@@ -200,7 +200,7 @@ function generatePages(content) {
              spellcheck="true" 
              tabindex="0">
             ${hasContent ? content : ''}
-            <div class="ghost-text-hint" style="display: ${hasContent ? 'none' : 'block'}">Click the ? to switch to edit with Genius to write your essay for you</div>
+            ${!hasContent ? '<div class="ghost-text-hint" style="display: block;">Click the ? to switch to edit with Genius to write your essay for you</div>' : ''}
         </div>
     `;
 }
@@ -375,11 +375,7 @@ function createEditorScreen(classData, existingDoc) {
                 <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
                 <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
                 <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
-                    <svg class="mode-icon" id="modeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
+                    <span class="mode-icon" id="modeIcon" style="font-size: 20px; font-weight: bold;">?</span>
                 </div>
             </div>
         </div>
@@ -473,9 +469,6 @@ function setupEditorControls(classData, existingDoc) {
     // Initialize placeholder visibility with a small delay to ensure DOM is ready
     setTimeout(() => {
         updatePlaceholderVisibility();
-        // Setup clickable placeholder examples
-        setupPlaceholderExamples(classData, existingDoc);
-        
         // No periodic check needed - event-driven updates are sufficient
     }, 100);
     
@@ -574,12 +567,12 @@ function setupEditorControls(classData, existingDoc) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('PDF clicked');
-                downloadAsPDF();
+            downloadAsPDF();
             };
             console.log('PDF button onclick set');
         } else {
             console.error('PDF button not found!');
-        }
+    }
     }, 200);
     
     // Simple humanize button setup
@@ -1599,7 +1592,7 @@ async function closeDocumentEditor() {
         
         // Save any pending suggestions before closing
         if (typeof window.saveCurrentSuggestions === 'function') {
-            window.saveCurrentSuggestions();
+        window.saveCurrentSuggestions();
         }
         
         editorScreen.remove();
@@ -2732,15 +2725,12 @@ function updatePlaceholderVisibility() {
     const content = document.getElementById('docEditorContent');
     if (!content) return;
     
-    let placeholder = content.querySelector('.empty-document-placeholder');
-    
     // Check if content is empty (only whitespace, placeholder, or chat messages)
     const textContent = content.innerText || '';
     const htmlContent = content.innerHTML || '';
     
-    // Remove placeholder and chat message content from consideration
+    // Remove chat message content from consideration
     const contentWithoutPlaceholder = htmlContent
-        .replace(/<div class="empty-document-placeholder">[\s\S]*?<\/div>/g, '')
         .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
         .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
         .replace(/<div class="ghost-text-hint">[\s\S]*?<\/div>/g, '') // Remove ghost text from consideration
@@ -2753,16 +2743,12 @@ function updatePlaceholderVisibility() {
     const hasRealContent = contentWithoutPlaceholder.length > 10;
     
     if (hasRealContent) {
-        // Hide placeholder if it exists
-        if (placeholder) {
-            placeholder.classList.add('hidden');
-        }
         // Remove ghost text if it exists
         removeGhostText();
     } else {
-        // Always show ghost text for empty documents
+        // Show simple ghost text
         if (!content.querySelector('.ghost-text-hint')) {
-            content.innerHTML = '<div class="ghost-text-hint">Click the ? to switch to edit with Genius to write your essay for you</div>';
+            content.innerHTML = '<div class="ghost-text-hint" style="display: block;">Click the ? to switch to edit with Genius to write your essay for you</div>';
         }
     }
 }
