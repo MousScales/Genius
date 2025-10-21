@@ -510,6 +510,7 @@ function setupEditorControls(classData, existingDoc) {
     
     // Helper function to trigger auto-save after formatting changes
     const triggerFormattingSave = () => {
+        console.log('💾 Triggering formatting save...');
         window.hasChanges = true;
         savingStatus.textContent = 'Saving...';
         savingStatus.style.color = '#aaaaaa';
@@ -1570,6 +1571,17 @@ async function saveDocument(classData, existingDoc) {
         });
         
         console.log('Saving document content with full HTML:', combinedContent.substring(0, 200) + '...');
+        
+        // Check if images are being saved with their styling
+        const imageWrappers = combinedContent.match(/<div class="image-wrapper"[^>]*>.*?<\/div>/gs);
+        if (imageWrappers) {
+            console.log('🖼️ Found image wrappers in saved content:', imageWrappers.length);
+            imageWrappers.forEach((wrapper, index) => {
+                const hasStyle = wrapper.includes('style=');
+                const hasResizeHandle = wrapper.includes('resize-handle');
+                console.log(`🖼️ Image ${index + 1}:`, { hasStyle, hasResizeHandle, wrapper: wrapper.substring(0, 100) + '...' });
+            });
+        }
         
         const doc = {
             title: title,
@@ -5221,6 +5233,8 @@ function attachImageFunctionality(imageWrapper, img, resizeHandle) {
             
             img.style.width = newWidth + 'px';
             img.style.height = newHeight + 'px';
+            
+            console.log('🖼️ Resizing image:', { newWidth, newHeight, aspectRatio });
         }
     });
     
@@ -5229,6 +5243,9 @@ function attachImageFunctionality(imageWrapper, img, resizeHandle) {
             isResizing = false;
             imageWrapper.classList.remove('resizing');
             resizeHandle.style.display = 'none';
+            
+            console.log('🖼️ Image resize completed, triggering save...');
+            console.log('🖼️ Final image size:', { width: img.style.width, height: img.style.height });
             
             // Trigger save after resizing is complete
             if (typeof triggerFormattingSave === 'function') {
