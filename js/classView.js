@@ -963,21 +963,15 @@ function generateAndSharePDF(doc) {
         const margin = 20;
         const maxWidth = pageWidth - (margin * 2);
         
-        // Add title
-        pdfDoc.setFontSize(20);
-        pdfDoc.setFont(undefined, 'bold');
-        const titleLines = pdfDoc.splitTextToSize(doc.title, maxWidth);
-        pdfDoc.text(titleLines, margin, margin + 10);
-        
         // Get content text (strip HTML tags for now)
         const contentText = doc.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
         
-        // Add content
+        // Add content (no title in PDF content)
         pdfDoc.setFontSize(12);
         pdfDoc.setFont(undefined, 'normal');
         const contentLines = pdfDoc.splitTextToSize(contentText, maxWidth);
         
-        let yPosition = margin + 30;
+        let yPosition = margin;
         const lineHeight = 7;
         
         for (let i = 0; i < contentLines.length; i++) {

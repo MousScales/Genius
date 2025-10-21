@@ -1852,21 +1852,15 @@ function downloadAsPDF() {
         const margin = 20;
         const maxWidth = pageWidth - (margin * 2);
         
-        // Add title
-        doc.setFontSize(20);
-        doc.setFont(undefined, 'bold');
-        const titleLines = doc.splitTextToSize(title, maxWidth);
-        doc.text(titleLines, margin, margin + 10);
-        
         // Get content text (strip HTML tags for now)
         const contentText = content.innerText || content.textContent || '';
         
-        // Add content
+        // Add content (no title in PDF content)
         doc.setFontSize(12);
         doc.setFont(undefined, 'normal');
         const contentLines = doc.splitTextToSize(contentText, maxWidth);
         
-        let yPosition = margin + 30;
+        let yPosition = margin;
         const lineHeight = 7;
         
         for (let i = 0; i < contentLines.length; i++) {
