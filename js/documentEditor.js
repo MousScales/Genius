@@ -3768,11 +3768,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     if (modeToggle && modeIcon) {
         // Set initial state
         if (currentMode === 'help') {
-            modeIcon.innerHTML = `
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            `;
+            modeIcon.textContent = '?';
             modeToggle.title = 'Help mode - Click to switch to Edit mode';
             chatInput.placeholder = 'Talk to Genius';
         }
@@ -3784,21 +3780,14 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
             if (currentMode === 'help') {
                 // Switch to edit mode
                 currentMode = 'edit';
-                modeIcon.innerHTML = `
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                `;
+                modeIcon.textContent = '✏';
                 modeToggle.title = 'Edit mode - Click to switch to Help mode';
                 modeToggle.classList.add('edit-mode-active');
                 updatePlaceholder();
             } else {
                 // Switch to help mode
                 currentMode = 'help';
-                modeIcon.innerHTML = `
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                `;
+                modeIcon.textContent = '?';
                 modeToggle.title = 'Help mode - Click to switch to Edit mode';
                 modeToggle.classList.remove('edit-mode-active');
                 updatePlaceholder();
