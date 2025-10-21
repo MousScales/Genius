@@ -10170,10 +10170,15 @@ img {
     text-align: center;
     pointer-events: auto;
     z-index: 10;
-    opacity: 0.8;
+    opacity: 0.9;
     max-width: 500px;
-    width: 100%;
-    padding: 0 20px;
+    width: calc(100% - 40px);
+    padding: 20px;
+    background: rgba(26, 26, 26, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .placeholder-content {
@@ -10252,7 +10257,9 @@ img {
 }
 
 .empty-document-placeholder.hidden {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.95);
 }
 
 /* AI Checker Styles */
