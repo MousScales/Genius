@@ -5590,10 +5590,6 @@ select.toolbar-select option {
     color: #ffffff !important;
 }
 
-.doc-editor-content:empty:before {
-    content: 'Start typing...';
-    color: #666666;
-}
 
 .doc-editor-content img {
     max-width: 100%;
