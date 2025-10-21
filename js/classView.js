@@ -1658,9 +1658,9 @@ function setupFolderFunctionality(classData) {
             console.log('Folder action clicked:', action, 'folderId:', folderId);
             
             if (action === 'Rename' && folderId) {
-                renameFolder(folderId, classData);
+                window.renameFolder(folderId, classData);
             } else if (action === 'Delete' && folderId) {
-                deleteFolder(folderId, classData);
+                window.deleteFolder(folderId, classData);
             }
         });
     });
@@ -1957,51 +1957,88 @@ window.toggleFolderExpansion = function(folderId, classData) {
     }
 }
 
-window.deleteFolder = function(folderId, classData) {
+window.deleteFolder = async function(folderId, classData) {
+    console.log('deleteFolder called with folderId:', folderId, 'classData:', classData);
+    
     if (!confirm('Are you sure you want to delete this folder? Documents inside will be moved to the root level.')) {
         return;
     }
     
-    const folders = getFolders(classData);
+    const folders = await getFolders(classData);
+    console.log('Available folders:', folders);
     const folder = folders.find(f => f.id === folderId);
-    if (!folder) return;
+    console.log('Found folder:', folder);
     
-    // Move all documents in this folder to root level
-    const documentsKey = `class_${classData.userId}_${classData.name}_documents`;
-    let documents = JSON.parse(localStorage.getItem(documentsKey) || '[]');
+    if (!folder) {
+        console.error('Folder not found with ID:', folderId);
+        return;
+    }
     
-    documents.forEach(doc => {
-        if (doc.folderId === folderId) {
-            doc.folderId = null;
-        }
-    });
-    
-    // Remove the folder
-    const updatedFolders = folders.filter(f => f.id !== folderId);
-    saveFolders(classData, updatedFolders);
-    localStorage.setItem(documentsKey, JSON.stringify(documents));
-    
-    // Reload documents
-    const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-    const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
-    loadDocuments(classData, currentViewMode);
+    try {
+        // Move all documents in this folder to root level using Firebase
+        const db = window.firebase.firestore();
+        const documentsRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('documents');
+        
+        // Get all documents in this folder
+        const documentsSnapshot = await documentsRef.where('folderId', '==', folderId).get();
+        
+        // Update each document to remove folderId
+        const batch = db.batch();
+        documentsSnapshot.forEach((doc) => {
+            batch.update(doc.ref, { folderId: null });
+        });
+        await batch.commit();
+        
+        // Remove the folder from Firebase
+        const updatedFolders = folders.filter(f => f.id !== folderId);
+        await saveFolders(classData, updatedFolders);
+        
+        console.log('✅ Folder deleted successfully from Firebase');
+        
+        // Reload documents
+        loadDocuments(classData, 'list');
+        
+    } catch (error) {
+        console.error('❌ Error deleting folder:', error);
+        alert('Error deleting folder. Please try again.');
+    }
 }
 
-window.renameFolder = function(folderId, classData) {
-    const folders = getFolders(classData);
+window.renameFolder = async function(folderId, classData) {
+    console.log('renameFolder called with folderId:', folderId, 'classData:', classData);
+    
+    const folders = await getFolders(classData);
+    console.log('Available folders:', folders);
     const folder = folders.find(f => f.id === folderId);
-    if (!folder) return;
+    console.log('Found folder:', folder);
+    
+    if (!folder) {
+        console.error('Folder not found with ID:', folderId);
+        return;
+    }
     
     const newName = prompt('Enter new folder name:', folder.name);
     if (!newName || !newName.trim() || newName.trim() === folder.name) return;
     
-    folder.name = newName.trim();
-    saveFolders(classData, folders);
-    
-    // Reload documents
-    const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-    const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
-    loadDocuments(classData, currentViewMode);
+    try {
+        // Update folder name in Firebase
+        const db = window.firebase.firestore();
+        const folderRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('folders').doc(folderId);
+        
+        await folderRef.update({
+            name: newName.trim(),
+            updatedAt: new Date()
+        });
+        
+        console.log('✅ Folder renamed successfully in Firebase');
+        
+        // Reload documents
+        loadDocuments(classData, 'list');
+        
+    } catch (error) {
+        console.error('❌ Error renaming folder:', error);
+        alert('Error renaming folder. Please try again.');
+    }
 }
 
 // Study Guide Functions

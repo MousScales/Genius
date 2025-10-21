@@ -375,11 +375,7 @@ function createEditorScreen(classData, existingDoc) {
                 <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
                 <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
                 <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
-                    <svg class="mode-icon" id="modeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
+                    <span class="mode-icon" id="modeIcon" style="font-size: 18px; font-weight: bold; color: #fff;">?</span>
                 </div>
             </div>
         </div>
@@ -2745,32 +2741,32 @@ function updatePlaceholderVisibility() {
     const content = document.getElementById('docEditorContent');
     if (!content) return;
     
-    // Check if content is empty (only whitespace, placeholder, or chat messages)
-    const textContent = content.innerText || '';
-    const htmlContent = content.innerHTML || '';
-    
-    // Remove chat message content from consideration
-    const contentWithoutPlaceholder = htmlContent
-        .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
-        .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
-        .replace(/<div class="ghost-text-hint">[\s\S]*?<\/div>/g, '') // Remove ghost text from consideration
-        .replace(/<br\s*\/?>/g, '') // Remove line breaks
-        .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .trim();
-    
-    // Only hide placeholder if there's substantial user content (more than just whitespace or single characters)
-    const hasRealContent = contentWithoutPlaceholder.length > 10;
-    
-    if (hasRealContent) {
-        // Remove ghost text if it exists
-        removeGhostText();
-    } else {
-        // Show simple ghost text
-        if (!content.querySelector('.ghost-text-hint')) {
-            content.innerHTML = '<div class="ghost-text-hint" style="display: block;">Click the ? to switch to edit with Genius to write your essay for you</div>';
+        // Check if content is empty (only whitespace, placeholder, or chat messages)
+        const textContent = content.innerText || '';
+        const htmlContent = content.innerHTML || '';
+        
+        // Remove chat message content from consideration
+        const contentWithoutPlaceholder = htmlContent
+            .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
+            .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
+            .replace(/<div class="ghost-text-hint">[\s\S]*?<\/div>/g, '') // Remove ghost text from consideration
+            .replace(/<br\s*\/?>/g, '') // Remove line breaks
+            .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+            .replace(/\s+/g, ' ') // Normalize whitespace
+            .trim();
+        
+        // Only hide placeholder if there's substantial user content (more than just whitespace or single characters)
+        const hasRealContent = contentWithoutPlaceholder.length > 10;
+        
+        if (hasRealContent) {
+            // Remove ghost text if it exists
+            removeGhostText();
+        } else {
+            // Always show genius essay writing text when document is empty
+            if (!content.querySelector('.ghost-text-hint')) {
+                content.innerHTML = '<div class="ghost-text-hint" style="display: block;">Click the ? to switch to edit with Genius to write your essay for you</div>';
+            }
         }
-    }
 }
 
 function setupPlaceholderExamples(classData, existingDoc) {
