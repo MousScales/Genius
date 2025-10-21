@@ -373,13 +373,13 @@ function createEditorScreen(classData, existingDoc) {
         </div>
         
         <div class="genius-chat-container" id="geniusChatContainer">
-            <div class="genius-chat-input-wrapper">
-                <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
-                <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
-                <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
-                    <span class="mode-icon" id="modeIcon" style="font-size: 16px; font-weight: bold; color: #fff;">?</span>
-                </div>
+        <div class="genius-chat-input-wrapper" id="geniusInputWrapper">
+            <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
+            <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
+            <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
+                <span class="mode-icon" id="modeIcon" style="font-size: 16px; font-weight: bold; color: #fff;">?</span>
             </div>
+        </div>
         </div>
         
         <div class="genius-sidebar" id="geniusSidebar">
@@ -2872,6 +2872,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     const chatTabs = document.getElementById('geniusChatTabs');
     const sidebarInput = document.getElementById('geniusChatInputSidebar');
     const sendBtn = document.getElementById('geniusSendBtn');
+    const inputWrapper = document.getElementById('geniusInputWrapper');
     
     const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
     
@@ -2908,11 +2909,19 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     chatInput.addEventListener('focus', () => {
         chatContainer.classList.add('focused');
         console.log('Genius input focused');
+        // Expand input wrapper when focused
+        if (inputWrapper) {
+            inputWrapper.classList.add('expanded');
+        }
     });
     
     chatInput.addEventListener('blur', () => {
         chatContainer.classList.remove('focused');
         console.log('Genius input blurred');
+        // Collapse input wrapper when not focused and empty
+        if (inputWrapper && (!chatInput.value || chatInput.value.trim() === '')) {
+            inputWrapper.classList.remove('expanded');
+        }
     });
     
     // Periodic check to ensure input stays focusable
@@ -3780,7 +3789,12 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
             if (currentMode === 'help') {
                 // Switch to edit mode
                 currentMode = 'edit';
-                modeIcon.textContent = '✏';
+                modeIcon.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                `;
                 modeToggle.title = 'Edit mode - Click to switch to Help mode';
                 modeToggle.classList.add('edit-mode-active');
                 updatePlaceholder();
