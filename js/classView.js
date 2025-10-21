@@ -465,20 +465,56 @@ async function initializeAssistants() {
 function createFallbackAssistantsService(apiKey) {
     return {
         async createThread() {
-            // No-op for fallback
-            return { id: 'fallback-thread' };
+            // Return a mock thread ID for fallback
+            return { id: 'fallback-thread-' + Date.now() };
         },
         async uploadFile(file) {
-            // No-op for fallback
-            return { id: 'fallback-file' };
+            // For fallback, we'll handle file content directly in the message
+            return { id: 'fallback-file-' + Date.now() };
         },
         async createMessage(threadId, content, fileIds = []) {
-            // No-op for fallback
-            return { id: 'fallback-message' };
+            // Return a mock message ID for fallback
+            return { id: 'fallback-message-' + Date.now() };
         },
-        async runAssistant(threadId, assistantId) {
-            // No-op for fallback
-            return { id: 'fallback-run' };
+        async runAssistant(content, attachments = []) {
+            // This is the main method that actually uses the OpenAI API
+            console.log('🔄 Using fallback OpenAI API for flashcard chat...');
+            
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are Genius AI, a helpful assistant for students. Answer questions about flashcards and study materials. Be concise, helpful, and educational.'
+                            },
+                            {
+                                role: 'user',
+                                content: content
+                            }
+                        ],
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`OpenAI API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.choices[0].message.content;
+                
+            } catch (error) {
+                console.error('❌ Fallback OpenAI API error:', error);
+                throw error;
+            }
         },
         async getMessages(threadId) {
             // No-op for fallback
