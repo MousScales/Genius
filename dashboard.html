@@ -693,7 +693,21 @@
                             <div class="class-card-content">
                                 <div class="class-card-header">
                                     <h3 class="class-card-title ${titleClass}">${className}</h3>
-                                    <div class="class-status-indicator"></div>
+                                    <div class="class-menu-container">
+                                        <button class="class-menu-btn" onclick="toggleClassMenu(event, ${index})">
+                                            <span class="menu-dots">⋯</span>
+                                        </button>
+                                        <div class="class-menu-dropdown" id="class-menu-${index}">
+                                            <button class="menu-item edit-class" onclick="editClass(${index})">
+                                                <span class="menu-icon">✏️</span>
+                                                Edit
+                                            </button>
+                                            <button class="menu-item delete-class" onclick="deleteClass(${index})">
+                                                <span class="menu-icon">🗑️</span>
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 ${classData.instructor ? 
                                     `<p class="class-card-instructor">${classData.instructor}</p>` : 
@@ -714,7 +728,12 @@
                 setTimeout(() => {
                     const classCards = document.querySelectorAll('.class-card');
                     classCards.forEach(card => {
-                        card.addEventListener('click', () => {
+                        card.addEventListener('click', (e) => {
+                            // Don't open class if clicking on menu
+                            if (e.target.closest('.class-menu-container')) {
+                                return;
+                            }
+                            
                             const classIndex = parseInt(card.dataset.classIndex);
                             const selectedClass = classes[classIndex];
                             
@@ -2502,6 +2521,176 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 }, 10000);
             });
         }
+
+        // Class menu functions
+        function toggleClassMenu(event, classIndex) {
+            event.stopPropagation();
+            
+            // Close all other menus
+            document.querySelectorAll('.class-menu-dropdown').forEach(menu => {
+                if (menu.id !== `class-menu-${classIndex}`) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            // Toggle current menu
+            const menu = document.getElementById(`class-menu-${classIndex}`);
+            if (menu) {
+                menu.classList.toggle('show');
+            }
+        }
+
+        function editClass(classIndex) {
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            const classToEdit = classes[classIndex];
+            
+            if (!classToEdit) {
+                console.error('Class not found');
+                return;
+            }
+            
+            // Close menu
+            const menu = document.getElementById(`class-menu-${classIndex}`);
+            if (menu) {
+                menu.classList.remove('show');
+            }
+            
+            // Show edit modal
+            showEditClassModal(classToEdit, classIndex);
+        }
+
+        function deleteClass(classIndex) {
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            const classToDelete = classes[classIndex];
+            
+            if (!classToDelete) {
+                console.error('Class not found');
+                return;
+            }
+            
+            // Close menu
+            const menu = document.getElementById(`class-menu-${classIndex}`);
+            if (menu) {
+                menu.classList.remove('show');
+            }
+            
+            // Confirm deletion
+            if (confirm(`Are you sure you want to delete "${classToDelete.name}"? This action cannot be undone.`)) {
+                // Remove class from array
+                classes.splice(classIndex, 1);
+                
+                // Save updated classes
+                localStorage.setItem('classes', JSON.stringify(classes));
+                
+                // Reload dashboard
+                location.reload();
+            }
+        }
+
+        function showEditClassModal(classData, classIndex) {
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content edit-class-modal">
+                    <div class="modal-header">
+                        <h2>Edit Class</h2>
+                        <button class="close-modal-btn" onclick="closeEditClassModal()">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editClassForm">
+                            <div class="form-group">
+                                <label for="editClassName">Class Name</label>
+                                <input type="text" id="editClassName" value="${classData.name}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editClassInstructor">Instructor</label>
+                                <input type="text" id="editClassInstructor" value="${classData.instructor || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="editClassTerm">Term</label>
+                                <select id="editClassTerm">
+                                    <option value="Fall" ${classData.term === 'Fall' ? 'selected' : ''}>Fall</option>
+                                    <option value="Spring" ${classData.term === 'Spring' ? 'selected' : ''}>Spring</option>
+                                    <option value="Summer" ${classData.term === 'Summer' ? 'selected' : ''}>Summer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editClassYear">Year</label>
+                                <input type="number" id="editClassYear" value="${classData.year || new Date().getFullYear()}" min="2020" max="2030">
+                            </div>
+                            <div class="form-group">
+                                <label for="editClassLevel">Level</label>
+                                <select id="editClassLevel">
+                                    <option value="Undergraduate" ${classData.level === 'Undergraduate' ? 'selected' : ''}>Undergraduate</option>
+                                    <option value="Graduate" ${classData.level === 'Graduate' ? 'selected' : ''}>Graduate</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn secondary" onclick="closeEditClassModal()">Cancel</button>
+                        <button class="modal-btn primary" onclick="saveEditedClass(${classIndex})">Save Changes</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function closeEditClassModal() {
+            const modal = document.querySelector('.edit-class-modal').closest('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function saveEditedClass(classIndex) {
+            const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+            const classToEdit = classes[classIndex];
+            
+            if (!classToEdit) {
+                console.error('Class not found');
+                return;
+            }
+            
+            // Get form values
+            const name = document.getElementById('editClassName').value.trim();
+            const instructor = document.getElementById('editClassInstructor').value.trim();
+            const term = document.getElementById('editClassTerm').value;
+            const year = parseInt(document.getElementById('editClassYear').value);
+            const level = document.getElementById('editClassLevel').value;
+            
+            if (!name) {
+                alert('Please enter a class name');
+                return;
+            }
+            
+            // Update class data
+            classToEdit.name = name;
+            classToEdit.instructor = instructor;
+            classToEdit.term = term;
+            classToEdit.year = year;
+            classToEdit.level = level;
+            
+            // Save updated classes
+            localStorage.setItem('classes', JSON.stringify(classes));
+            
+            // Close modal
+            closeEditClassModal();
+            
+            // Reload dashboard
+            location.reload();
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.class-menu-container')) {
+                document.querySelectorAll('.class-menu-dropdown').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
 
     </script>
     

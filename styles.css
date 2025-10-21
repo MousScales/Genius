@@ -1327,14 +1327,83 @@ body {
     gap: 12px;
 }
 
-.class-status-indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #00ff88;
-    box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
-    flex-shrink: 0;
-    margin-top: 4px;
+/* Class Menu Styles */
+.class-menu-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.class-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.class-menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-dots {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    transform: rotate(90deg);
+}
+
+.class-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 120px;
+    display: none;
+    overflow: hidden;
+}
+
+.class-menu-dropdown.show {
+    display: block;
+}
+
+.menu-item {
+    width: 100%;
+    background: none;
+    border: none;
+    color: #ffffff;
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+    text-align: left;
+}
+
+.menu-item:hover {
+    background-color: #3a3a3a;
+}
+
+.menu-item.delete-class:hover {
+    background-color: #4a1a1a;
+    color: #ff6b6b;
+}
+
+.menu-icon {
+    font-size: 16px;
+    width: 16px;
+    text-align: center;
 }
 
 
@@ -11779,6 +11848,29 @@ img {
     transform: scale(1.1);
 }
 
+.save-and-exit-flashcard-edit {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    border: none;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 12px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.save-and-exit-flashcard-edit:hover {
+    background: #218838;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
 .flashcard-edit-layout-container {
     display: flex;
     flex: 1;
@@ -12313,14 +12405,15 @@ img {
 }
 
 .save-flashcard-edit {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #28a745;
     color: #ffffff;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
 .save-flashcard-edit:hover {
+    background: #218838;
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 12px 35px rgba(40, 167, 69, 0.5);
 }
 
 /* Loading Study Guides */

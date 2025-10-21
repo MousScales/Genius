@@ -3880,7 +3880,6 @@ async function editFlashcardSet(guideId, classData) {
             
             <!-- Footer Actions -->
             <div class="flashcard-edit-footer">
-                <button class="cancel-flashcard-edit" onclick="closeFlashcardEdit()">Cancel</button>
                 <button class="save-flashcard-edit" onclick="saveFlashcardEdit('${guideId}', '${classData.userId}', '${classData.id}')">Save Changes</button>
             </div>
         `;
