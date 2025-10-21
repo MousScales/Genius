@@ -1380,7 +1380,8 @@ function formatDate(dateString) {
 }
 
 function renderDocumentCard(doc, viewMode, classData, folderId = null) {
-    const date = formatDate(doc.updatedAt);
+    // Use the most recent date available (updatedAt, lastModified, or createdAt)
+    const date = formatDate(doc.updatedAt || doc.lastModified || doc.createdAt);
     
     // Generate preview based on document type
     let previewHtml = '';
@@ -1451,7 +1452,8 @@ function renderDocumentCard(doc, viewMode, classData, folderId = null) {
 }
 
 function renderDocumentItem(doc, viewMode, classData, folderId = null) {
-    const date = formatDate(doc.updatedAt);
+    // Use the most recent date available (updatedAt, lastModified, or createdAt)
+    const date = formatDate(doc.updatedAt || doc.lastModified || doc.createdAt);
     
     return `
         <div class="document-card" data-doc-id="${doc.id}" draggable="true">
@@ -3283,7 +3285,7 @@ async function createBasicStudyGuide(classData, sourceDocuments, customName = nu
         // Generate AI-powered study guide content
         const studyGuideContent = await generateStudyGuideContent(sourceDocuments);
         
-        // Use custom name or default name
+        // Use custom name or default name with fresh date
         const setName = customName || `Study Guide - ${new Date().toLocaleDateString()}`;
         
         // Create new study guide
@@ -3315,7 +3317,7 @@ async function createFlashcardSet(classData, sourceDocuments, customName = null,
         // Generate AI-powered flashcard content
         const flashcards = await generateFlashcardContent(sourceDocuments, flashcardCount);
         
-        // Use custom name or default name
+        // Use custom name or default name with fresh date
         const setName = customName || `Flashcards - ${new Date().toLocaleDateString()}`;
         
         // Create new flashcard set
@@ -3939,7 +3941,8 @@ async function loadStudyGuides(classData, viewMode = 'list') {
 }
 
 function renderStudyGuideCard(guide, classData, viewMode = 'list') {
-    const date = formatDate(guide.createdAt);
+    // Use the most recent date available (updatedAt or createdAt)
+    const date = formatDate(guide.updatedAt || guide.createdAt);
     
     if (viewMode === 'grid') {
         return `
@@ -4003,7 +4006,8 @@ function renderStudyGuideCard(guide, classData, viewMode = 'list') {
 }
 
 function renderFlashcardSetCard(guide, classData, viewMode = 'list') {
-    const date = formatDate(guide.createdAt);
+    // Use the most recent date available (updatedAt or createdAt)
+    const date = formatDate(guide.updatedAt || guide.createdAt);
     
     if (viewMode === 'grid') {
         return `
@@ -6322,12 +6326,24 @@ function createFallbackDocumentService() {
         saveDocument: async (userId, classId, document) => {
             const db = window.firebase.firestore();
             const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc();
-            await docRef.set({ ...document, id: docRef.id });
+            // Always add fresh timestamps
+            const documentWithTimestamps = {
+                ...document,
+                id: docRef.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            await docRef.set(documentWithTimestamps);
             return docRef.id;
         },
         updateDocument: async (userId, classId, docId, updates) => {
             const db = window.firebase.firestore();
-            await db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc(docId).update(updates);
+            // Always add fresh updatedAt timestamp
+            const updatesWithTimestamp = {
+                ...updates,
+                updatedAt: new Date().toISOString()
+            };
+            await db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc(docId).update(updatesWithTimestamp);
         },
         deleteDocument: async (userId, classId, docId) => {
             const db = window.firebase.firestore();
@@ -6371,7 +6387,14 @@ function createFallbackStudyGuideService() {
         saveStudyGuide: async (userId, classId, studyGuide) => {
             const db = window.firebase.firestore();
             const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('study_guides').doc();
-            await docRef.set({ ...studyGuide, id: docRef.id });
+            // Always add fresh timestamps
+            const studyGuideWithTimestamps = {
+                ...studyGuide,
+                id: docRef.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            await docRef.set(studyGuideWithTimestamps);
             return docRef.id;
         },
         deleteStudyGuide: async (userId, classId, guideId) => {
