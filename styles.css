@@ -1741,6 +1741,10 @@ body {
     height: 100%;
 }
 
+.form-header-custom {
+    margin-bottom: 40px; /* Add more space between back button and form */
+}
+
 .form-section {
     background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
     border-radius: 16px;
