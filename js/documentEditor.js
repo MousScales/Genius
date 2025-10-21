@@ -105,14 +105,8 @@ function openDocumentEditor(classData, existingDoc = null) {
         }
     }, 5000);
     
-    // Auto-save document content every 3 seconds
-    const autoSaveInterval = setInterval(() => {
-        if (document.getElementById('documentEditorScreen')) {
-            autoSaveDocument(classData, existingDoc);
-        } else {
-            clearInterval(autoSaveInterval);
-        }
-    }, 3000);
+    // Auto-save is handled by the 30-second interval and input events
+    // Removed duplicate 3-second interval to prevent multiple saves
     
     // Auto-save on content changes
     const contentElements = document.querySelectorAll('.doc-editor-content');
@@ -1441,14 +1435,16 @@ async function saveDocument(classData, existingDoc) {
         const isValidFirebaseId = existingDoc && existingDoc.id && 
             existingDoc.id !== 'new-document' && 
             !existingDoc.id.startsWith('new-document-') &&
-            !/^\d+$/.test(existingDoc.id); // Not just numbers (timestamps)
+            !/^\d+$/.test(existingDoc.id) && // Not just numbers (timestamps)
+            existingDoc.id.length > 10; // Firebase IDs are typically longer than 10 characters
         
         console.log('Document ID check:', {
             existingDocId: existingDoc?.id,
             isValidFirebaseId: isValidFirebaseId,
             isNewDocument: existingDoc?.id === 'new-document',
             isNewDocumentPrefix: existingDoc?.id?.startsWith('new-document-'),
-            isTimestamp: existingDoc?.id ? /^\d+$/.test(existingDoc.id) : false
+            isTimestamp: existingDoc?.id ? /^\d+$/.test(existingDoc.id) : false,
+            idLength: existingDoc?.id ? existingDoc.id.length : 0
         });
         
         if (isValidFirebaseId) {
@@ -1659,12 +1655,14 @@ window.autoSaveDocument = function(classData, existingDoc) {
         const isValidFirebaseId = existingDoc && existingDoc.id && 
             existingDoc.id !== 'new-document' && 
             !existingDoc.id.startsWith('new-document-') &&
-            !/^\d+$/.test(existingDoc.id); // Not just numbers (timestamps)
+            !/^\d+$/.test(existingDoc.id) && // Not just numbers (timestamps)
+            existingDoc.id.length > 10; // Firebase IDs are typically longer than 10 characters
         
         console.log('Auto-save ID check:', {
             existingDocId: existingDoc?.id,
             isValidFirebaseId: isValidFirebaseId,
-            isTimestamp: existingDoc?.id ? /^\d+$/.test(existingDoc.id) : false
+            isTimestamp: existingDoc?.id ? /^\d+$/.test(existingDoc.id) : false,
+            idLength: existingDoc?.id ? existingDoc.id.length : 0
         });
         
         const doc = {
