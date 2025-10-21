@@ -700,7 +700,10 @@ async function createClass(event) {
         let firebaseSaved = false;
         
         try {
+            console.log('📡 Importing Firebase services...');
             const { classService } = await import('./firebase-services.js');
+            console.log('💾 Saving class to Firebase...');
+            console.log('📋 Class data being saved:', formData);
             classId = await classService.addClass(user.uid, formData);
             console.log('✅ Class saved to Firebase with ID:', classId);
             firebaseSaved = true;
@@ -729,10 +732,18 @@ async function createClass(event) {
         // Close the form and return to main screen
         cancelClassCreation();
         
-        // Force reload the classes
-        setTimeout(() => {
-            window.location.reload();
-        }, 100);
+        // Trigger class reload event instead of full page reload
+        if (firebaseSaved) {
+            // Dispatch event to reload classes from Firebase
+            window.dispatchEvent(new CustomEvent('classCreated'));
+            console.log('✅ Class creation event dispatched - dashboard will reload from Firebase');
+        } else {
+            // Fallback to page reload if Firebase save failed
+            console.warn('⚠️ Firebase save failed, using page reload as fallback');
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
+        }
         
     } catch (error) {
         console.error('Error creating class:', error);

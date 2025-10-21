@@ -560,6 +560,8 @@
                 console.log('No current user available for class loading');
                 return;
             }
+            
+            console.log('🔄 Loading classes from Firebase for user:', currentUser.uid);
 
             // Show loading state
             const loadingState = document.getElementById('loadingState');
@@ -593,21 +595,26 @@
             
             // Load classes from Firebase
             try {
+                console.log('📡 Connecting to Firebase Firestore...');
                 const db = window.firebase.firestore();
                 const classesRef = db.collection('users').doc(currentUser.uid).collection('classes');
+                console.log('📚 Querying classes collection...');
                 const querySnapshot = await classesRef.orderBy('createdAt', 'desc').get();
                 classes = [];
                 querySnapshot.forEach((doc) => {
-                    classes.push({
+                    const classData = {
                         id: doc.id,
                         ...doc.data()
-                    });
+                    };
+                    classes.push(classData);
+                    console.log('📖 Loaded class:', classData.name, 'ID:', classData.id);
                 });
-                console.log('Loaded classes from Firebase:', classes);
+                console.log('✅ Successfully loaded', classes.length, 'classes from Firebase');
             } catch (error) {
-                console.error('Error loading classes from Firebase:', error);
+                console.error('❌ Error loading classes from Firebase:', error);
+                console.error('Error details:', error.code, error.message);
                 alert('Error loading classes. Please refresh the page and try again.');
-                        classes = [];
+                classes = [];
             }
             
             // Hide loading state and show appropriate content

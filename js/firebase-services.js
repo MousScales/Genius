@@ -76,12 +76,16 @@ export class ClassService {
         try {
             await waitForFirebase();
             console.log('➕ Adding class for user:', userId);
+            console.log('📋 Class data:', classData);
             
             const docRef = await db.collection('users').doc(userId).collection('classes').add(classData);
-            console.log('✅ Class added with ID:', docRef.id);
+            console.log('✅ Class added to Firebase with ID:', docRef.id);
+            console.log('🔗 Full path: users/' + userId + '/classes/' + docRef.id);
             return docRef.id;
         } catch (error) {
-            console.error('❌ Error adding class:', error);
+            console.error('❌ Error adding class to Firebase:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
             return null;
         }
     }
