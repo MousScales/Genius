@@ -193,11 +193,31 @@ export async function logout() {
     try {
         console.log('🚪 Logging out...');
         await auth.signOut();
+        
+        // Clear localStorage
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('genius_chats');
+        
+        // Clear all user-specific localStorage data
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('profile_') || key.includes('classes_') || key.includes('suggestions_'))) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
         console.log('✅ Logged out successfully');
+        
+        // Redirect to login page
+        window.location.href = 'login.html';
         return true;
     } catch (error) {
         console.error('❌ Error during logout:', error);
+        // Even if there's an error, still redirect to login
+        window.location.href = 'login.html';
         return false;
     }
 }

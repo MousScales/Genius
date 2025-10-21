@@ -86,9 +86,28 @@ export async function handleLogout() {
     try {
         await waitForFirebase();
         await window.firebase.auth().signOut();
-        // Auth state change will handle showing login page
+        
+        // Clear localStorage
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('genius_chats');
+        
+        // Clear all user-specific localStorage data
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('profile_') || key.includes('classes_') || key.includes('suggestions_'))) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Redirect to login page
+        window.location.href = 'login.html';
     } catch (error) {
-        alert('Logout failed: ' + error.message);
+        console.error('Logout error:', error);
+        // Even if there's an error, still redirect to login
+        window.location.href = 'login.html';
     }
 }
 
