@@ -2154,12 +2154,20 @@ function showFlashcardExplanationDialog(classData) {
 
 async function createFlashcardsFromExplanation(classData, explanation) {
     console.log('🚀 createFlashcardsFromExplanation called with:', { classData, explanation });
+    let flashcardService = null;
     try {
         // Show brain icon thinking effect
         if (window.CSharpFlashcardService) {
             console.log('🧠 Showing thinking effect...');
-            const flashcardService = new window.CSharpFlashcardService();
+            flashcardService = new window.CSharpFlashcardService();
             flashcardService.showThinkingEffect('creating flashcards');
+            
+            // Set a timeout fallback to hide thinking effect after 30 seconds
+            setTimeout(() => {
+                if (window.hideAnyThinkingEffect()) {
+                    console.log('🧠 Timeout fallback: thinking effect hidden after 30s');
+                }
+            }, 30000);
         } else {
             console.warn('⚠️ CSharpFlashcardService not available');
         }
@@ -2187,9 +2195,16 @@ async function createFlashcardsFromExplanation(classData, explanation) {
         loadStudyGuides(classData);
         
         // Hide thinking effect
-        if (window.CSharpFlashcardService) {
-            const flashcardService = new window.CSharpFlashcardService();
+        if (flashcardService) {
+            console.log('🧠 Hiding thinking effect...');
             flashcardService.hideThinkingEffect();
+        } else {
+            // Fallback: try to hide any existing thinking effect
+            const geniusFloating = document.querySelector('.genius-floating');
+            if (geniusFloating) {
+                console.log('🧠 Fallback: removing thinking effect...');
+                geniusFloating.remove();
+            }
         }
         
         console.log('Flashcards created from explanation successfully');
@@ -2198,9 +2213,16 @@ async function createFlashcardsFromExplanation(classData, explanation) {
         console.error('Error creating flashcards from explanation:', error);
         
         // Hide thinking effect on error
-        if (window.CSharpFlashcardService) {
-            const flashcardService = new window.CSharpFlashcardService();
+        if (flashcardService) {
+            console.log('🧠 Hiding thinking effect on error...');
             flashcardService.hideThinkingEffect();
+        } else {
+            // Fallback: try to hide any existing thinking effect
+            const geniusFloating = document.querySelector('.genius-floating');
+            if (geniusFloating) {
+                console.log('🧠 Fallback: removing thinking effect on error...');
+                geniusFloating.remove();
+            }
         }
         
         alert('Error creating flashcards. Please check your OpenAI API key and try again.');
@@ -6292,6 +6314,17 @@ function createFallbackEventService() {
         }
     };
 }
+
+// Global function to hide any thinking effect (fallback)
+window.hideAnyThinkingEffect = function() {
+    const geniusFloating = document.querySelector('.genius-floating');
+    if (geniusFloating) {
+        console.log('🧠 Global fallback: removing thinking effect...');
+        geniusFloating.remove();
+        return true;
+    }
+    return false;
+};
 
 // Make functions globally available
 window.showClassView = showClassView;
