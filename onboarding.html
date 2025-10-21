@@ -51,9 +51,9 @@
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            padding: 40px;
+            padding: 50px 40px;
             width: 100%;
-            max-width: 500px;
+            max-width: 450px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -85,20 +85,43 @@
             font-size: 16px;
         }
 
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #ffffff, #cccccc);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .question {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             text-align: left;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #ffffff;
-            font-weight: 500;
-        }
-
         input[type="text"],
-        input[type="email"],
         select {
             width: 100%;
             padding: 15px;
@@ -111,7 +134,6 @@
         }
 
         input[type="text"]:focus,
-        input[type="email"]:focus,
         select:focus {
             outline: none;
             border-color: #ffffff;
@@ -119,10 +141,13 @@
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
         }
 
-        input[type="text"]::placeholder,
-        input[type="email"]::placeholder,
-        select option {
+        input[type="text"]::placeholder {
             color: #888888;
+        }
+
+        select option {
+            background: #1a1a1a;
+            color: #ffffff;
         }
 
         .btn {
@@ -135,6 +160,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .btn-primary {
@@ -146,6 +175,17 @@
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #ffffff;
         }
 
         .btn:disabled {
@@ -193,81 +233,34 @@
             100% { transform: rotate(360deg); }
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin-bottom: 30px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #ffffff, #cccccc);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .step {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+        .step-counter {
             color: #888888;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 10px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .step.active {
-            background: #ffffff;
-            color: #000000;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4);
-        }
-
-        .step.completed {
-            background: #ffffff;
-            color: #000000;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4);
-        }
-
-        .user-info {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: left;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .user-info h3 {
-            color: #ffffff;
-            margin-bottom: 10px;
-        }
-
-        .user-info p {
-            color: #cccccc;
-            margin-bottom: 5px;
-        }
-
-        .logout-link {
-            color: #ffffff;
-            text-decoration: none;
             font-size: 14px;
+            margin-bottom: 20px;
         }
 
-        .logout-link:hover {
-            text-decoration: underline;
+        .navigation-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .navigation-buttons .btn {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -281,53 +274,57 @@
             <div class="progress-fill" id="progressFill"></div>
         </div>
 
-        <div class="step-indicator">
-            <div class="step active" id="step1">1</div>
-            <div class="step" id="step2">2</div>
-            <div class="step" id="step3">3</div>
+        <div class="step-counter">
+            <span id="currentStep">1</span> of <span id="totalSteps">4</span>
         </div>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
         <div id="successMessage" class="success-message" style="display: none;"></div>
 
-        <div id="userInfo" class="user-info" style="display: none;">
-            <h3>Welcome!</h3>
-            <p><strong>Name:</strong> <span id="userName"></span></p>
-            <p><strong>Email:</strong> <span id="userEmail"></span></p>
-            <a href="#" class="logout-link" id="logoutLink">Not you? Sign out</a>
+        <div class="question-container">
+            <!-- Question 1: Full Name -->
+            <div id="question1" class="question-container">
+                <div class="question">What's your full name?</div>
+                <div class="form-group">
+                    <input type="text" id="fullName" placeholder="Enter your full name" required>
+                </div>
+            </div>
+
+            <!-- Question 2: College -->
+            <div id="question2" class="question-container hidden">
+                <div class="question">Which college or university do you attend?</div>
+                <div class="form-group">
+                    <input type="text" id="collegeName" placeholder="Enter your college or university" required>
+                </div>
+            </div>
+
+            <!-- Question 3: Major -->
+            <div id="question3" class="question-container hidden">
+                <div class="question">What's your major or field of study?</div>
+                <div class="form-group">
+                    <input type="text" id="major" placeholder="Enter your major or field of study" required>
+                </div>
+            </div>
+
+            <!-- Question 4: Academic Level -->
+            <div id="question4" class="question-container hidden">
+                <div class="question">What's your current academic level?</div>
+                <div class="form-group">
+                    <select id="academicLevel" required>
+                        <option value="">Select your level</option>
+                        <option value="undergraduate">Undergraduate</option>
+                        <option value="graduate">Graduate</option>
+                        <option value="phd">PhD</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
-        <form id="onboardingForm">
-            <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" name="fullName" required>
-            </div>
-
-            <div class="form-group">
-                <label for="collegeName">College/University</label>
-                <input type="text" id="collegeName" name="collegeName" placeholder="Enter your college or university" required>
-            </div>
-
-            <div class="form-group">
-                <label for="major">Major/Field of Study</label>
-                <input type="text" id="major" name="major" placeholder="Enter your major or field of study" required>
-            </div>
-
-            <div class="form-group">
-                <label for="academicLevel">Academic Level</label>
-                <select id="academicLevel" name="academicLevel" required>
-                    <option value="">Select your level</option>
-                    <option value="undergraduate">Undergraduate</option>
-                    <option value="graduate">Graduate</option>
-                    <option value="phd">PhD</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary" id="completeBtn">
-                Complete Setup
-            </button>
-        </form>
+        <div class="navigation-buttons">
+            <button class="btn btn-secondary" id="backBtn" style="display: none;">Back</button>
+            <button class="btn btn-primary" id="nextBtn">Next</button>
+        </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -351,6 +348,7 @@
         let app, auth, db;
         let currentUser = null;
         let currentStep = 1;
+        const totalSteps = 4;
         
         function initFirebase() {
             try {
@@ -391,74 +389,132 @@
 
         function setLoading(loading) {
             const loadingDiv = document.getElementById('loading');
-            const completeBtn = document.getElementById('completeBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const backBtn = document.getElementById('backBtn');
             
             if (loading) {
                 loadingDiv.style.display = 'block';
-                completeBtn.disabled = true;
+                nextBtn.disabled = true;
+                backBtn.disabled = true;
             } else {
                 loadingDiv.style.display = 'none';
-                completeBtn.disabled = false;
+                nextBtn.disabled = false;
+                backBtn.disabled = false;
             }
         }
 
-        function updateProgress(step) {
+        // Check if user has already completed onboarding
+        async function checkOnboardingStatus(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists()) {
+                    console.log('User has already completed onboarding, redirecting to dashboard');
+                    window.location.href = 'dashboard.html';
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking onboarding status:', error);
+                return false;
+            }
+        }
+
+        // Update progress bar
+        function updateProgress() {
             const progressFill = document.getElementById('progressFill');
-            const progress = (step / 3) * 100;
+            const progress = (currentStep / totalSteps) * 100;
             progressFill.style.width = progress + '%';
             
-            // Update step indicators
-            for (let i = 1; i <= 3; i++) {
-                const stepEl = document.getElementById(`step${i}`);
-                if (i < step) {
-                    stepEl.className = 'step completed';
-                } else if (i === step) {
-                    stepEl.className = 'step active';
-                } else {
-                    stepEl.className = 'step';
-                }
+            document.getElementById('currentStep').textContent = currentStep;
+            document.getElementById('totalSteps').textContent = totalSteps;
+        }
+
+        // Show current question
+        function showQuestion(step) {
+            // Hide all questions
+            for (let i = 1; i <= totalSteps; i++) {
+                const question = document.getElementById(`question${i}`);
+                question.classList.add('hidden');
+            }
+            
+            // Show current question
+            const currentQuestion = document.getElementById(`question${step}`);
+            currentQuestion.classList.remove('hidden');
+            currentQuestion.classList.add('fade-in');
+            
+            // Update navigation buttons
+            const backBtn = document.getElementById('backBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (step === 1) {
+                backBtn.style.display = 'none';
+                nextBtn.textContent = 'Next';
+            } else if (step === totalSteps) {
+                backBtn.style.display = 'flex';
+                nextBtn.textContent = 'Complete';
+            } else {
+                backBtn.style.display = 'flex';
+                nextBtn.textContent = 'Next';
+            }
+            
+            updateProgress();
+        }
+
+        // Validate current step
+        function validateCurrentStep() {
+            switch (currentStep) {
+                case 1:
+                    const fullName = document.getElementById('fullName').value.trim();
+                    return fullName.length > 0;
+                case 2:
+                    const collegeName = document.getElementById('collegeName').value.trim();
+                    return collegeName.length > 0;
+                case 3:
+                    const major = document.getElementById('major').value.trim();
+                    return major.length > 0;
+                case 4:
+                    const academicLevel = document.getElementById('academicLevel').value;
+                    return academicLevel.length > 0;
+                default:
+                    return false;
             }
         }
 
-        function showUserInfo(user) {
-            const userInfoDiv = document.getElementById('userInfo');
-            const userNameSpan = document.getElementById('userName');
-            const userEmailSpan = document.getElementById('userEmail');
-            
-            userNameSpan.textContent = user.displayName || 'User';
-            userEmailSpan.textContent = user.email || 'No email';
-            userInfoDiv.style.display = 'block';
-        }
-
-        // Check authentication
-        function checkAuth() {
-            return new Promise((resolve) => {
-                const unsubscribe = auth.onAuthStateChanged((user) => {
-                    unsubscribe();
-                    if (user) {
-                        currentUser = user;
-                        console.log('User authenticated:', user.uid);
-                        showUserInfo(user);
-                        resolve(true);
-                    } else {
-                        console.log('No user authenticated');
-                        resolve(false);
-                    }
-                });
-            });
+        // Get current step value
+        function getCurrentStepValue() {
+            switch (currentStep) {
+                case 1:
+                    return document.getElementById('fullName').value.trim();
+                case 2:
+                    return document.getElementById('collegeName').value.trim();
+                case 3:
+                    return document.getElementById('major').value.trim();
+                case 4:
+                    return document.getElementById('academicLevel').value;
+                default:
+                    return '';
+            }
         }
 
         // Save user profile to Firestore
-        async function saveUserProfile(profileData) {
+        async function saveUserProfile() {
             try {
-                const userRef = db.collection('users').doc(currentUser.uid);
-                await userRef.set({
-                    ...profileData,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
+                const userData = {
+                    name: document.getElementById('fullName').value.trim(),
+                    collegeName: document.getElementById('collegeName').value.trim(),
+                    major: document.getElementById('major').value.trim(),
+                    academicLevel: document.getElementById('academicLevel').value,
                     email: currentUser.email,
-                    uid: currentUser.uid
-                });
+                    uid: currentUser.uid,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+
+                await db.collection('users').doc(currentUser.uid).set(userData);
+                
+                // Also save to localStorage for immediate access
+                localStorage.setItem('userData', JSON.stringify(userData));
+                localStorage.setItem('currentUser', JSON.stringify(userData));
                 
                 console.log('User profile saved successfully');
                 return true;
@@ -468,91 +524,53 @@
             }
         }
 
-        // Complete onboarding
-        async function completeOnboarding() {
+        // Handle next/complete button
+        async function handleNext() {
             hideMessages();
-            setLoading(true);
-            updateProgress(2);
-
-            const formData = {
-                name: document.getElementById('fullName').value.trim(),
-                collegeName: document.getElementById('collegeName').value.trim(),
-                major: document.getElementById('major').value.trim(),
-                academicLevel: document.getElementById('academicLevel').value
-            };
-
-            // Validate form data
-            if (!formData.name || !formData.collegeName || !formData.major || !formData.academicLevel) {
-                showError('Please fill in all fields');
-                setLoading(false);
-                updateProgress(1);
+            
+            if (!validateCurrentStep()) {
+                showError('Please fill in the required field');
                 return;
             }
 
-            try {
-                await saveUserProfile(formData);
-                
-                // Update user data in localStorage
-                const userData = {
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: formData.name,
-                    photoURL: currentUser.photoURL,
-                    emailVerified: currentUser.emailVerified,
-                    collegeName: formData.collegeName,
-                    major: formData.major,
-                    academicLevel: formData.academicLevel
-                };
-                
-                localStorage.setItem('userData', JSON.stringify(userData));
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-                
-                updateProgress(3);
-                showSuccess('Profile completed successfully!');
-                
-                // Redirect to dashboard after a short delay
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Error completing onboarding:', error);
-                showError('Failed to save your profile. Please try again.');
-                setLoading(false);
-                updateProgress(1);
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showQuestion(currentStep);
+            } else {
+                // Complete onboarding
+                setLoading(true);
+                try {
+                    await saveUserProfile();
+                    showSuccess('Profile completed successfully! Redirecting to dashboard...');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                } catch (error) {
+                    showError('Failed to save profile. Please try again.');
+                    setLoading(false);
+                }
+            }
+        }
+
+        // Handle back button
+        function handleBack() {
+            if (currentStep > 1) {
+                currentStep--;
+                showQuestion(currentStep);
             }
         }
 
         // Event listeners
-        document.getElementById('onboardingForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            completeOnboarding();
-        });
+        document.getElementById('nextBtn').addEventListener('click', handleNext);
+        document.getElementById('backBtn').addEventListener('click', handleBack);
 
-        document.getElementById('logoutLink').addEventListener('click', async (e) => {
-            e.preventDefault();
-            
-            try {
-                await auth.signOut();
-                localStorage.clear();
-                window.location.href = 'login.html';
-            } catch (error) {
-                console.error('Error signing out:', error);
-                showError('Error signing out. Please try again.');
+        // Allow Enter key to proceed
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleNext();
             }
         });
-
-        // Check if user already has a profile
-        async function checkExistingProfile() {
-            try {
-                const userRef = db.collection('users').doc(currentUser.uid);
-                const userDoc = await userRef.get();
-                return userDoc.exists();
-            } catch (error) {
-                console.error('Error checking existing profile:', error);
-                return false;
-            }
-        }
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', async () => {
@@ -562,28 +580,23 @@
                 return;
             }
 
-            // Check authentication
-            const isAuthenticated = await checkAuth();
-            if (!isAuthenticated) {
-                console.log('No user authenticated, redirecting to login');
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Check if user already has a profile
-            const hasExistingProfile = await checkExistingProfile();
-            if (hasExistingProfile) {
-                console.log('User already has a profile, redirecting to dashboard');
-                window.location.href = 'dashboard.html';
-                return;
-            }
-
-            // Pre-fill form with user data
-            if (currentUser.displayName) {
-                document.getElementById('fullName').value = currentUser.displayName;
-            }
-
-            updateProgress(1);
+            // Check if user is authenticated
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentUser = user;
+                    console.log('User authenticated:', user.uid);
+                    
+                    // Check if user has already completed onboarding
+                    const hasCompleted = await checkOnboardingStatus(user);
+                    if (!hasCompleted) {
+                        // Show first question
+                        showQuestion(1);
+                    }
+                } else {
+                    console.log('No user authenticated, redirecting to login');
+                    window.location.href = 'login.html';
+                }
+            });
         });
     </script>
 </body>
