@@ -210,7 +210,7 @@ function createClassForm() {
             
             <div class="form-actions">
                 <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                <button type="button" class="btn btn-primary" id="createBtn">Create Class</button>
+                <button type="button" class="btn btn-primary" id="createBtn" onclick="console.log('Direct onclick test');">Create Class</button>
             </div>
         </div>
         
@@ -411,11 +411,46 @@ function setupLivePreview() {
     
     const createBtn = document.getElementById('createBtn');
     if (createBtn) {
-        console.log('✅ Create Class button event listener added');
+        console.log('✅ Create Class button found:', createBtn);
+        console.log('✅ Button text:', createBtn.textContent);
+        console.log('✅ Button disabled:', createBtn.disabled);
+        console.log('✅ Button style:', createBtn.style.display);
+        
+        // Add multiple event listeners to debug
         createBtn.addEventListener('click', (event) => {
             console.log('🖱️ Create Class button clicked!');
+            event.preventDefault();
+            event.stopPropagation();
             createClass(event);
         });
+        
+        createBtn.addEventListener('mousedown', () => {
+            console.log('🖱️ Create Class button mousedown!');
+        });
+        
+        createBtn.addEventListener('mouseup', () => {
+            console.log('🖱️ Create Class button mouseup!');
+        });
+        
+        // Also try onclick as backup
+        createBtn.onclick = (event) => {
+            console.log('🖱️ Create Class button onclick!');
+            event.preventDefault();
+            event.stopPropagation();
+            createClass(event);
+        };
+        
+        console.log('✅ Create Class button event listeners added');
+        
+        // Test if button is clickable
+        setTimeout(() => {
+            console.log('🧪 Testing button clickability...');
+            const rect = createBtn.getBoundingClientRect();
+            console.log('📍 Button position:', rect);
+            console.log('📍 Button visible:', rect.width > 0 && rect.height > 0);
+            console.log('📍 Button z-index:', window.getComputedStyle(createBtn).zIndex);
+            console.log('📍 Button pointer-events:', window.getComputedStyle(createBtn).pointerEvents);
+        }, 100);
     } else {
         console.error('❌ Create Class button not found!');
     }
@@ -424,6 +459,16 @@ function setupLivePreview() {
     if (backBtnCustom) {
         backBtnCustom.addEventListener('click', cancelClassCreation);
     }
+    
+    // Add global click debugging
+    document.addEventListener('click', (event) => {
+        if (event.target.id === 'createBtn') {
+            console.log('🌍 Global click detected on createBtn!');
+        }
+        if (event.target.classList.contains('btn-primary')) {
+            console.log('🌍 Global click detected on btn-primary!');
+        }
+    });
     
     console.log('Live preview setup complete');
 }
