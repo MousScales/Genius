@@ -249,6 +249,9 @@
         function initializeDashboard() {
             // Load user profile from Firestore
             loadProfileInfo();
+            
+            // Load classes after user is authenticated
+            loadClasses();
 
         // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
@@ -731,8 +734,7 @@
             // Counters removed - no longer loading document, study guide, and flashcard counts
         }
 
-        // Load classes on page load
-        loadClasses();
+        // Load classes is now called in initializeDashboard() after authentication
 
         // Add class button (top right)
         document.getElementById('addClassBtn').addEventListener('click', () => {
