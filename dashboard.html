@@ -416,7 +416,8 @@
             if (currentUserData) {
                 const currentUser = JSON.parse(currentUserData);
                 // document.getElementById('openaiApiKey').value = currentUser.openaiApiKey || ''; // COMMENTED OUT
-                document.getElementById('schoolName').value = currentUser.school || '';
+                // Use collegeName instead of school to match the profile structure
+                document.getElementById('schoolName').value = currentUser.collegeName || currentUser.school || '';
                 document.getElementById('majorField').value = currentUser.major || '';
             }
             
@@ -451,7 +452,8 @@
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    document.getElementById('schoolName').value = userData.school || '';
+                    // Use collegeName instead of school to match the profile structure
+                    document.getElementById('schoolName').value = userData.collegeName || userData.school || '';
                     document.getElementById('majorField').value = userData.major || '';
                 }
             } catch (error) {
@@ -511,13 +513,15 @@
                 
                 // Update Firebase profile
                 await db.collection('users').doc(currentUser.uid).set({
-                    school: schoolName,
+                    collegeName: schoolName,
+                    school: schoolName, // Keep both for compatibility
                     major: majorField,
                     updatedAt: new Date()
                 }, { merge: true });
 
                 // Update localStorage
-                currentUser.school = schoolName;
+                currentUser.collegeName = schoolName;
+                currentUser.school = schoolName; // Keep both for compatibility
                 currentUser.major = majorField;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
