@@ -38,7 +38,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #000000, #1a1a1a);
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
             color: #ffffff;
             min-height: 100vh;
             display: flex;
@@ -54,9 +54,9 @@
         }
 
         .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 10px;
             background-image: url('assets/darkgenius.png');
             background-size: contain;
             background-repeat: no-repeat;
@@ -65,6 +65,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
         h1 {
@@ -81,7 +89,7 @@
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: left;
         }
 
@@ -89,17 +97,18 @@
             display: block;
             margin-bottom: 8px;
             color: #ffffff;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 16px;
         }
 
         input[type="email"],
         input[type="password"],
         input[type="text"] {
             width: 100%;
-            padding: 15px;
+            padding: 20px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 18px;
             background: rgba(255, 255, 255, 0.05);
             color: #ffffff;
             transition: all 0.3s ease;
@@ -268,27 +277,30 @@
 <body>
     <div class="signup-container">
         <div class="logo"></div>
-        <h1>Create Account</h1>
-        <p class="subtitle">Join Genius and start your learning journey</p>
+        <div class="logo-text">Genius</div>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
         <div id="successMessage" class="success-message" style="display: none;"></div>
 
         <form id="signupForm">
             <div class="form-group">
-                <input type="text" id="fullName" name="fullName" placeholder="Full Name" required>
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
             </div>
 
             <div class="form-group">
-                <input type="email" id="email" name="email" placeholder="Email Address" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
             </div>
 
             <div class="form-group">
-                <input type="password" id="password" name="password" placeholder="Password" required>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
             </div>
 
             <div class="form-group">
-                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
             </div>
 
             <button type="submit" class="btn btn-primary" id="signupBtn">
