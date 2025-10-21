@@ -437,18 +437,54 @@ async function initializeAssistants() {
                 throw new Error('OpenAI API key not found. Please contact support.');
             }
 
-            // Import and create assistants service
-            const { AssistantsClassView } = await import('./assistants-class-view.js');
-            assistantsClassView = new AssistantsClassView();
-            
-            await assistantsClassView.initialize();
-            console.log('✅ Assistants service initialized');
+            // Try to import and create assistants service, but make it optional
+            try {
+                const { AssistantsClassView } = await import('./assistants-class-view.js');
+                if (AssistantsClassView && typeof AssistantsClassView === 'function') {
+                    assistantsClassView = new AssistantsClassView();
+                    await assistantsClassView.initialize();
+                    console.log('✅ Assistants service initialized');
+                } else {
+                    throw new Error('AssistantsClassView is not a valid constructor');
+                }
+            } catch (importError) {
+                console.warn('⚠️ Assistants service not available, using fallback:', importError.message);
+                // Create a fallback service that uses regular OpenAI API
+                assistantsClassView = createFallbackAssistantsService(OPENAI_API_KEY);
+                console.log('✅ Fallback assistants service initialized');
+            }
         } catch (error) {
             console.error('❌ Failed to initialize assistants service:', error);
             throw error;
         }
     }
     return assistantsClassView;
+}
+
+// Fallback assistants service using regular OpenAI API
+function createFallbackAssistantsService(apiKey) {
+    return {
+        async createThread() {
+            // No-op for fallback
+            return { id: 'fallback-thread' };
+        },
+        async uploadFile(file) {
+            // No-op for fallback
+            return { id: 'fallback-file' };
+        },
+        async createMessage(threadId, content, fileIds = []) {
+            // No-op for fallback
+            return { id: 'fallback-message' };
+        },
+        async runAssistant(threadId, assistantId) {
+            // No-op for fallback
+            return { id: 'fallback-run' };
+        },
+        async getMessages(threadId) {
+            // No-op for fallback
+            return { data: [] };
+        }
+    };
 }
 
 async function handleFileUpload(event, classData) {
@@ -3690,8 +3726,8 @@ async function editFlashcardSet(guideId, classData) {
         const modal = document.createElement('div');
         modal.className = 'flashcard-edit-modal';
         modal.innerHTML = `
-            <!-- Close Button -->
-            <button class="close-flashcard-edit" onclick="closeFlashcardEdit()">✕</button>
+            <!-- Save and Exit Button -->
+            <button class="save-and-exit-flashcard-edit" onclick="saveFlashcardEdit('${guideId}', '${classData.userId}', '${classData.id}')">Save and Exit</button>
             
             <!-- Main Layout Container -->
             <div class="flashcard-edit-layout-container">
@@ -4818,10 +4854,10 @@ async function openFlashcardQuiz(guideId, classData) {
             
             // Use OpenAI Assistants API for better file reading (like the C# approach)
             const assistants = await initializeAssistants();
-            if (assistants && assistants.assistantsService) {
+            if (assistants) {
                 try {
                     // Create a thread for this conversation
-                    await assistants.assistantsService.createThread();
+                    await assistants.createThread();
                     
                     // Upload ALL documents to OpenAI (multiple files support)
                     const fileIds = [];
@@ -4833,7 +4869,7 @@ async function openFlashcardQuiz(guideId, classData) {
                             
                             if (doc.content && doc.content.startsWith('data:')) {
                                 // Base64 content - convert to file
-                                fileToUpload = assistants.assistantsService.base64ToFile(doc.content, doc.fileName || doc.title, doc.type);
+                                fileToUpload = assistants.base64ToFile ? assistants.base64ToFile(doc.content, doc.fileName || doc.title, doc.type) : null;
                             } else if (doc.type === 'text' && doc.content) {
                                 // Text content - create text file
                                 const textContent = doc.content.replace(/<[^>]*>/g, '').trim();
@@ -4843,7 +4879,7 @@ async function openFlashcardQuiz(guideId, classData) {
                             }
                             
                             if (fileToUpload) {
-                                const uploadResult = await assistants.assistantsService.uploadFile(fileToUpload);
+                                const uploadResult = await assistants.uploadFile(fileToUpload);
                                 fileIds.push(uploadResult.id);
                                 uploadedFiles.push({
                                     id: uploadResult.id,
@@ -4875,7 +4911,7 @@ async function openFlashcardQuiz(guideId, classData) {
                     }
                     
                     // Get response using Assistants API
-                    const response = await assistants.assistantsService.runAssistant(
+                    const response = await assistants.runAssistant(
                         messageOptions.content,
                         messageOptions.attachments || []
                     );
