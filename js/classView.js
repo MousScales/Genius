@@ -2108,12 +2108,16 @@ function showFlashcardExplanationDialog(classData) {
     
     // Confirm button
     document.getElementById('confirmExplanation').addEventListener('click', async () => {
+        console.log('🎯 Create Flashcards button clicked');
         const explanation = document.getElementById('flashcardExplanation').value.trim();
+        console.log('📝 Explanation text:', explanation);
+        
         if (!explanation) {
             alert('Please describe what flashcards you want to create.');
             return;
         }
         
+        console.log('✅ Starting flashcard creation process...');
         document.body.removeChild(modal);
         await createFlashcardsFromExplanation(classData, explanation);
     });
@@ -2135,11 +2139,15 @@ function showFlashcardExplanationDialog(classData) {
 }
 
 async function createFlashcardsFromExplanation(classData, explanation) {
+    console.log('🚀 createFlashcardsFromExplanation called with:', { classData, explanation });
     try {
         // Show brain icon thinking effect
         if (window.CSharpFlashcardService) {
+            console.log('🧠 Showing thinking effect...');
             const flashcardService = new window.CSharpFlashcardService();
             flashcardService.showThinkingEffect('creating flashcards');
+        } else {
+            console.warn('⚠️ CSharpFlashcardService not available');
         }
         
         // Generate flashcards using OpenAI
@@ -2633,6 +2641,7 @@ async function saveEditedFlashcards(guideId, classData) {
 }
 
 async function generateFlashcardsFromExplanation(explanation) {
+    console.log('🤖 generateFlashcardsFromExplanation called with:', explanation);
     try {
         // Get OpenAI API key with fallback
         const currentUserData = localStorage.getItem('currentUser');
@@ -2642,7 +2651,9 @@ async function generateFlashcardsFromExplanation(explanation) {
         
         const currentUser = JSON.parse(currentUserData);
         const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
+        console.log('🔑 API Key available:', !!OPENAI_API_KEY);
         
+        console.log('🌐 Making API call to OpenAI...');
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -2685,19 +2696,24 @@ async function generateFlashcardsFromExplanation(explanation) {
         });
 
         if (!response.ok) {
+            console.error('❌ API response not ok:', response.status, response.statusText);
             throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
         }
 
+        console.log('✅ API response received, parsing...');
         const data = await response.json();
         const content = data.choices[0].message.content;
+        console.log('📝 Raw content:', content);
         
         // Parse the JSON response
         const flashcards = JSON.parse(content);
+        console.log('🎴 Parsed flashcards:', flashcards);
         
         if (!Array.isArray(flashcards)) {
             throw new Error('Invalid response format from OpenAI');
         }
         
+        console.log(`✅ Generated ${flashcards.length} flashcards successfully`);
         return flashcards;
         
     } catch (error) {
