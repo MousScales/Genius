@@ -2880,21 +2880,12 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         console.log('Input wrapper initialized in collapsed state');
     }
     
-    // Add click handler to wrapper to expand it
-    if (inputWrapper) {
-        inputWrapper.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+    // Add input handler to expand when typing
+    if (chatInput) {
+        chatInput.addEventListener('input', () => {
             if (!inputWrapper.classList.contains('expanded')) {
                 inputWrapper.classList.add('expanded');
-                console.log('Input wrapper expanded');
-                // Focus the input after a short delay to allow animation
-                setTimeout(() => {
-                    if (chatInput) {
-                        chatInput.focus();
-                        console.log('Input focused after expansion');
-                    }
-                }, 100);
+                console.log('Input wrapper expanded due to typing');
             }
         });
     }

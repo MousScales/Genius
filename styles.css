@@ -114,7 +114,6 @@
     border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
     display: flex;
@@ -207,7 +206,6 @@ body {
     border: none;
     color: #ffffff;
     font-size: 18px;
-    cursor: pointer;
     padding: 8px;
     border-radius: 4px;
     transition: background-color 0.2s;
@@ -240,7 +238,6 @@ body {
     border: none;
     color: #ffffff;
     text-align: left;
-    cursor: pointer;
     font-size: 14px;
     transition: background-color 0.2s;
 }
@@ -481,7 +478,6 @@ body {
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
-    cursor: pointer;
     font-size: 12px;
     transition: background-color 0.2s;
 }
@@ -502,7 +498,6 @@ body {
     border: none;
     padding: 12px 20px;
     border-radius: 6px;
-    cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: background-color 0.2s;
@@ -523,7 +518,6 @@ body {
     padding: 12px 24px;
     border: none;
     border-radius: 6px;
-    cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s;
@@ -692,7 +686,6 @@ body {
     border: none;
     color: #ffffff;
     font-size: 24px;
-    cursor: pointer;
     padding: 8px;
     display: flex;
     align-items: center;
@@ -800,7 +793,6 @@ body {
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -910,7 +902,6 @@ body {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     display: flex;
@@ -984,7 +975,6 @@ body {
     color: #ffffff;
     padding: 14px 20px;
     text-align: left;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -1186,7 +1176,6 @@ body {
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1249,7 +1238,6 @@ body {
     color: #ffffff;
     font-size: 15px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
 }
 
@@ -1283,7 +1271,6 @@ body {
     color: #ffffff;
     font-size: 15px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
 }
@@ -1319,7 +1306,6 @@ body {
     border-radius: 10px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1365,7 +1351,6 @@ body {
         0 8px 16px rgba(0, 0, 0, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
     display: flex;
     flex-direction: row;
     overflow: hidden;
@@ -1467,7 +1452,6 @@ body {
 .class-menu-btn {
     background: none;
     border: none;
-    cursor: pointer;
     padding: 4px;
     border-radius: 4px;
     transition: background-color 0.2s ease;
@@ -1512,7 +1496,6 @@ body {
     border: none;
     color: #ffffff;
     padding: 12px 16px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1623,7 +1606,7 @@ body {
 }
 
 .big-plus-button {
-    width: 120px;
+    width: 300px;
     height: 120px;
     border-radius: 50%;
     border: none;
@@ -1631,7 +1614,6 @@ body {
     color: white;
     font-size: 48px;
     font-weight: 300;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1677,7 +1659,7 @@ body {
 }
 
 .big-plus-button {
-    width: 120px;
+    width: 300px;
     height: 120px;
     border-radius: 50%;
     border: none;
@@ -1685,7 +1667,6 @@ body {
     color: white;
     font-size: 48px;
     font-weight: 300;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1719,7 +1700,6 @@ body {
     color: white;
     padding: 15px 30px;
     border-radius: 12px;
-    cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1801,7 +1781,6 @@ body {
 
 .form-group select {
     padding-right: 40px;
-    cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -1865,7 +1844,6 @@ body {
     border: 2px solid #555;
     border-radius: 12px;
     padding: 14px;
-    cursor: pointer;
     transition: all 0.3s ease;
     min-height: 70px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2),
@@ -1906,7 +1884,6 @@ body {
     font-weight: 600;
     font-size: 14px;
     margin-bottom: 0;
-    cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1963,7 +1940,6 @@ body {
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -2141,7 +2117,6 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.3s ease;
     background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
@@ -2314,7 +2289,6 @@ body {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2386,7 +2360,6 @@ body {
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2463,7 +2436,6 @@ body {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -2513,7 +2485,6 @@ body {
     color: white;
     border: none;
     border-radius: 8px;
-    cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -2532,7 +2503,6 @@ body {
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -2657,7 +2627,6 @@ body {
     padding: 8px 16px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -2674,7 +2643,6 @@ body {
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2689,7 +2657,6 @@ body {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2751,7 +2718,6 @@ body {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
 }
@@ -2775,7 +2741,6 @@ body {
     padding: 12px 16px;
     margin: 5px 0;
     border-radius: 12px;
-    cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
 }
@@ -2815,7 +2780,6 @@ body {
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    cursor: pointer;
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -2895,7 +2859,6 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 25px;
-    cursor: pointer;
     font-size: 14px;
     color: #ffffff;
     transition: all 0.2s ease;
@@ -3057,7 +3020,6 @@ body {
     border: none;
     background: rgba(0, 0, 0, 0.1);
     border-radius: 6px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3201,7 +3163,6 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
     border-radius: 6px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3319,16 +3280,14 @@ body {
     border-radius: 50px;
     padding: 12px 20px;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 120px;
+    width: 300px;
     overflow: hidden;
     max-width: 600px;
-    cursor: pointer;
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    cursor: default;
 }
 
 .file-attachments {
@@ -3394,7 +3353,6 @@ body {
     background: none;
     border: none;
     color: #999;
-    cursor: pointer;
     font-size: 18px;
     font-weight: bold;
     padding: 0;
@@ -3451,7 +3409,6 @@ body {
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
     font-size: 12px;
     font-weight: bold;
     padding: 0;
@@ -3488,12 +3445,6 @@ body {
     max-height: 200px;
     min-width: 0;
     width: 100%;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.genius-chat-input-wrapper.expanded .genius-chat-input {
     pointer-events: auto;
     opacity: 1;
 }
@@ -3509,7 +3460,6 @@ body {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3537,7 +3487,6 @@ body {
     border-radius: 50%;
     background: linear-gradient(135deg, #4a9eff, #5ba8ff);
     color: white;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3631,7 +3580,6 @@ body {
     gap: 8px;
     flex: 1;
     min-width: 0;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -3671,7 +3619,6 @@ body {
     background: transparent;
     color: rgba(255, 255, 255, 0.5);
     border-radius: 3px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3693,7 +3640,6 @@ body {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3824,7 +3770,6 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.7);
     border-radius: 8px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3931,7 +3876,6 @@ body {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -4235,7 +4179,6 @@ body {
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(10px);
     flex-shrink: 0;
@@ -4287,7 +4230,6 @@ body {
     font-size: 14px;
     font-weight: 500;
     padding: 16px 24px;
-    cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
     text-transform: uppercase;
@@ -4451,7 +4393,6 @@ body {
     padding: 12px 20px;
     font-size: 14px;
     color: #aaaaaa;
-    cursor: pointer;
     transition: background 0.2s ease;
 }
 
@@ -4549,7 +4490,6 @@ body {
     border: none;
     color: #888888;
     padding: 8px 12px;
-    cursor: pointer;
     border-radius: 6px;
     transition: all 0.2s ease;
     display: flex;
@@ -4578,7 +4518,6 @@ body {
     color: #ffffff;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
@@ -4609,7 +4548,6 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: 12px;
 }
@@ -4632,7 +4570,6 @@ body {
     border: none;
     border-radius: 8px;
     overflow: visible;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
@@ -4881,7 +4818,6 @@ body {
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 13px;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -4934,7 +4870,6 @@ body {
     border: none;
     color: #888888;
     font-size: 20px;
-    cursor: pointer;
     padding: 8px 12px;
     border-radius: 6px;
     transition: all 0.2s ease;
@@ -5011,7 +4946,6 @@ body {
     color: #ffffff;
     font-size: 14px;
     text-align: left;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -5055,7 +4989,6 @@ body {
     color: #ffffff;
     font-size: 13px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -5121,7 +5054,6 @@ body.document-editor-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.2s ease;
     color: #ffffff;
     font-size: 18px;
@@ -5181,7 +5113,6 @@ body.document-editor-open {
     color: #888888;
     font-size: 13px;
     padding: 6px 12px;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -5205,7 +5136,6 @@ body.document-editor-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.3s ease;
     padding: 0;
 }
@@ -5225,7 +5155,6 @@ body.document-editor-open {
 }
 
 .doc-tool-btn.doc-back-btn {
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -5251,7 +5180,6 @@ body.document-editor-open {
 }
 
 .doc-tool-btn.doc-back-btn-arrow {
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5311,7 +5239,6 @@ body.document-editor-open {
     color: #ffffff;
     padding: 6px 12px;
     font-size: 13px;
-    cursor: pointer;
     transition: all 0.2s ease;
     min-width: 120px;
     appearance: none;
@@ -5420,7 +5347,6 @@ select.toolbar-select option {
     height: 32px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    cursor: pointer;
     background: transparent;
     transition: all 0.2s ease;
 }
@@ -5460,7 +5386,6 @@ select.toolbar-select option {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.2s ease;
     color: #ffffff;
     font-size: 16px;
@@ -5723,7 +5648,6 @@ select.toolbar-select option {
     padding: 12px 0;
     margin-bottom: 8px;
     border-bottom: 1px solid #333;
-    cursor: pointer;
     user-select: none;
 }
 
@@ -5761,7 +5685,6 @@ select.toolbar-select option {
     background: none;
     border: none;
     color: #aaaaaa;
-    cursor: pointer;
     padding: 4px;
     border-radius: 4px;
     transition: all 0.2s;
@@ -5850,7 +5773,6 @@ select.toolbar-select option {
     padding: 12px 0;
     margin-bottom: 8px;
     border-bottom: 1px solid #333;
-    cursor: pointer;
     user-select: none;
 }
 
@@ -6060,14 +5982,12 @@ select.toolbar-select option {
     padding: 8px 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 120px;
+    width: 300px;
     overflow: hidden;
-    cursor: pointer;
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
-    cursor: default;
 }
 
 .genius-chat-container.focused .genius-chat-input-wrapper {
@@ -6101,12 +6021,6 @@ select.toolbar-select option {
     flex: 1;
     min-width: 0;
     width: 100%;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.genius-chat-input-wrapper.expanded .genius-chat-input {
     pointer-events: auto;
     opacity: 1;
 }
@@ -6125,7 +6039,6 @@ select.toolbar-select option {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
-    cursor: pointer;
     transition: all 0.3s ease;
     flex-shrink: 0;
 }
@@ -6214,7 +6127,6 @@ select.toolbar-select option {
     color: #4a9eff;
     font-size: 18px;
     font-weight: bold;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -6248,7 +6160,6 @@ select.toolbar-select option {
     height: 32px;
     color: #ffffff;
     font-size: 18px;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -6390,7 +6301,6 @@ select.toolbar-select option {
     padding: 8px 12px;
     margin: 4px 0;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
     min-width: 120px;
@@ -6439,7 +6349,6 @@ select.toolbar-select option {
     align-items: center;
     justify-content: center;
     border-radius: 3px;
-    cursor: pointer;
     transition: all 0.2s ease;
     opacity: 0;
     flex-shrink: 0;
@@ -6570,7 +6479,6 @@ select.toolbar-select option {
     font-size: 13px;
     font-weight: 500;
     padding: 8px 16px;
-    cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -6621,7 +6529,7 @@ select.toolbar-select option {
     position: absolute;
     left: 0;
     top: 0;
-    width: 120px; /* Increased width to accommodate multiple horizontal dots */
+    width: 300px; /* Increased width to accommodate multiple horizontal dots */
     height: 100%;
     background: transparent;
     z-index: 100;
@@ -6632,7 +6540,6 @@ select.toolbar-select option {
     left: 10px;
     width: 20px;
     height: 20px;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -6658,7 +6565,6 @@ select.toolbar-select option {
 
 /* Suggestion Markers (underlined text) with different colors */
 .suggestion-marker {
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -6672,7 +6578,6 @@ select.toolbar-select option {
     border-bottom: 3px solid #ff0000 !important;
     background: rgba(255, 0, 0, 0.15) !important;
     position: relative;
-    cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none !important;
     box-shadow: 0 1px 0 0 #ff0000 !important;
@@ -6706,7 +6611,6 @@ select.toolbar-select option {
 .spell-check-suggestion-item {
     padding: 8px 16px;
     color: #ffffff;
-    cursor: pointer;
     transition: all 0.2s ease;
     font-size: 14px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -6866,7 +6770,6 @@ select.toolbar-select option {
     border: none;
     color: #888888;
     font-size: 18px;
-    cursor: pointer;
     padding: 0;
     width: 24px;
     height: 24px;
@@ -6918,7 +6821,6 @@ select.toolbar-select option {
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -7002,7 +6904,6 @@ select.toolbar-select option {
     border-radius: 8px;
     padding: 8px;
     color: #ffffff;
-    cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -7166,7 +7067,6 @@ select.toolbar-select option {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
 }
@@ -7224,7 +7124,6 @@ select.toolbar-select option {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: 12px;
 }
@@ -7270,7 +7169,6 @@ select.toolbar-select option {
     border: none;
     border-radius: 8px;
     overflow: visible;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
@@ -7422,7 +7320,6 @@ select.toolbar-select option {
     color: #ffffff;
     padding: 6px;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -7443,7 +7340,6 @@ select.toolbar-select option {
     border: none;
     border-radius: 8px;
     overflow: visible;
-    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
@@ -7647,7 +7543,6 @@ select.toolbar-select option {
     color: #ffffff;
     padding: 6px;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -7663,7 +7558,6 @@ select.toolbar-select option {
 }
 
 .clickable-flashcard-card {
-    cursor: pointer;
 }
 
 .clickable-flashcard-card:hover {
@@ -7763,7 +7657,6 @@ select.toolbar-select option {
     border-radius: 6px;
     font-size: 12px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -7848,7 +7741,6 @@ select.toolbar-select option {
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
     padding: 8px;
     border-radius: 6px;
     transition: all 0.3s ease;
@@ -7875,7 +7767,6 @@ select.toolbar-select option {
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
-    cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -8052,7 +7943,6 @@ select.toolbar-select option {
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.3s ease;
 }
 
@@ -8131,7 +8021,6 @@ select.toolbar-select option {
     color: #ffffff;
     padding: 8px;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.3s ease;
 }
 
@@ -8299,7 +8188,6 @@ select.toolbar-select option {
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
     padding: 8px;
     border-radius: 6px;
     transition: all 0.3s ease;
@@ -8324,7 +8212,6 @@ select.toolbar-select option {
     max-width: 400px;
     height: 200px;
     perspective: 1000px;
-    cursor: pointer;
 }
 
 .flashcard-front, .flashcard-back {
@@ -8376,7 +8263,6 @@ select.toolbar-select option {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     min-width: 120px;
 }
@@ -8521,7 +8407,6 @@ select.toolbar-select option {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 24px;
-    cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
 }
@@ -8642,7 +8527,6 @@ select.toolbar-select option {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.3s ease;
 }
 
@@ -8948,7 +8832,6 @@ select.toolbar-select option {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     background: rgba(79, 172, 254, 0.2);
     color: #4facfe;
@@ -8977,7 +8860,6 @@ select.toolbar-select option {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -9012,7 +8894,6 @@ select.toolbar-select option {
 
 /* Clickable Stats */
 .clickable-stat {
-    cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 8px;
     padding: 8px;
@@ -9148,7 +9029,6 @@ select.toolbar-select option {
     border: none;
     padding: 12px 16px;
     border-radius: 50%;
-    cursor: pointer;
     font-size: 18px;
     transition: all 0.3s ease;
     z-index: 10002;
@@ -9259,7 +9139,6 @@ select.toolbar-select option {
     border-radius: 8px;
     padding: 8px;
     color: #ffffff;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -9293,7 +9172,6 @@ select.toolbar-select option {
     padding: 10px 16px;
     color: #ffffff;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -9355,7 +9233,6 @@ select.toolbar-select option {
     align-items: center;
     justify-content: flex-start;
     border-radius: 12px;
-    cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
     position: relative;
@@ -9392,7 +9269,6 @@ select.toolbar-select option {
 
 .calendar-day.empty {
     background: transparent;
-    cursor: default;
     opacity: 0.3;
 }
 
@@ -9519,7 +9395,6 @@ select.toolbar-select option {
     border-radius: 6px;
     padding: 6px;
     color: #ffffff;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -9555,7 +9430,6 @@ select.toolbar-select option {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     padding: 12px;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -9643,7 +9517,6 @@ select.toolbar-select option {
     border: none;
     color: #a0a0a0;
     font-size: 20px;
-    cursor: pointer;
     padding: 4px;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -9708,7 +9581,6 @@ select.toolbar-select option {
     padding: 12px 24px;
     border-radius: 8px;
     font-weight: 500;
-    cursor: pointer;
     transition: all 0.2s ease;
     border: none;
     font-size: 14px;
@@ -10321,7 +10193,7 @@ img {
 }
 
 .placeholder-icon {
-    width: 120px;
+    width: 300px;
     height: 60px;
     opacity: 0.8;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
@@ -10368,7 +10240,6 @@ img {
 }
 
 .clickable-example {
-    cursor: pointer;
     user-select: none;
 }
 
@@ -10457,7 +10328,6 @@ img {
     border: none;
     color: #888;
     font-size: 20px;
-    cursor: pointer;
     padding: 4px;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -10834,7 +10704,6 @@ img {
     border-radius: 4px;
     padding: 8px 12px;
     font-size: 12px;
-    cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
 }
@@ -10864,7 +10733,6 @@ img {
     padding: 12px;
     font-size: 16px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     min-height: 50px;
     display: flex;
@@ -11012,7 +10880,6 @@ img {
     padding: 12px 18px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -11205,7 +11072,6 @@ img {
     padding: 8px 12px;
     border-radius: 20px;
     font-size: 0.9em;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -11307,7 +11173,6 @@ img {
     color: #cccccc;
     padding: 6px 10px;
     border-radius: 6px;
-    cursor: pointer;
     font-size: 0.9em;
     transition: all 0.2s ease;
 }
@@ -11369,14 +11234,12 @@ img {
     border-radius: 50px;
     padding: 12px;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 120px;
+    width: 300px;
     overflow: hidden;
-    cursor: pointer;
 }
 
 .genius-chat-input-wrapper.expanded {
     width: 100%;
-    cursor: default;
 }
 
 .genius-chat-input-wrapper:focus-within {
@@ -11397,12 +11260,6 @@ img {
     max-height: 120px;
     font-family: inherit;
     width: 100%;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.genius-chat-input-wrapper.expanded .genius-chat-input {
     pointer-events: auto;
     opacity: 1;
 }
@@ -11420,7 +11277,6 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
 }
@@ -11490,7 +11346,6 @@ img {
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    cursor: pointer;
     font-size: 16px;
     font-weight: bold;
     transition: all 0.2s ease;
@@ -11589,7 +11444,6 @@ img {
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    cursor: pointer;
     font-size: 16px;
     font-weight: bold;
     transition: all 0.2s ease;
@@ -11623,7 +11477,6 @@ img {
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -11776,7 +11629,6 @@ img {
     color: #ffffff;
     font-size: 20px;
     font-weight: bold;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -12034,7 +11886,6 @@ img {
     border: none;
     color: #ffffff;
     font-size: 20px;
-    cursor: pointer;
     padding: 12px;
     border-radius: 50%;
     width: 45px;
@@ -12061,7 +11912,6 @@ img {
     color: #ffffff;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     padding: 12px 20px;
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -12129,7 +11979,6 @@ img {
     border: 2px solid #444;
     border-radius: 12px;
     padding: 15px;
-    cursor: pointer;
     transition: all 0.3s;
     position: relative;
     display: flex;
@@ -12205,7 +12054,6 @@ img {
     color: white;
     width: 22px;
     height: 22px;
-    cursor: pointer;
     font-size: 12px;
     display: flex;
     align-items: center;
@@ -12232,7 +12080,6 @@ img {
     padding: 15px;
     font-size: 16px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s;
 }
 
@@ -12405,7 +12252,6 @@ img {
     padding: 15px 30px;
     font-size: 16px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s;
 }
 
@@ -12448,7 +12294,6 @@ img {
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -12561,7 +12406,6 @@ img {
     padding: 12px 20px;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.3s;
     display: flex;
     align-items: center;
@@ -12589,7 +12433,6 @@ img {
     padding: 18px 35px;
     border: none;
     border-radius: 30px;
-    cursor: pointer;
     font-size: 16px;
     font-weight: 700;
     transition: all 0.3s;
