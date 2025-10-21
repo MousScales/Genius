@@ -1354,6 +1354,6 @@ if (typeof window !== 'undefined') {
     window.CSharpFlashcardService = CSharpFlashcardService;
 }
 
-// ES6 module export
-export { CSharpFlashcardService };
+// Make CSharpFlashcardService globally available
+window.CSharpFlashcardService = CSharpFlashcardService;
 

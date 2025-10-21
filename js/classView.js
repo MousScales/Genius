@@ -6,7 +6,7 @@ async function getFirebaseServices() {
         // Wait for firebase-service.js to load with longer timeout and better error handling
         await new Promise((resolve, reject) => {
             let attempts = 0;
-            const maxAttempts = 100; // 10 seconds timeout (100 * 100ms)
+            const maxAttempts = 50; // 5 seconds timeout (50 * 100ms)
             
             const checkServices = () => {
                 attempts++;
@@ -27,9 +27,14 @@ async function getFirebaseServices() {
                     console.log('✅ Firebase services loaded successfully');
                     resolve();
                 } else if (attempts >= maxAttempts) {
-                    console.error('❌ Timeout waiting for Firebase services to load');
-                    console.error('❌ Available window services:', Object.keys(window).filter(key => key.includes('Service')));
-                    reject(new Error('Firebase services failed to load within timeout period'));
+                    console.warn('⚠️ Timeout waiting for Firebase services, using fallback');
+                    // Create fallback services that use direct Firebase calls
+                    documentService = createFallbackDocumentService();
+                    folderService = createFallbackFolderService();
+                    studyGuideService = createFallbackStudyGuideService();
+                    eventService = createFallbackEventService();
+                    console.log('✅ Using fallback Firebase services');
+                    resolve();
                 } else {
                     setTimeout(checkServices, 100);
                 }
@@ -2117,9 +2122,10 @@ function showFlashcardExplanationDialog(classData) {
 async function createFlashcardsFromExplanation(classData, explanation) {
     try {
         // Show brain icon thinking effect
-        const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-        const flashcardService = new CSharpFlashcardService();
-        flashcardService.showThinkingEffect('creating flashcards');
+        if (window.CSharpFlashcardService) {
+            const flashcardService = new window.CSharpFlashcardService();
+            flashcardService.showThinkingEffect('creating flashcards');
+        }
         
         // Generate flashcards using OpenAI
         const flashcards = await generateFlashcardsFromExplanation(explanation);
@@ -2144,7 +2150,10 @@ async function createFlashcardsFromExplanation(classData, explanation) {
         loadStudyGuides(classData);
         
         // Hide thinking effect
-        flashcardService.hideThinkingEffect();
+        if (window.CSharpFlashcardService) {
+            const flashcardService = new window.CSharpFlashcardService();
+            flashcardService.hideThinkingEffect();
+        }
         
         console.log('Flashcards created from explanation successfully');
         
@@ -2152,9 +2161,10 @@ async function createFlashcardsFromExplanation(classData, explanation) {
         console.error('Error creating flashcards from explanation:', error);
         
         // Hide thinking effect on error
-        const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-        const flashcardService = new CSharpFlashcardService();
-        flashcardService.hideThinkingEffect();
+        if (window.CSharpFlashcardService) {
+            const flashcardService = new window.CSharpFlashcardService();
+            flashcardService.hideThinkingEffect();
+        }
         
         alert('Error creating flashcards. Please check your OpenAI API key and try again.');
     }
@@ -3049,10 +3059,12 @@ async function createStudyGuide(classData, format, folderId, customName = null, 
     }
     
     // Show brain icon thinking effect
-    const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-    const flashcardService = new CSharpFlashcardService();
-    const action = format === 'basic' ? 'creating study guide' : 'creating flashcards';
-    flashcardService.showThinkingEffect(action);
+    let flashcardService = null;
+    if (window.CSharpFlashcardService) {
+        flashcardService = new window.CSharpFlashcardService();
+        const action = format === 'basic' ? 'creating study guide' : 'creating flashcards';
+        flashcardService.showThinkingEffect(action);
+    }
     
     // Process with AI
         try {
@@ -3063,12 +3075,16 @@ async function createStudyGuide(classData, format, folderId, customName = null, 
             }
         
         // Hide thinking effect after completion
-        flashcardService.hideThinkingEffect();
+        if (flashcardService) {
+            flashcardService.hideThinkingEffect();
+        }
         } catch (error) {
             console.error('Error creating study content:', error);
         
         // Hide thinking effect on error
-        flashcardService.hideThinkingEffect();
+        if (flashcardService) {
+            flashcardService.hideThinkingEffect();
+        }
         
             alert('Error creating study content. Please check your OpenAI API key and try again.');
         }
@@ -3138,17 +3154,19 @@ async function createFlashcardSet(classData, sourceDocuments, customName = null,
         await loadStudyGuides(classData);
         
         // Hide thinking effect after everything is complete
-        const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-        const flashcardService = new CSharpFlashcardService();
-        flashcardService.hideThinkingEffect();
+        if (window.CSharpFlashcardService) {
+            const flashcardService = new window.CSharpFlashcardService();
+            flashcardService.hideThinkingEffect();
+        }
         
     } catch (error) {
         console.error('Error creating flashcard set:', error);
         
         // Hide thinking effect on error
-        const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-        const flashcardService = new CSharpFlashcardService();
-        flashcardService.hideThinkingEffect();
+        if (window.CSharpFlashcardService) {
+            const flashcardService = new window.CSharpFlashcardService();
+            flashcardService.hideThinkingEffect();
+        }
         
         alert('Error creating flashcard set. Please try again.');
     }
@@ -6099,6 +6117,95 @@ function deleteEvent(eventId, userId, className) {
             showEventsForDate(selectedCalendarDate, classData);
         }
     }
+}
+
+// Fallback service functions for when main services fail to load
+function createFallbackDocumentService() {
+    return {
+        getDocuments: async (userId, classId) => {
+            const db = window.firebase.firestore();
+            const snapshot = await db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
+        saveDocument: async (userId, classId, document) => {
+            const db = window.firebase.firestore();
+            const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc();
+            await docRef.set({ ...document, id: docRef.id });
+            return docRef.id;
+        },
+        updateDocument: async (userId, classId, docId, updates) => {
+            const db = window.firebase.firestore();
+            await db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc(docId).update(updates);
+        },
+        deleteDocument: async (userId, classId, docId) => {
+            const db = window.firebase.firestore();
+            await db.collection('users').doc(userId).collection('classes').doc(classId).collection('documents').doc(docId).delete();
+        }
+    };
+}
+
+function createFallbackFolderService() {
+    return {
+        getFolders: async (userId, classId) => {
+            const db = window.firebase.firestore();
+            const snapshot = await db.collection('users').doc(userId).collection('classes').doc(classId).collection('folders').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
+        saveFolder: async (userId, classId, folder) => {
+            const db = window.firebase.firestore();
+            const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('folders').doc();
+            await docRef.set({ ...folder, id: docRef.id });
+            return docRef.id;
+        },
+        saveFolders: async (userId, classId, folders) => {
+            const db = window.firebase.firestore();
+            const batch = db.batch();
+            folders.forEach(folder => {
+                const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('folders').doc(folder.id);
+                batch.set(docRef, folder);
+            });
+            await batch.commit();
+        }
+    };
+}
+
+function createFallbackStudyGuideService() {
+    return {
+        getStudyGuides: async (userId, classId) => {
+            const db = window.firebase.firestore();
+            const snapshot = await db.collection('users').doc(userId).collection('classes').doc(classId).collection('study_guides').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
+        saveStudyGuide: async (userId, classId, studyGuide) => {
+            const db = window.firebase.firestore();
+            const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('study_guides').doc();
+            await docRef.set({ ...studyGuide, id: docRef.id });
+            return docRef.id;
+        },
+        deleteStudyGuide: async (userId, classId, guideId) => {
+            const db = window.firebase.firestore();
+            await db.collection('users').doc(userId).collection('classes').doc(classId).collection('study_guides').doc(guideId).delete();
+        }
+    };
+}
+
+function createFallbackEventService() {
+    return {
+        getEvents: async (userId, classId) => {
+            const db = window.firebase.firestore();
+            const snapshot = await db.collection('users').doc(userId).collection('classes').doc(classId).collection('events').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        },
+        saveEvents: async (userId, classId, events) => {
+            const db = window.firebase.firestore();
+            const batch = db.batch();
+            events.forEach(event => {
+                const docRef = db.collection('users').doc(userId).collection('classes').doc(classId).collection('events').doc(event.id);
+                batch.set(docRef, event);
+            });
+            await batch.commit();
+        }
+    };
 }
 
 // Make functions globally available
