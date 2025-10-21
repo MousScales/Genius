@@ -51,9 +51,9 @@
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            padding: 40px;
+            padding: 50px 40px;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -161,6 +161,28 @@
         .btn-google:hover {
             background: rgba(255, 255, 255, 0.08);
             border-color: #4285f4;
+        }
+
+        .btn-apple {
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-apple:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #ffffff;
+        }
+
+        .social-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-buttons .btn {
+            flex: 1;
+            margin-bottom: 0;
         }
 
         .btn:disabled {
@@ -282,30 +304,19 @@
 
         <form id="signupForm">
             <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" name="fullName" required>
+                <input type="text" id="fullName" name="fullName" placeholder="Full Name" required>
             </div>
 
             <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" placeholder="Email Address" required>
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-                <div class="password-requirements">
-                    <h4>Password Requirements:</h4>
-                    <ul>
-                        <li>At least 6 characters long</li>
-                        <li>Mix of letters and numbers recommended</li>
-                    </ul>
-                </div>
+                <input type="password" id="password" name="password" placeholder="Password" required>
             </div>
 
             <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
             </div>
 
             <button type="submit" class="btn btn-primary" id="signupBtn">
@@ -317,15 +328,25 @@
             <span>or</span>
         </div>
 
-        <button class="btn btn-google" id="googleBtn">
-            <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 10px;">
-                <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-                <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-                <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18z"/>
-                <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
-            </svg>
-            Sign up with Google
-        </button>
+        <div class="social-buttons">
+            <button class="btn btn-google" id="googleBtn">
+                <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px;">
+                    <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+                    <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+                    <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18z"/>
+                    <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+                </svg>
+                Google
+            </button>
+
+            <button class="btn btn-apple" id="appleBtn">
+                <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px;">
+                    <path fill="#ffffff" d="M13.5 15.5c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5zm-3-1.5c0 .8-.7 1.5-1.5 1.5s-1.5-.7-1.5-1.5.7-1.5 1.5-1.5 1.5.7 1.5 1.5zm-3 0c0 .8-.7 1.5-1.5 1.5s-1.5-.7-1.5-1.5.7-1.5 1.5-1.5 1.5.7 1.5 1.5zm-3 0c0 .8-.7 1.5-1.5 1.5s-1.5-.7-1.5-1.5.7-1.5 1.5-1.5 1.5.7 1.5 1.5z"/>
+                    <path fill="#ffffff" d="M9 2C5.1 2 2 5.1 2 9s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/>
+                </svg>
+                Apple
+            </button>
+        </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -350,7 +371,7 @@
         };
 
         // Initialize Firebase
-        let app, auth, db, googleProvider;
+        let app, auth, db, googleProvider, appleProvider;
         
         function initFirebase() {
             try {
@@ -358,6 +379,7 @@
                 auth = window.firebase.auth();
                 db = window.firebase.firestore();
                 googleProvider = new window.firebase.auth.GoogleAuthProvider();
+                appleProvider = new window.firebase.auth.OAuthProvider('apple.com');
                 
                 console.log('Firebase initialized successfully');
                 return true;
@@ -394,15 +416,18 @@
             const loadingDiv = document.getElementById('loading');
             const signupBtn = document.getElementById('signupBtn');
             const googleBtn = document.getElementById('googleBtn');
+            const appleBtn = document.getElementById('appleBtn');
             
             if (loading) {
                 loadingDiv.style.display = 'block';
                 signupBtn.disabled = true;
                 googleBtn.disabled = true;
+                appleBtn.disabled = true;
             } else {
                 loadingDiv.style.display = 'none';
                 signupBtn.disabled = false;
                 googleBtn.disabled = false;
+                appleBtn.disabled = false;
             }
         }
 
@@ -436,6 +461,20 @@
                 return user;
             } catch (error) {
                 console.error('Google sign-up error:', error);
+                throw error;
+            }
+        }
+
+        async function signUpWithApple() {
+            try {
+                console.log('Attempting Apple sign-up...');
+                const result = await auth.signInWithPopup(appleProvider);
+                const user = result.user;
+                
+                console.log('Apple sign-up successful:', user.uid);
+                return user;
+            } catch (error) {
+                console.error('Apple sign-up error:', error);
                 throw error;
             }
         }
@@ -557,6 +596,38 @@
                 await handleSuccessfulSignup(user);
             } catch (error) {
                 let errorMessage = 'Google sign-up failed. Please try again.';
+                
+                switch (error.code) {
+                    case 'auth/popup-closed-by-user':
+                        errorMessage = 'Sign-up was cancelled. Please try again.';
+                        break;
+                    case 'auth/popup-blocked':
+                        errorMessage = 'Popup was blocked. Please allow popups and try again.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Network error. Please check your connection and try again.';
+                        break;
+                    case 'auth/account-exists-with-different-credential':
+                        errorMessage = 'An account already exists with this email address.';
+                        break;
+                    default:
+                        errorMessage = error.message;
+                }
+                
+                showError(errorMessage);
+                setLoading(false);
+            }
+        });
+
+        document.getElementById('appleBtn').addEventListener('click', async () => {
+            hideMessages();
+            setLoading(true);
+
+            try {
+                const user = await signUpWithApple();
+                await handleSuccessfulSignup(user);
+            } catch (error) {
+                let errorMessage = 'Apple sign-up failed. Please try again.';
                 
                 switch (error.code) {
                     case 'auth/popup-closed-by-user':
