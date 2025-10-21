@@ -2874,6 +2874,12 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     const sendBtn = document.getElementById('geniusSendBtn');
     const inputWrapper = document.getElementById('geniusInputWrapper');
     
+    // Ensure input wrapper starts in collapsed state
+    if (inputWrapper) {
+        inputWrapper.classList.remove('expanded');
+        console.log('Input wrapper initialized in collapsed state');
+    }
+    
     const OPENAI_API_KEY = window.getOpenAIApiKey() || window.APP_CONFIG.OPENAI_API_KEY;
     
     // Mode state: 'help' or 'edit'
@@ -2911,6 +2917,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         console.log('Genius input focused');
         // Expand input wrapper when focused
         if (inputWrapper) {
+            console.log('Adding expanded class to input wrapper');
             inputWrapper.classList.add('expanded');
         }
     });
@@ -2920,6 +2927,7 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         console.log('Genius input blurred');
         // Collapse input wrapper when not focused and empty
         if (inputWrapper && (!chatInput.value || chatInput.value.trim() === '')) {
+            console.log('Removing expanded class from input wrapper');
             inputWrapper.classList.remove('expanded');
         }
     });

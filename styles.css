@@ -3484,8 +3484,7 @@ body {
     resize: none;
     min-height: 24px;
     max-height: 200px;
-    width: 100%;
-    max-width: 500px;
+    min-width: 0;
 }
 
 .genius-chat-input::placeholder {
@@ -6086,12 +6085,8 @@ select.toolbar-select option {
     font-size: 14px;
     font-family: 'Segoe UI', system-ui, sans-serif;
     outline: none;
-    width: 220px;
-    transition: width 0.3s ease;
-}
-
-.genius-chat-container.focused .genius-chat-input {
-    width: 280px;
+    flex: 1;
+    min-width: 0;
 }
 
 .genius-chat-input::placeholder {
