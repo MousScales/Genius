@@ -5532,49 +5532,6 @@ select.toolbar-select option {
     border-radius: 8px;
 }
 
-.image-wrapper {
-    position: relative;
-    display: inline-block;
-    max-width: 100%;
-    margin: 10px 0;
-    cursor: move;
-    user-select: none;
-    transition: box-shadow 0.2s ease;
-}
-
-.image-wrapper:hover {
-    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.5);
-}
-
-.image-wrapper.resizing {
-    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.8);
-}
-
-.resize-handle {
-    position: absolute;
-    bottom: -8px;
-    right: -8px;
-    width: 20px;
-    height: 20px;
-    background: #4a9eff;
-    border: 2px solid white;
-    border-radius: 50%;
-    cursor: se-resize;
-    display: none;
-    z-index: 10;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    font-size: 12px;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.resize-handle:hover {
-    background: #3a8bef;
-    transform: scale(1.1);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-}
 
 /* .page-break removed - no longer needed for infinite page */
 

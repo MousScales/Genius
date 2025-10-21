@@ -346,14 +346,6 @@ function createEditorScreen(classData, existingDoc) {
             <div class="toolbar-divider"></div>
             
             <div class="toolbar-group">
-                <button class="toolbar-btn" id="imageBtn" title="Insert Image" tabindex="-1">
-                    🖼️
-                </button>
-            </div>
-            
-            <div class="toolbar-divider"></div>
-            
-            <div class="toolbar-group">
                 <button class="toolbar-btn" id="undoBtn" title="Undo (Ctrl+Z)" tabindex="-1">
                     ↶
                 </button>
@@ -489,10 +481,6 @@ function setupEditorControls(classData, existingDoc) {
     // Initialize undo/redo functionality
     initializeUndoRedo();
     
-    // Reattach image functionality after content is loaded
-    setTimeout(() => {
-        reattachImageFunctionality();
-    }, 100);
     
     // Store the document ID to ensure we always update the same document
     let currentDocId = existingDoc ? existingDoc.id : Date.now().toString();
@@ -1261,183 +1249,6 @@ function setupToolbarButtons() {
     // Text color button removed
     
     // Image
-    const imageBtn = document.getElementById('imageBtn');
-    if (imageBtn) {
-        imageBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Create hidden file input
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.style.display = 'none';
-            
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const imageUrl = event.target.result;
-                        
-                        // Create a wrapper div for the image with resize handles
-                        const imageWrapper = document.createElement('div');
-                        imageWrapper.className = 'image-wrapper';
-                        imageWrapper.contentEditable = 'false';
-                        imageWrapper.style.cssText = `
-                            position: relative;
-                            display: inline-block;
-                            max-width: 100%;
-                            margin: 10px 0;
-                            cursor: move;
-                        `;
-                        
-                        const img = document.createElement('img');
-                        img.src = imageUrl;
-                        img.style.cssText = `
-                            width: 300px;
-                            height: auto;
-                            display: block;
-                            border-radius: 8px;
-                            pointer-events: none;
-                        `;
-                        
-                        // Add resize handle
-                        const resizeHandle = document.createElement('div');
-                        resizeHandle.className = 'resize-handle';
-                        resizeHandle.style.cssText = `
-                            position: absolute;
-                            bottom: -8px;
-                            right: -8px;
-                            width: 20px;
-                            height: 20px;
-                            background: #4a9eff;
-                            border: 2px solid white;
-                            border-radius: 50%;
-                            cursor: se-resize;
-                            display: none;
-                            z-index: 10;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                        `;
-                        
-                        // Add resize icon
-                        resizeHandle.innerHTML = '↘';
-                        resizeHandle.style.fontSize = '12px';
-                        resizeHandle.style.color = 'white';
-                        resizeHandle.style.display = 'flex';
-                        resizeHandle.style.alignItems = 'center';
-                        resizeHandle.style.justifyContent = 'center';
-                        
-                        imageWrapper.appendChild(img);
-                        imageWrapper.appendChild(resizeHandle);
-                        
-                        // Show/hide resize handle on hover
-                        imageWrapper.addEventListener('mouseenter', () => {
-                            resizeHandle.style.display = 'block';
-                        });
-                        imageWrapper.addEventListener('mouseleave', () => {
-                            if (!imageWrapper.classList.contains('resizing')) {
-                                resizeHandle.style.display = 'none';
-                            }
-                        });
-                        
-                        // Make image draggable
-                        let isDragging = false;
-                        let startX, startY, startLeft, startTop;
-                        
-                        imageWrapper.addEventListener('mousedown', (e) => {
-                            if (e.target === resizeHandle) return;
-                            isDragging = true;
-                            startX = e.clientX;
-                            startY = e.clientY;
-                            const rect = imageWrapper.getBoundingClientRect();
-                            startLeft = rect.left;
-                            startTop = rect.top;
-                            imageWrapper.style.position = 'absolute';
-                            imageWrapper.style.left = startLeft + 'px';
-                            imageWrapper.style.top = startTop + 'px';
-                            e.preventDefault();
-                        });
-                        
-                        document.addEventListener('mousemove', (e) => {
-                            if (isDragging) {
-                                const deltaX = e.clientX - startX;
-                                const deltaY = e.clientY - startY;
-                                imageWrapper.style.left = (startLeft + deltaX) + 'px';
-                                imageWrapper.style.top = (startTop + deltaY) + 'px';
-                            }
-                        });
-                        
-                        document.addEventListener('mouseup', () => {
-                            if (isDragging) {
-                                isDragging = false;
-                                
-                                // Trigger save after dragging is complete
-                                if (typeof triggerFormattingSave === 'function') {
-                                    triggerFormattingSave();
-                                }
-                            }
-                        });
-                        
-                        // Make image resizable
-                        let isResizing = false;
-                        let startWidth, startHeight, aspectRatio;
-                        
-                        resizeHandle.addEventListener('mousedown', (e) => {
-                            isResizing = true;
-                            startX = e.clientX;
-                            startWidth = img.offsetWidth;
-                            startHeight = img.offsetHeight;
-                            aspectRatio = startWidth / startHeight;
-                            imageWrapper.classList.add('resizing');
-                            e.stopPropagation();
-                            e.preventDefault();
-                        });
-                        
-                        document.addEventListener('mousemove', (e) => {
-                            if (isResizing) {
-                                const deltaX = e.clientX - startX;
-                                const newWidth = Math.max(100, startWidth + deltaX);
-                                const newHeight = newWidth / aspectRatio;
-                                
-                                img.style.width = newWidth + 'px';
-                                img.style.height = newHeight + 'px';
-                            }
-                        });
-                        
-                        document.addEventListener('mouseup', () => {
-                            if (isResizing) {
-                                isResizing = false;
-                                imageWrapper.classList.remove('resizing');
-                                resizeHandle.style.display = 'none';
-                                
-                                // Trigger save after resizing is complete
-                                if (typeof triggerFormattingSave === 'function') {
-                                    triggerFormattingSave();
-                                }
-                            }
-                        });
-                        
-                        // Insert into editor
-                        const selection = window.getSelection();
-                        if (selection.rangeCount > 0) {
-                            const range = selection.getRangeAt(0);
-                            range.insertNode(imageWrapper);
-                            range.collapse(false);
-                        }
-                        
-                        // Trigger auto-save after image insertion
-                        triggerFormattingSave();
-                    };
-                    reader.readAsDataURL(file);
-                }
-                // Remove the input element
-                fileInput.remove();
-            });
-            
-            // Trigger file picker
-            document.body.appendChild(fileInput);
-            fileInput.click();
-        });
-    }
     
     // Undo/Redo buttons
     const undoBtn = document.getElementById('undoBtn');
@@ -5132,10 +4943,6 @@ function undo() {
         // Update button states
         updateUndoRedoButtons();
         
-        // Reattach image functionality after undo
-        setTimeout(() => {
-            reattachImageFunctionality();
-        }, 50);
         
         showNotification('Undo successful', 'success');
         console.log('Undo performed. Undo stack size:', undoStack.length, 'Redo stack size:', redoStack.length);
@@ -5173,144 +4980,11 @@ function redo() {
     // Update button states
     updateUndoRedoButtons();
     
-    // Reattach image functionality after redo
-    setTimeout(() => {
-        reattachImageFunctionality();
-    }, 50);
     
     showNotification('Redo successful', 'success');
     console.log('Redo performed. Undo stack size:', undoStack.length, 'Redo stack size:', redoStack.length);
 }
 
-// Function to reattach image functionality after content is loaded
-function reattachImageFunctionality() {
-    const content = document.getElementById('docEditorContent');
-    if (!content) return;
-    
-    // Find all existing images and reattach functionality
-    const imageWrappers = content.querySelectorAll('.image-wrapper');
-    imageWrappers.forEach(imageWrapper => {
-        const img = imageWrapper.querySelector('img');
-        const resizeHandle = imageWrapper.querySelector('.resize-handle');
-        
-        if (!img || !resizeHandle) return;
-        
-        // Remove existing event listeners by cloning the elements
-        const newImageWrapper = imageWrapper.cloneNode(true);
-        const newImg = newImageWrapper.querySelector('img');
-        const newResizeHandle = newImageWrapper.querySelector('.resize-handle');
-        
-        // Copy styles
-        newImageWrapper.style.cssText = imageWrapper.style.cssText;
-        newImg.style.cssText = img.style.cssText;
-        newResizeHandle.style.cssText = resizeHandle.style.cssText;
-        
-        // Replace the old wrapper with the new one
-        imageWrapper.parentNode.replaceChild(newImageWrapper, imageWrapper);
-        
-        // Reattach all functionality
-        attachImageFunctionality(newImageWrapper, newImg, newResizeHandle);
-    });
-}
-
-// Function to attach image functionality to a specific image wrapper
-function attachImageFunctionality(imageWrapper, img, resizeHandle) {
-    // Show/hide resize handle on hover
-    imageWrapper.addEventListener('mouseenter', () => {
-        resizeHandle.style.display = 'block';
-    });
-    imageWrapper.addEventListener('mouseleave', () => {
-        if (!imageWrapper.classList.contains('resizing')) {
-            resizeHandle.style.display = 'none';
-        }
-    });
-    
-    // Make image draggable
-    let isDragging = false;
-    let startX, startY, startLeft, startTop;
-    
-    imageWrapper.addEventListener('mousedown', (e) => {
-        if (e.target === resizeHandle) return;
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        const rect = imageWrapper.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-        imageWrapper.style.position = 'absolute';
-        imageWrapper.style.zIndex = '1000';
-        e.stopPropagation();
-        e.preventDefault();
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-            imageWrapper.style.left = (startLeft + deltaX) + 'px';
-            imageWrapper.style.top = (startTop + deltaY) + 'px';
-        }
-    });
-    
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            imageWrapper.style.position = 'relative';
-            imageWrapper.style.zIndex = 'auto';
-            imageWrapper.style.left = 'auto';
-            imageWrapper.style.top = 'auto';
-            
-            // Trigger save after dragging is complete
-            if (typeof triggerFormattingSave === 'function') {
-                triggerFormattingSave();
-            }
-        }
-    });
-    
-    // Make image resizable
-    let isResizing = false;
-    let startWidth, startHeight, aspectRatio;
-    
-    resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        startX = e.clientX;
-        startWidth = img.offsetWidth;
-        startHeight = img.offsetHeight;
-        aspectRatio = startWidth / startHeight;
-        imageWrapper.classList.add('resizing');
-        e.stopPropagation();
-        e.preventDefault();
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (isResizing) {
-            const deltaX = e.clientX - startX;
-            const newWidth = Math.max(100, startWidth + deltaX);
-            const newHeight = newWidth / aspectRatio;
-            
-            img.style.width = newWidth + 'px';
-            img.style.height = newHeight + 'px';
-            
-            console.log('🖼️ Resizing image:', { newWidth, newHeight, aspectRatio });
-        }
-    });
-    
-    document.addEventListener('mouseup', () => {
-        if (isResizing) {
-            isResizing = false;
-            imageWrapper.classList.remove('resizing');
-            resizeHandle.style.display = 'none';
-            
-            console.log('🖼️ Image resize completed, triggering save...');
-            console.log('🖼️ Final image size:', { width: img.style.width, height: img.style.height });
-            
-            // Trigger save after resizing is complete
-            if (typeof triggerFormattingSave === 'function') {
-                triggerFormattingSave();
-            }
-        }
-    });
-}
 
 // Global function to type out content with animation (like geniusChat.js)
 window.typeOutContent = function(contentElement, text) {
