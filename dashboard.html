@@ -143,7 +143,7 @@
                     </button>
                 </div>
 
-                <div class="settings-section">
+                <!-- <div class="settings-section">
                     <h3>OpenAI API Key</h3>
                     <p class="settings-description">Add your OpenAI API key to use the Chat with Genius feature.</p>
                     <div class="input-group">
@@ -155,7 +155,7 @@
                             Get your API key from OpenAI Platform
                         </a>
                     </p>
-                </div>
+                </div> -->
             </div>
             <div class="settings-footer">
                 <button id="saveSettingsBtn" class="save-settings-btn">Save Settings</button>
@@ -415,7 +415,7 @@
             const currentUserData = localStorage.getItem('currentUser');
             if (currentUserData) {
                 const currentUser = JSON.parse(currentUserData);
-                document.getElementById('openaiApiKey').value = currentUser.openaiApiKey || '';
+                // document.getElementById('openaiApiKey').value = currentUser.openaiApiKey || ''; // COMMENTED OUT
                 document.getElementById('schoolName').value = currentUser.school || '';
                 document.getElementById('majorField').value = currentUser.major || '';
             }
@@ -470,19 +470,19 @@
             }
         });
 
-        // Toggle API key visibility
-        document.getElementById('toggleApiKey').addEventListener('click', () => {
-            const input = document.getElementById('openaiApiKey');
-            const button = document.getElementById('toggleApiKey');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                button.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                button.textContent = '👁️';
-            }
-        });
+        // Toggle API key visibility - COMMENTED OUT
+        // document.getElementById('toggleApiKey').addEventListener('click', () => {
+        //     const input = document.getElementById('openaiApiKey');
+        //     const button = document.getElementById('toggleApiKey');
+        //     
+        //     if (input.type === 'password') {
+        //         input.type = 'text';
+        //         button.textContent = '🙈';
+        //     } else {
+        //         input.type = 'password';
+        //         button.textContent = '👁️';
+        //     }
+        // });
 
         // Manage subscription button (coming soon)
         document.getElementById('manageSubscriptionBtn').addEventListener('click', () => {
@@ -533,32 +533,32 @@
 
         // Save settings
         document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-            const apiKey = document.getElementById('openaiApiKey').value.trim();
+            // const apiKey = document.getElementById('openaiApiKey').value.trim(); // COMMENTED OUT
             
-            if (!apiKey) {
-                alert('Please enter your OpenAI API key.');
-                return;
-            }
+            // if (!apiKey) {
+            //     alert('Please enter your OpenAI API key.');
+            //     return;
+            // }
 
             try {
                 const currentUserData = localStorage.getItem('currentUser');
                 if (currentUserData) {
                     const currentUser = JSON.parse(currentUserData);
-                    currentUser.openaiApiKey = apiKey;
+                    // currentUser.openaiApiKey = apiKey; // COMMENTED OUT
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
                     // Also save to Firebase profile
                     const db = window.firebase.firestore();
                     await db.collection('users').doc(currentUser.uid).set({
-                        openaiApiKey: apiKey,
+                        // openaiApiKey: apiKey, // COMMENTED OUT
                         updatedAt: new Date()
                     }, { merge: true });
                     
-                    console.log('API key saved successfully');
+                    console.log('Settings saved successfully');
                     closeSettingsModal();
                     
                     // Show success message
-                    alert('Settings saved successfully! You can now use Chat with Genius.');
+                    alert('Settings saved successfully!');
                 }
             } catch (error) {
                 console.error('Error saving settings:', error);
