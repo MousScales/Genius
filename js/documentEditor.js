@@ -2880,6 +2880,34 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         console.log('Input wrapper initialized in collapsed state');
     }
     
+    // Add click handler to wrapper to expand when clicked
+    if (inputWrapper) {
+        inputWrapper.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!inputWrapper.classList.contains('expanded')) {
+                inputWrapper.classList.add('expanded');
+                console.log('Input wrapper expanded due to wrapper click');
+            }
+            if (chatInput) {
+                chatInput.focus();
+            }
+        });
+    }
+    
+    // Add click handler to expand when clicked
+    if (chatInput) {
+        chatInput.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!inputWrapper.classList.contains('expanded')) {
+                inputWrapper.classList.add('expanded');
+                console.log('Input wrapper expanded due to input click');
+            }
+            chatInput.focus();
+        });
+    }
+    
     // Add input handler to expand when typing
     if (chatInput) {
         chatInput.addEventListener('input', () => {
@@ -2912,6 +2940,11 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
     chatInput.disabled = false;
     chatInput.readOnly = false;
     chatInput.tabIndex = 0;
+    
+    // Additional setup to ensure input works
+    chatInput.style.pointerEvents = 'auto';
+    chatInput.style.opacity = '1';
+    chatInput.style.visibility = 'visible';
     
     // Add click handler to ensure input is always focusable
     chatInput.addEventListener('click', (e) => {
