@@ -200,7 +200,7 @@ function generatePages(content) {
              spellcheck="true" 
              tabindex="0">
             ${hasContent ? content : ''}
-            ${!hasContent ? '<div class="empty-document-placeholder"><div class="placeholder-content"><img src="assets/darkgenius.png" alt="Genius AI" class="placeholder-icon"><h3>Start Writing with Genius AI</h3><p>Switch to edit mode and ask Genius to write your first draft, or begin typing to get started</p><div class="placeholder-examples"><span class="example-tag clickable-example" data-example="Write a blog post about">"Write a blog post about..."</span><span class="example-tag clickable-example" data-example="Create a report on">"Create a report on..."</span><span class="example-tag clickable-example" data-example="Draft an email about">"Draft an email about..."</span></div><div class="placeholder-hint">💡 Click any example above or type your own request</div></div></div>' : ''}
+            <div class="ghost-text-hint" style="display: ${hasContent ? 'none' : 'block'}">Click the ? to switch to edit with Genius to write your essay for you</div>
         </div>
     `;
 }
@@ -2760,7 +2760,7 @@ function updatePlaceholderVisibility() {
         // Remove ghost text if it exists
         removeGhostText();
     } else {
-        // Show simple ghost text instead of overlay
+        // Always show ghost text for empty documents
         if (!content.querySelector('.ghost-text-hint')) {
             content.innerHTML = '<div class="ghost-text-hint">Click the ? to switch to edit with Genius to write your essay for you</div>';
         }
