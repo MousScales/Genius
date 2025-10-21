@@ -939,76 +939,75 @@ function shareDocument(doc) {
 
 function generateAndSharePDF(doc) {
     try {
-        // Create a temporary container for PDF generation
-        const printContainer = document.createElement('div');
-        printContainer.style.cssText = `
-            position: fixed;
-            top: -9999px;
-            left: -9999px;
-            width: 8.5in;
-            background: white;
-            color: black;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        `;
-        
-        // Add title
-        const titleEl = document.createElement('h1');
-        titleEl.textContent = doc.title;
-        titleEl.style.cssText = 'color: black; margin-bottom: 20px; font-size: 24px; text-align: center;';
-        printContainer.appendChild(titleEl);
-        
-        // Add content
-        const contentEl = document.createElement('div');
-        contentEl.innerHTML = doc.content;
-        contentEl.style.cssText = `
-            color: black;
-            background: white;
-            padding: 1in;
-            min-height: 9.5in;
-            page-break-after: auto;
-            line-height: 1.6;
-        `;
-        printContainer.appendChild(contentEl);
-        
-        document.body.appendChild(printContainer);
-        
-        // Use browser's print dialog with the container
-        const originalContents = document.body.innerHTML;
-        const originalTitle = document.title;
-        document.body.innerHTML = printContainer.innerHTML;
-        document.title = doc.title; // Set the filename
-        
-        // Try to use the Web Share API with PDF
-        if (navigator.share) {
-            // For now, we'll use the print dialog and then try to share
-            window.print();
-            
-            // After printing, try to share
-            setTimeout(() => {
-                navigator.share({
-                    title: doc.title,
-                    text: `Check out my document: ${doc.title}`,
-                    files: [] // Note: Web Share API doesn't support PDF files directly in all browsers
-                }).catch(err => {
-                    console.log('Share cancelled or not supported');
-                    // Fallback to clipboard
-                    copyToClipboard(`Check out my document: ${doc.title}`);
-                });
-            }, 1000);
-        } else {
-            // Fallback: show print dialog and copy text to clipboard
-            window.print();
-            setTimeout(() => {
-                copyToClipboard(`Check out my document: ${doc.title}`);
-            }, 1000);
+        // Check if jsPDF is available
+        if (typeof window.jspdf === 'undefined') {
+            alert('PDF generation library not loaded. Please refresh the page and try again.');
+            return;
         }
         
-        // Restore original content
-        setTimeout(() => {
-            document.body.innerHTML = originalContents;
-            document.title = originalTitle;
-            document.body.removeChild(printContainer);
-        }, 2000);
+        const { jsPDF } = window.jspdf;
+        const pdfDoc = new jsPDF();
+        
+        // Set up PDF styling
+        const pageWidth = pdfDoc.internal.pageSize.getWidth();
+        const pageHeight = pdfDoc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - (margin * 2);
+        
+        // Add title
+        pdfDoc.setFontSize(20);
+        pdfDoc.setFont(undefined, 'bold');
+        const titleLines = pdfDoc.splitTextToSize(doc.title, maxWidth);
+        pdfDoc.text(titleLines, margin, margin + 10);
+        
+        // Get content text (strip HTML tags for now)
+        const contentText = doc.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+        
+        // Add content
+        pdfDoc.setFontSize(12);
+        pdfDoc.setFont(undefined, 'normal');
+        const contentLines = pdfDoc.splitTextToSize(contentText, maxWidth);
+        
+        let yPosition = margin + 30;
+        const lineHeight = 7;
+        
+        for (let i = 0; i < contentLines.length; i++) {
+            // Check if we need a new page
+            if (yPosition + lineHeight > pageHeight - margin) {
+                pdfDoc.addPage();
+                yPosition = margin;
+            }
+            
+            pdfDoc.text(contentLines[i], margin, yPosition);
+            yPosition += lineHeight;
+        }
+        
+        // Generate PDF blob
+        const pdfBlob = pdfDoc.output('blob');
+        const fileName = `${doc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+        
+        // Try to use the Web Share API with PDF
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfBlob] })) {
+            navigator.share({
+                title: doc.title,
+                text: `Check out my document: ${doc.title}`,
+                files: [new File([pdfBlob], fileName, { type: 'application/pdf' })]
+            }).catch(err => {
+                console.log('Share cancelled or not supported, downloading instead');
+                // Fallback to download
+                pdfDoc.save(fileName);
+            });
+        } else {
+            // Fallback: download the PDF
+            pdfDoc.save(fileName);
+            
+            // Also try to copy link to clipboard
+            setTimeout(() => {
+                copyToClipboard(`Check out my document: ${doc.title}`);
+            }, 500);
+        }
+        
+        console.log('PDF generated and shared:', fileName);
         
     } catch (error) {
         console.error('Error generating PDF:', error);

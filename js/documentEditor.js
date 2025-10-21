@@ -1817,49 +1817,60 @@ function downloadAsPDF() {
         return;
     }
     
-    // Create a temporary container for printing
-    const printContainer = document.createElement('div');
-    printContainer.style.cssText = `
-        position: fixed;
-        top: -9999px;
-        left: -9999px;
-        width: 8.5in;
-        background: white;
-        color: black;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    `;
-    
-    // Add title
-    const titleEl = document.createElement('h1');
-    titleEl.textContent = title;
-    titleEl.style.cssText = 'color: black; margin-bottom: 20px; font-size: 24px;';
-    printContainer.appendChild(titleEl);
-    
-    // Add content
-    const contentClone = content.cloneNode(true);
-    contentClone.style.cssText = `
-        color: black;
-        background: white;
-        padding: 1in;
-        min-height: 9.5in;
-        page-break-after: auto;
-    `;
-    printContainer.appendChild(contentClone);
-    
-    document.body.appendChild(printContainer);
-    
-    // Use browser's print dialog with the container
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContainer.innerHTML;
-    document.title = title; // Set the filename
-    
-    window.print();
-    
-    // Restore original content
-    document.body.innerHTML = originalContents;
-    
-    // Reload the page to restore all event listeners
-    window.location.reload();
+    try {
+        // Check if jsPDF is available
+        if (typeof window.jspdf === 'undefined') {
+            alert('PDF generation library not loaded. Please refresh the page and try again.');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Set up PDF styling
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const maxWidth = pageWidth - (margin * 2);
+        
+        // Add title
+        doc.setFontSize(20);
+        doc.setFont(undefined, 'bold');
+        const titleLines = doc.splitTextToSize(title, maxWidth);
+        doc.text(titleLines, margin, margin + 10);
+        
+        // Get content text (strip HTML tags for now)
+        const contentText = content.innerText || content.textContent || '';
+        
+        // Add content
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+        const contentLines = doc.splitTextToSize(contentText, maxWidth);
+        
+        let yPosition = margin + 30;
+        const lineHeight = 7;
+        
+        for (let i = 0; i < contentLines.length; i++) {
+            // Check if we need a new page
+            if (yPosition + lineHeight > pageHeight - margin) {
+                doc.addPage();
+                yPosition = margin;
+            }
+            
+            doc.text(contentLines[i], margin, yPosition);
+            yPosition += lineHeight;
+        }
+        
+        // Save the PDF
+        const fileName = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+        doc.save(fileName);
+        
+        console.log('PDF generated and downloaded:', fileName);
+        
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+    }
 }
 
 function humanizeText() {
