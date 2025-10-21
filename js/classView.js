@@ -218,7 +218,7 @@ function createClassView(classData) {
                         <!-- Documents will appear here -->
                     </div>
                     
-                    <div class="empty-documents" id="emptyDocuments">
+                    <div class="empty-documents" id="emptyDocuments" style="display: none;">
                         <div class="empty-stream-icon">📄</div>
                         <h3>No documents yet</h3>
                         <p>Create a new document or upload files to get started</p>
@@ -255,7 +255,7 @@ function createClassView(classData) {
                         <!-- Study guides will appear here -->
                     </div>
                     
-                    <div class="empty-study-guides" id="emptyStudyGuides">
+                    <div class="empty-study-guides" id="emptyStudyGuides" style="display: none;">
                         <div class="empty-icon">📖</div>
                         <h3>No study guides yet</h3>
                         <p>Create study guides from your documents to help with studying</p>

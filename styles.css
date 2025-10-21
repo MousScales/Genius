@@ -4955,6 +4955,7 @@ body {
 }
 
 .empty-documents {
+    display: none; /* Hidden by default, shown only when no documents */
     text-align: center;
     padding: 60px 20px;
     background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
@@ -7643,7 +7644,7 @@ select.toolbar-select option {
 }
 
 .empty-study-guides {
-    display: flex;
+    display: none; /* Hidden by default, shown only when no study guides */
     flex-direction: column;
     align-items: center;
     justify-content: center;
