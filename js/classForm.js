@@ -411,7 +411,13 @@ function setupLivePreview() {
     
     const createBtn = document.getElementById('createBtn');
     if (createBtn) {
-        createBtn.addEventListener('click', createClass);
+        console.log('✅ Create Class button event listener added');
+        createBtn.addEventListener('click', (event) => {
+            console.log('🖱️ Create Class button clicked!');
+            createClass(event);
+        });
+    } else {
+        console.error('❌ Create Class button not found!');
     }
     
     const backBtnCustom = document.getElementById('backBtnCustom');
@@ -611,18 +617,30 @@ function updatePreview() {
 
 // Create class
 async function createClass(event) {
-    console.log('Create Class button clicked!');
+    console.log('🚀 Create Class function called!');
     
     if (event) {
         event.preventDefault();
     }
     
-    console.log('Creating class...');
+    // Add visual feedback
+    const createBtn = document.getElementById('createBtn');
+    if (createBtn) {
+        createBtn.textContent = 'Creating...';
+        createBtn.disabled = true;
+    }
+    
+    console.log('📝 Creating class...');
     
     const user = getCurrentUser();
     if (!user) {
         alert('Please log in to create a class');
         console.error('No user logged in');
+        // Reset button
+        if (createBtn) {
+            createBtn.textContent = 'Create Class';
+            createBtn.disabled = false;
+        }
         return;
     }
     
@@ -663,16 +681,34 @@ async function createClass(event) {
     const classInstructor = document.getElementById('classInstructor')?.value || '';
     const classMaterials = document.getElementById('classMaterials')?.value || '';
     
-    // Validate required fields (only class name is required)
+    // Validate required fields
     if (!className || !className.trim()) {
-        alert('Please enter a class name to continue. You can fill in other details later.');
+        alert('Please enter a class name to continue.');
         console.log('Validation failed: No class name');
-        // Focus on the class name input
         const classNameInput = document.getElementById('className');
         if (classNameInput) {
             classNameInput.focus();
         }
-        // Don't close form, let user keep editing
+        // Reset button
+        if (createBtn) {
+            createBtn.textContent = 'Create Class';
+            createBtn.disabled = false;
+        }
+        return;
+    }
+    
+    if (!classLevel || !classLevel.trim()) {
+        alert('Please select a class level to continue.');
+        console.log('Validation failed: No class level');
+        const classLevelSelect = document.getElementById('classLevel');
+        if (classLevelSelect) {
+            classLevelSelect.focus();
+        }
+        // Reset button
+        if (createBtn) {
+            createBtn.textContent = 'Create Class';
+            createBtn.disabled = false;
+        }
         return;
     }
     
@@ -748,6 +784,11 @@ async function createClass(event) {
     } catch (error) {
         console.error('Error creating class:', error);
         alert('Error creating class: ' + error.message);
+        // Reset button
+        if (createBtn) {
+            createBtn.textContent = 'Create Class';
+            createBtn.disabled = false;
+        }
     }
 }
 
