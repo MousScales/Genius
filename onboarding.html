@@ -148,6 +148,59 @@
             color: #888888;
         }
 
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .autocomplete-suggestion {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #ffffff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background-color 0.2s ease;
+        }
+
+        .autocomplete-suggestion:hover,
+        .autocomplete-suggestion.highlighted {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .autocomplete-suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .ghost-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 15px 20px;
+            color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            font-size: 16px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            z-index: 1;
+        }
+
         select option {
             background: #1a1a1a;
             color: #ffffff;
@@ -298,7 +351,11 @@
             <div id="question2" class="question-container hidden">
                 <div class="question">Which college or university do you attend?</div>
                 <div class="form-group">
-                    <input type="text" id="collegeName" required>
+                    <div class="autocomplete-container">
+                        <input type="text" id="collegeName" required>
+                        <div class="ghost-text" id="ghostText"></div>
+                        <div class="autocomplete-suggestions" id="suggestions"></div>
+                    </div>
                 </div>
             </div>
 
@@ -604,6 +661,177 @@
                     }
                 }
             });
+        });
+
+        // University autocomplete functionality
+        const universities = [
+            'Harvard University', 'Stanford University', 'Massachusetts Institute of Technology',
+            'University of California, Berkeley', 'Yale University', 'Princeton University',
+            'Columbia University', 'University of Chicago', 'University of Pennsylvania',
+            'California Institute of Technology', 'Duke University', 'Northwestern University',
+            'Johns Hopkins University', 'Dartmouth College', 'Brown University',
+            'Cornell University', 'Rice University', 'Vanderbilt University',
+            'Washington University in St. Louis', 'University of Notre Dame',
+            'University of California, Los Angeles', 'University of Michigan',
+            'University of Virginia', 'University of North Carolina at Chapel Hill',
+            'Georgetown University', 'Carnegie Mellon University', 'Emory University',
+            'New York University', 'University of Southern California', 'Tufts University',
+            'Wake Forest University', 'University of Rochester', 'Boston College',
+            'Tulane University', 'University of Miami', 'Case Western Reserve University',
+            'Northeastern University', 'University of California, San Diego',
+            'University of California, Santa Barbara', 'University of California, Irvine',
+            'University of California, Davis', 'University of California, Santa Cruz',
+            'University of California, Riverside', 'University of California, Merced',
+            'University of Texas at Austin', 'Texas A&M University', 'University of Florida',
+            'University of Georgia', 'University of Wisconsin-Madison', 'Ohio State University',
+            'Pennsylvania State University', 'University of Illinois at Urbana-Champaign',
+            'Purdue University', 'Indiana University Bloomington', 'University of Minnesota',
+            'University of Iowa', 'University of Missouri', 'University of Kansas',
+            'University of Nebraska-Lincoln', 'University of Colorado Boulder',
+            'Arizona State University', 'University of Arizona', 'University of Utah',
+            'University of Washington', 'University of Oregon', 'Oregon State University',
+            'University of California, Berkeley', 'University of California, Los Angeles',
+            'University of Southern California', 'Stanford University', 'California Institute of Technology'
+        ];
+
+        let currentSuggestions = [];
+        let selectedIndex = -1;
+        let ghostText = '';
+
+        function initializeAutocomplete() {
+            const collegeInput = document.getElementById('collegeName');
+            const suggestionsDiv = document.getElementById('suggestions');
+            const ghostTextDiv = document.getElementById('ghostText');
+
+            if (!collegeInput || !suggestionsDiv || !ghostTextDiv) return;
+
+            collegeInput.addEventListener('input', function(e) {
+                const value = e.target.value.toLowerCase();
+                if (value.length === 0) {
+                    hideSuggestions();
+                    hideGhostText();
+                    return;
+                }
+
+                // Filter universities
+                currentSuggestions = universities.filter(uni => 
+                    uni.toLowerCase().startsWith(value)
+                ).slice(0, 8); // Limit to 8 suggestions
+
+                if (currentSuggestions.length > 0) {
+                    showSuggestions();
+                    updateGhostText(value, currentSuggestions[0]);
+                } else {
+                    hideSuggestions();
+                    hideGhostText();
+                }
+            });
+
+            collegeInput.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, currentSuggestions.length - 1);
+                    updateSelection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection();
+                } else if (e.key === 'Tab' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    completeSelection();
+                } else if (e.key === 'Escape') {
+                    hideSuggestions();
+                    hideGhostText();
+                    selectedIndex = -1;
+                }
+            });
+
+            collegeInput.addEventListener('blur', function() {
+                // Delay hiding to allow clicks on suggestions
+                setTimeout(() => {
+                    hideSuggestions();
+                    hideGhostText();
+                }, 200);
+            });
+
+            // Handle suggestion clicks
+            suggestionsDiv.addEventListener('click', function(e) {
+                if (e.target.classList.contains('autocomplete-suggestion')) {
+                    const suggestion = e.target.textContent;
+                    collegeInput.value = suggestion;
+                    hideSuggestions();
+                    hideGhostText();
+                    selectedIndex = -1;
+                }
+            });
+        }
+
+        function showSuggestions() {
+            const suggestionsDiv = document.getElementById('suggestions');
+            if (!suggestionsDiv) return;
+
+            suggestionsDiv.innerHTML = currentSuggestions.map((suggestion, index) => 
+                `<div class="autocomplete-suggestion" data-index="${index}">${suggestion}</div>`
+            ).join('');
+
+            suggestionsDiv.style.display = 'block';
+            selectedIndex = -1;
+        }
+
+        function hideSuggestions() {
+            const suggestionsDiv = document.getElementById('suggestions');
+            if (suggestionsDiv) {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+
+        function updateSelection() {
+            const suggestions = document.querySelectorAll('.autocomplete-suggestion');
+            suggestions.forEach((suggestion, index) => {
+                suggestion.classList.toggle('highlighted', index === selectedIndex);
+            });
+
+            if (selectedIndex >= 0 && currentSuggestions[selectedIndex]) {
+                const collegeInput = document.getElementById('collegeName');
+                const value = collegeInput.value.toLowerCase();
+                updateGhostText(value, currentSuggestions[selectedIndex]);
+            }
+        }
+
+        function completeSelection() {
+            if (selectedIndex >= 0 && currentSuggestions[selectedIndex]) {
+                const collegeInput = document.getElementById('collegeName');
+                collegeInput.value = currentSuggestions[selectedIndex];
+                hideSuggestions();
+                hideGhostText();
+                selectedIndex = -1;
+            }
+        }
+
+        function updateGhostText(inputValue, suggestion) {
+            const ghostTextDiv = document.getElementById('ghostText');
+            if (!ghostTextDiv) return;
+
+            if (suggestion && suggestion.toLowerCase().startsWith(inputValue.toLowerCase())) {
+                const remaining = suggestion.substring(inputValue.length);
+                ghostTextDiv.textContent = remaining;
+                ghostTextDiv.style.display = 'block';
+            } else {
+                hideGhostText();
+            }
+        }
+
+        function hideGhostText() {
+            const ghostTextDiv = document.getElementById('ghostText');
+            if (ghostTextDiv) {
+                ghostTextDiv.style.display = 'none';
+            }
+        }
+
+        // Initialize autocomplete when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize autocomplete after a short delay to ensure DOM is ready
+            setTimeout(initializeAutocomplete, 100);
         });
     </script>
 </body>
