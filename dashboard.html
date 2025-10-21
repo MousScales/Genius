@@ -2773,6 +2773,26 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                         <button type="button" class="btn-primary" id="createBtn">Update Class</button>
                     </div>
                 </div>
+                
+                <div class="preview-section">
+                    <div class="class-preview">
+                        <div class="preview-image" id="previewImage">
+                            ${classData.imageUrl ? 
+                                `<img src="${classData.imageUrl}" alt="Class Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` :
+                                `<span>📷</span>`
+                            }
+                        </div>
+                        <div class="preview-content">
+                            <h3 class="preview-title" id="previewTitle">${classData.name || 'Untitled'}</h3>
+                            <p class="preview-instructor" id="previewInstructor" style="${classData.instructor ? '' : 'display: none;'}">${classData.instructor || ''}</p>
+                            <div class="preview-meta">
+                                <span id="previewTerm" style="${classData.term ? '' : 'display: none;'}">${classData.term || ''}</span>
+                                <span id="previewLevel" style="${classData.level ? '' : 'display: none;'}">${classData.level || ''}</span>
+                                <span id="previewDays" style="display: none;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
             
             // Set proper z-index for form container
@@ -2784,6 +2804,9 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             
             // Setup event listeners
             setupEditClassFormListeners();
+            
+            // Setup live preview
+            setupEditClassPreview();
         }
 
         function setupEditClassFormListeners() {
@@ -2931,6 +2954,75 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             const formContainer = document.querySelector('.class-form-container');
             if (formContainer) {
                 formContainer.remove();
+            }
+        }
+
+        function setupEditClassPreview() {
+            // Get form elements
+            const className = document.getElementById('className');
+            const classInstructor = document.getElementById('classInstructor');
+            const classLevel = document.getElementById('classLevel');
+            const classTerm = document.getElementById('classTerm');
+            const classImage = document.getElementById('classImage');
+            
+            // Get preview elements
+            const previewTitle = document.getElementById('previewTitle');
+            const previewInstructor = document.getElementById('previewInstructor');
+            const previewLevel = document.getElementById('previewLevel');
+            const previewTerm = document.getElementById('previewTerm');
+            const previewImage = document.getElementById('previewImage');
+            
+            // Update preview on input changes
+            if (className && previewTitle) {
+                className.addEventListener('input', () => {
+                    previewTitle.textContent = className.value || 'Untitled';
+                });
+            }
+            
+            if (classInstructor && previewInstructor) {
+                classInstructor.addEventListener('input', () => {
+                    if (classInstructor.value.trim()) {
+                        previewInstructor.textContent = classInstructor.value;
+                        previewInstructor.style.display = 'block';
+                    } else {
+                        previewInstructor.style.display = 'none';
+                    }
+                });
+            }
+            
+            if (classLevel && previewLevel) {
+                classLevel.addEventListener('change', () => {
+                    if (classLevel.value) {
+                        previewLevel.textContent = classLevel.value;
+                        previewLevel.style.display = 'inline';
+                    } else {
+                        previewLevel.style.display = 'none';
+                    }
+                });
+            }
+            
+            if (classTerm && previewTerm) {
+                classTerm.addEventListener('change', () => {
+                    if (classTerm.value) {
+                        previewTerm.textContent = classTerm.value;
+                        previewTerm.style.display = 'inline';
+                    } else {
+                        previewTerm.style.display = 'none';
+                    }
+                });
+            }
+            
+            if (classImage && previewImage) {
+                classImage.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewImage.innerHTML = `<img src="${e.target.result}" alt="Class Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             }
         }
 
