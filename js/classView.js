@@ -3726,9 +3726,11 @@ async function generateFlashcardContent(documents, flashcardCount = null) {
             console.log(`📊 Auto-calculated flashcard count: ${flashcardCount} for ${documents.length} documents`);
         }
         
-        // Import the C# flashcard service directly
-        const { CSharpFlashcardService } = await import('./csharp-flashcard-service.js');
-        const flashcardService = new CSharpFlashcardService();
+        // Use the global CSharpFlashcardService
+        if (!window.CSharpFlashcardService) {
+            throw new Error('CSharpFlashcardService not available');
+        }
+        const flashcardService = new window.CSharpFlashcardService();
 
         // Get user data and set up API configuration
         const currentUserData = localStorage.getItem('currentUser');
