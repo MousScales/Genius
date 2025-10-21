@@ -2175,9 +2175,12 @@ async function createFlashcardsFromExplanation(classData, explanation) {
         // Generate flashcards using OpenAI
         const flashcards = await generateFlashcardsFromExplanation(explanation);
         
+        // Generate a meaningful name from the explanation
+        const flashcardTitle = generateFlashcardTitle(explanation);
+        
         // Create flashcard set
         const flashcardSet = {
-            title: `Custom Flashcards - ${new Date().toLocaleDateString()}`,
+            title: flashcardTitle,
             type: 'flashcards',
             isFlashcardSet: true,
             sourceDocuments: [], // No source documents for explanation-based flashcards
@@ -3027,6 +3030,86 @@ function calculateOptimalFlashcardCount(documents) {
     
     // Ensure minimum and maximum bounds
     return Math.max(15, Math.min(50, baseCount));
+}
+
+function generateFlashcardTitle(explanation) {
+    // Clean up the explanation
+    const cleanExplanation = explanation.trim().toLowerCase();
+    
+    // Extract key topics and subjects
+    const subjects = [];
+    const topics = [];
+    
+    // Common academic subjects
+    const subjectKeywords = {
+        'math': ['math', 'mathematics', 'algebra', 'calculus', 'geometry', 'trigonometry', 'statistics'],
+        'science': ['science', 'biology', 'chemistry', 'physics', 'anatomy', 'physiology', 'genetics'],
+        'history': ['history', 'historical', 'war', 'revolution', 'ancient', 'medieval', 'world war'],
+        'language': ['spanish', 'french', 'german', 'italian', 'vocabulary', 'grammar', 'language'],
+        'literature': ['literature', 'english', 'poetry', 'novel', 'author', 'writing', 'literary'],
+        'geography': ['geography', 'countries', 'capitals', 'continents', 'maps', 'locations'],
+        'art': ['art', 'painting', 'sculpture', 'artist', 'artistic', 'design', 'creative'],
+        'music': ['music', 'musical', 'composer', 'instrument', 'classical', 'jazz', 'theory'],
+        'psychology': ['psychology', 'psych', 'mental', 'behavior', 'cognitive', 'therapy'],
+        'economics': ['economics', 'economy', 'finance', 'business', 'market', 'trade'],
+        'computer science': ['programming', 'coding', 'computer', 'software', 'algorithm', 'data structure'],
+        'medicine': ['medicine', 'medical', 'anatomy', 'physiology', 'diagnosis', 'treatment']
+    };
+    
+    // Check for subjects
+    for (const [subject, keywords] of Object.entries(subjectKeywords)) {
+        if (keywords.some(keyword => cleanExplanation.includes(keyword))) {
+            subjects.push(subject);
+        }
+    }
+    
+    // Extract specific topics (words that might be important)
+    const words = cleanExplanation.split(/\s+/);
+    const importantWords = words.filter(word => 
+        word.length > 3 && 
+        !['about', 'create', 'make', 'generate', 'flashcards', 'study', 'learn', 'help'].includes(word)
+    );
+    
+    // Take the first few important words as topics
+    topics.push(...importantWords.slice(0, 3));
+    
+    // Generate title based on what we found
+    let title = '';
+    
+    if (subjects.length > 0) {
+        const mainSubject = subjects[0].charAt(0).toUpperCase() + subjects[0].slice(1);
+        if (topics.length > 0) {
+            const mainTopic = topics[0].charAt(0).toUpperCase() + topics[0].slice(1);
+            title = `${mainSubject}: ${mainTopic}`;
+        } else {
+            title = `${mainSubject} Study Cards`;
+        }
+    } else if (topics.length > 0) {
+        const mainTopic = topics[0].charAt(0).toUpperCase() + topics[0].slice(1);
+        title = `${mainTopic} Flashcards`;
+    } else {
+        // Fallback: try to extract meaningful words from the explanation
+        const meaningfulWords = cleanExplanation
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 3)
+            .slice(0, 2);
+        
+        if (meaningfulWords.length > 0) {
+            title = meaningfulWords.map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ') + ' Flashcards';
+        } else {
+            title = 'Study Flashcards';
+        }
+    }
+    
+    // Add date if the title is too generic
+    if (title === 'Study Flashcards' || title.length < 10) {
+        title += ` - ${new Date().toLocaleDateString()}`;
+    }
+    
+    return title;
 }
 
 async function showStudyGuideNamingDialog(classData, format, folderId) {
