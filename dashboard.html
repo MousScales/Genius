@@ -601,7 +601,7 @@
             } catch (error) {
                 console.error('Error loading classes from Firebase:', error);
                 alert('Error loading classes. Please refresh the page and try again.');
-                classes = [];
+                        classes = [];
             }
             
             const classesGrid = document.getElementById('classesGrid');
@@ -2596,6 +2596,20 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             window.editingClassData = classData;
             window.editingClassIndex = classIndex;
             
+            // Create background overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'class-form-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #000000, #1a1a1a);
+                z-index: 9999;
+                backdrop-filter: blur(20px);
+            `;
+            
             // Create the class form with preloaded data
             const formContainer = document.createElement('div');
             formContainer.className = 'class-form-container';
@@ -2761,6 +2775,11 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 </div>
             `;
             
+            // Set proper z-index for form container
+            formContainer.style.zIndex = '10000';
+            
+            // Append overlay first, then form
+            document.body.appendChild(overlay);
             document.body.appendChild(formContainer);
             
             // Setup event listeners
@@ -2772,7 +2791,7 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             const backBtn = document.getElementById('backBtnCustom');
             if (backBtn) {
                 backBtn.addEventListener('click', () => {
-                    document.querySelector('.class-form-container').remove();
+                    closeEditClassForm();
                 });
             }
             
@@ -2780,7 +2799,7 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             const cancelBtn = document.getElementById('cancelBtn');
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', () => {
-                    document.querySelector('.class-form-container').remove();
+                    closeEditClassForm();
                 });
             }
             
@@ -2863,7 +2882,7 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                 });
                 
                 // Close form
-                document.querySelector('.class-form-container').remove();
+                closeEditClassForm();
                 
                 // Reload classes
                 setTimeout(() => {
@@ -2898,6 +2917,20 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
                     }
                 };
                 reader.readAsDataURL(file);
+            }
+        }
+
+        function closeEditClassForm() {
+            // Remove overlay
+            const overlay = document.querySelector('.class-form-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            
+            // Remove form container
+            const formContainer = document.querySelector('.class-form-container');
+            if (formContainer) {
+                formContainer.remove();
             }
         }
 
