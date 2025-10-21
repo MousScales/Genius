@@ -472,11 +472,20 @@ function setupEditorControls(classData, existingDoc) {
     // Initialize counters
     updateDocumentStats();
     
-    // Initialize placeholder visibility
-    updatePlaceholderVisibility();
-    
-    // Setup clickable placeholder examples
-    setupPlaceholderExamples(classData, existingDoc);
+    // Initialize placeholder visibility with a small delay to ensure DOM is ready
+    setTimeout(() => {
+        updatePlaceholderVisibility();
+        // Setup clickable placeholder examples
+        setupPlaceholderExamples(classData, existingDoc);
+        
+        // Set up periodic check to ensure placeholder stays visible when document is empty
+        setInterval(() => {
+            const content = document.getElementById('docEditorContent');
+            if (content && !content.querySelector('.empty-document-placeholder')) {
+                updatePlaceholderVisibility();
+            }
+        }, 1000);
+    }, 100);
     
     // Initialize undo/redo functionality
     initializeUndoRedo();
@@ -2715,8 +2724,33 @@ function updatePlaceholderVisibility() {
     const content = document.getElementById('docEditorContent');
     if (!content) return;
     
-    const placeholder = content.querySelector('.empty-document-placeholder');
-    if (!placeholder) return;
+    let placeholder = content.querySelector('.empty-document-placeholder');
+    
+    // If no placeholder exists and content is empty, create one
+    if (!placeholder) {
+        const textContent = content.innerText || '';
+        const htmlContent = content.innerHTML || '';
+        
+        // Check if content is truly empty (no real user content)
+        const contentWithoutPlaceholder = htmlContent
+            .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
+            .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
+            .replace(/<br\s*\/?>/g, '') // Remove line breaks
+            .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+            .replace(/\s+/g, ' ') // Normalize whitespace
+            .trim();
+        
+        const hasRealContent = contentWithoutPlaceholder.length > 10;
+        
+        if (!hasRealContent) {
+            // Create placeholder if content is empty
+            content.innerHTML = '<div class="empty-document-placeholder"><div class="placeholder-content"><img src="assets/darkgenius.png" alt="Genius AI" class="placeholder-icon"><h3>Start Writing with Genius AI</h3><p>Switch to edit mode and ask Genius to write your first draft, or begin typing to get started</p><div class="placeholder-examples"><span class="example-tag clickable-example" data-example="Write a blog post about">"Write a blog post about..."</span><span class="example-tag clickable-example" data-example="Create a report on">"Create a report on..."</span><span class="example-tag clickable-example" data-example="Draft an email about">"Draft an email about..."</span></div><div class="placeholder-hint">💡 Click any example above or type your own request</div></div></div>';
+            placeholder = content.querySelector('.empty-document-placeholder');
+            // Setup clickable examples for the new placeholder
+            setupPlaceholderExamples(window.currentClassData, window.currentExistingDoc);
+        }
+        return;
+    }
     
     // Check if content is empty (only whitespace, placeholder, or chat messages)
     const textContent = content.innerText || '';
