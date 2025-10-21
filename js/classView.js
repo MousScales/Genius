@@ -1,48 +1,58 @@
 // Import Firebase services dynamically to avoid timing issues
-let documentService, folderService, studyGuideService, eventService;
+// Services are declared in firebase-service.js, we'll access them via getFirebaseServices()
 
 async function getFirebaseServices() {
-    if (!documentService) {
-        // Wait for firebase-service.js to load with longer timeout and better error handling
-        await new Promise((resolve, reject) => {
-            let attempts = 0;
-            const maxAttempts = 50; // 5 seconds timeout (50 * 100ms)
-            
-            const checkServices = () => {
-                attempts++;
-                
-                console.log(`🔍 Checking Firebase services (attempt ${attempts}/${maxAttempts})...`);
-                console.log('Available services:', {
-                    documentService: !!window.documentService,
-                    folderService: !!window.folderService,
-                    studyGuideService: !!window.studyGuideService,
-                    eventService: !!window.eventService
-                });
-                
-                if (window.documentService && window.folderService && window.studyGuideService && window.eventService) {
-                    documentService = window.documentService;
-                    folderService = window.folderService;
-                    studyGuideService = window.studyGuideService;
-                    eventService = window.eventService;
-                    console.log('✅ Firebase services loaded successfully');
-                    resolve();
-                } else if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Timeout waiting for Firebase services, using fallback');
-                    // Create fallback services that use direct Firebase calls
-                    documentService = createFallbackDocumentService();
-                    folderService = createFallbackFolderService();
-                    studyGuideService = createFallbackStudyGuideService();
-                    eventService = createFallbackEventService();
-                    console.log('✅ Using fallback Firebase services');
-                    resolve();
-                } else {
-                    setTimeout(checkServices, 100);
-                }
-            };
-            checkServices();
-        });
+    // Check if services are already available
+    if (window.documentService && window.folderService && window.studyGuideService && window.eventService) {
+        return {
+            documentService: window.documentService,
+            folderService: window.folderService,
+            studyGuideService: window.studyGuideService,
+            eventService: window.eventService
+        };
     }
-    return { documentService, folderService, studyGuideService, eventService };
+    
+    // Wait for firebase-service.js to load with longer timeout and better error handling
+    await new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds timeout (50 * 100ms)
+        
+        const checkServices = () => {
+            attempts++;
+            
+            console.log(`🔍 Checking Firebase services (attempt ${attempts}/${maxAttempts})...`);
+            console.log('Available services:', {
+                documentService: !!window.documentService,
+                folderService: !!window.folderService,
+                studyGuideService: !!window.studyGuideService,
+                eventService: !!window.eventService
+            });
+            
+            if (window.documentService && window.folderService && window.studyGuideService && window.eventService) {
+                console.log('✅ Firebase services loaded successfully');
+                resolve();
+            } else if (attempts >= maxAttempts) {
+                console.warn('⚠️ Timeout waiting for Firebase services, using fallback');
+                // Create fallback services that use direct Firebase calls
+                window.documentService = createFallbackDocumentService();
+                window.folderService = createFallbackFolderService();
+                window.studyGuideService = createFallbackStudyGuideService();
+                window.eventService = createFallbackEventService();
+                console.log('✅ Using fallback Firebase services');
+                resolve();
+            } else {
+                setTimeout(checkServices, 100);
+            }
+        };
+        checkServices();
+    });
+    
+    return {
+        documentService: window.documentService,
+        folderService: window.folderService,
+        studyGuideService: window.studyGuideService,
+        eventService: window.eventService
+    };
 }
 
 // Class view module
