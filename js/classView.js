@@ -1657,9 +1657,13 @@ function setupFolderFunctionality(classData) {
             console.log('Folder action clicked:', action, 'folderId:', folderId);
             
             if (action === 'Rename' && folderId) {
+                console.log('Calling renameFolder...');
                 window.renameFolder(folderId, classData);
             } else if (action === 'Delete' && folderId) {
+                console.log('Calling deleteFolder...');
                 window.deleteFolder(folderId, classData);
+            } else {
+                console.log('No action matched:', { action, folderId });
             }
         });
     });
@@ -1911,9 +1915,31 @@ async function getFolders(classData) {
 
 async function saveFolders(classData, folders) {
     try {
-        // Save to Firebase
-        const { folderService } = await getFirebaseServices();
-        await folderService.saveFolders(classData.userId, classData.id, folders);
+        // Save to Firebase using direct operations
+        const db = window.firebase.firestore();
+        const foldersRef = db.collection('users').doc(classData.userId).collection('classes').doc(classData.id).collection('folders');
+        
+        // Get existing folders to know which ones to delete
+        const existingSnapshot = await foldersRef.get();
+        const batch = db.batch();
+        
+        // Delete existing folders
+        existingSnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        
+        // Add new folders
+        folders.forEach((folder) => {
+            const folderRef = foldersRef.doc(folder.id);
+            batch.set(folderRef, {
+                name: folder.name,
+                isExpanded: folder.isExpanded || false,
+                createdAt: folder.createdAt || new Date().toISOString(),
+                documents: folder.documents || []
+            });
+        });
+        
+        await batch.commit();
         console.log('Folders saved to Firebase');
     } catch (error) {
         console.error('Error saving folders to Firebase:', error);
@@ -1942,17 +1968,21 @@ async function moveDocumentToFolder(documentId, folderId, classData) {
     }
 }
 
-window.toggleFolderExpansion = function(folderId, classData) {
-    const folders = getFolders(classData);
-    const folder = folders.find(f => f.id === folderId);
-    if (folder) {
-        folder.isExpanded = !folder.isExpanded;
-        saveFolders(classData, folders);
-        
-        // Reload documents to update UI
-        const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
-        const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
-        loadDocuments(classData, currentViewMode);
+window.toggleFolderExpansion = async function(folderId, classData) {
+    try {
+        const folders = await getFolders(classData);
+        const folder = folders.find(f => f.id === folderId);
+        if (folder) {
+            folder.isExpanded = !folder.isExpanded;
+            await saveFolders(classData, folders);
+            
+            // Reload documents to update UI
+            const viewModeKey = `class_${classData.userId}_${classData.name}_viewMode`;
+            const currentViewMode = localStorage.getItem(viewModeKey) || 'list';
+            loadDocuments(classData, currentViewMode);
+        }
+    } catch (error) {
+        console.error('Error toggling folder expansion:', error);
     }
 }
 
