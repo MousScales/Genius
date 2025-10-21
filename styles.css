@@ -5991,19 +5991,20 @@ select.toolbar-select option {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+    border-radius: 0;
     cursor: pointer;
     transition: all 0.3s ease;
     flex-shrink: 0;
+    padding: 4px 8px;
 }
 
 .genius-mode-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
     transform: scale(1.1);
 }
 
@@ -6017,14 +6018,13 @@ select.toolbar-select option {
 }
 
 .genius-mode-toggle.edit-mode-active {
-    background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .genius-mode-toggle.edit-mode-active:hover {
-    background: linear-gradient(145deg, #3a3a3a, #4a4a4a);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Genius AI Sidebar */
