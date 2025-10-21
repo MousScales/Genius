@@ -130,13 +130,16 @@ function openDocumentEditor(classData, existingDoc = null) {
             }, 500); // Reduced debounce time for more responsive saving
         };
         
-        // Input events
+        // Input events - remove ghost text immediately on any input
         content.addEventListener('input', () => {
             removeGhostText();
             triggerAutoSave();
         });
-        content.addEventListener('keydown', () => {
-            removeGhostText();
+        content.addEventListener('keydown', (e) => {
+            // Remove ghost text on any key except special keys
+            if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+                removeGhostText();
+            }
         });
         content.addEventListener('keyup', () => {
             removeGhostText();
@@ -2758,23 +2761,19 @@ function removeGhostText() {
     const content = document.getElementById('docEditorContent');
     if (!content) return;
     
+    // Always remove ghost text - be aggressive about it
     const ghostText = content.querySelector('.ghost-text-hint');
     if (ghostText) {
         ghostText.remove();
         console.log('Ghost text removed');
     }
     
-    // Also check if there's any actual text content and remove ghost text if so
-    const textContent = content.textContent || content.innerText || '';
-    const hasRealContent = textContent.trim().length > 0 && !textContent.includes('Click the ? to switch to edit with Genius');
-    
-    if (hasRealContent) {
-        const remainingGhostText = content.querySelector('.ghost-text-hint');
-        if (remainingGhostText) {
-            remainingGhostText.remove();
-            console.log('Ghost text removed due to content detection');
-        }
-    }
+    // Double-check and remove any remaining ghost text
+    const allGhostText = content.querySelectorAll('.ghost-text-hint');
+    allGhostText.forEach(ghost => {
+        ghost.remove();
+        console.log('Additional ghost text removed');
+    });
 }
 
 function updatePlaceholderVisibility() {
@@ -2795,8 +2794,10 @@ function updatePlaceholderVisibility() {
             .replace(/\s+/g, ' ') // Normalize whitespace
             .trim();
         
-        // Only hide placeholder if there's substantial user content (more than just whitespace or single characters)
-        const hasRealContent = contentWithoutPlaceholder.length > 10;
+        // Check if there's any real content (not just whitespace, ghost text, or empty elements)
+        const hasRealContent = contentWithoutPlaceholder.length > 0 && 
+                               !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius') &&
+                               contentWithoutPlaceholder !== '';
         
         if (hasRealContent) {
             // Remove ghost text if it exists
