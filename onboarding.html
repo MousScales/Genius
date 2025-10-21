@@ -665,33 +665,388 @@
 
         // University autocomplete functionality
         const universities = [
-            'Harvard University', 'Stanford University', 'Massachusetts Institute of Technology',
-            'University of California, Berkeley', 'Yale University', 'Princeton University',
-            'Columbia University', 'University of Chicago', 'University of Pennsylvania',
-            'California Institute of Technology', 'Duke University', 'Northwestern University',
-            'Johns Hopkins University', 'Dartmouth College', 'Brown University',
-            'Cornell University', 'Rice University', 'Vanderbilt University',
-            'Washington University in St. Louis', 'University of Notre Dame',
-            'University of California, Los Angeles', 'University of Michigan',
-            'University of Virginia', 'University of North Carolina at Chapel Hill',
-            'Georgetown University', 'Carnegie Mellon University', 'Emory University',
-            'New York University', 'University of Southern California', 'Tufts University',
-            'Wake Forest University', 'University of Rochester', 'Boston College',
-            'Tulane University', 'University of Miami', 'Case Western Reserve University',
-            'Northeastern University', 'University of California, San Diego',
-            'University of California, Santa Barbara', 'University of California, Irvine',
-            'University of California, Davis', 'University of California, Santa Cruz',
-            'University of California, Riverside', 'University of California, Merced',
-            'University of Texas at Austin', 'Texas A&M University', 'University of Florida',
-            'University of Georgia', 'University of Wisconsin-Madison', 'Ohio State University',
-            'Pennsylvania State University', 'University of Illinois at Urbana-Champaign',
-            'Purdue University', 'Indiana University Bloomington', 'University of Minnesota',
-            'University of Iowa', 'University of Missouri', 'University of Kansas',
-            'University of Nebraska-Lincoln', 'University of Colorado Boulder',
-            'Arizona State University', 'University of Arizona', 'University of Utah',
-            'University of Washington', 'University of Oregon', 'Oregon State University',
+            // Ivy League
+            'Harvard University', 'Yale University', 'Princeton University', 'Columbia University',
+            'University of Pennsylvania', 'Dartmouth College', 'Brown University', 'Cornell University',
+            
+            // Top Private Universities
+            'Stanford University', 'Massachusetts Institute of Technology', 'California Institute of Technology',
+            'University of Chicago', 'Duke University', 'Northwestern University', 'Johns Hopkins University',
+            'Rice University', 'Vanderbilt University', 'Washington University in St. Louis', 'University of Notre Dame',
+            'Georgetown University', 'Carnegie Mellon University', 'Emory University', 'New York University',
+            'University of Southern California', 'Tufts University', 'Wake Forest University', 'University of Rochester',
+            'Boston College', 'Tulane University', 'University of Miami', 'Case Western Reserve University',
+            'Northeastern University', 'Boston University', 'Brandeis University', 'Lehigh University',
+            'Villanova University', 'University of Richmond', 'William & Mary', 'Washington and Lee University',
+            'Colgate University', 'Hamilton College', 'Middlebury College', 'Amherst College',
+            'Williams College', 'Swarthmore College', 'Pomona College', 'Claremont McKenna College',
+            'Harvey Mudd College', 'Scripps College', 'Pitzer College', 'Wellesley College',
+            'Smith College', 'Mount Holyoke College', 'Bryn Mawr College', 'Barnard College',
+            'Vassar College', 'Wesleyan University', 'Trinity College', 'Connecticut College',
+            'Bates College', 'Bowdoin College', 'Colby College', 'Dartmouth College',
+            
+            // University of California System
             'University of California, Berkeley', 'University of California, Los Angeles',
-            'University of Southern California', 'Stanford University', 'California Institute of Technology'
+            'University of California, San Diego', 'University of California, Santa Barbara',
+            'University of California, Irvine', 'University of California, Davis',
+            'University of California, Santa Cruz', 'University of California, Riverside',
+            'University of California, Merced', 'University of California, San Francisco',
+            
+            // California State Universities
+            'California State University, Long Beach', 'California State University, Fullerton',
+            'California State University, Northridge', 'California State University, San Diego',
+            'California State University, San Francisco', 'California State University, Los Angeles',
+            'California State University, Sacramento', 'California State University, Fresno',
+            'California State University, San Jose', 'California State University, Chico',
+            'California State University, Humboldt', 'California State University, Monterey Bay',
+            'California State University, Stanislaus', 'California State University, East Bay',
+            'California State University, Dominguez Hills', 'California State University, Bakersfield',
+            'California State University, San Bernardino', 'California State University, Channel Islands',
+            'California State University, Maritime Academy', 'California Polytechnic State University',
+            'California State Polytechnic University, Pomona', 'San Diego State University',
+            'San Francisco State University', 'San Jose State University', 'Cal State LA',
+            'Cal State Fullerton', 'Cal State Long Beach', 'Cal State Northridge',
+            
+            // Private California Universities
+            'University of Southern California', 'Stanford University', 'California Institute of Technology',
+            'Pepperdine University', 'Loyola Marymount University', 'University of San Diego',
+            'University of San Francisco', 'Santa Clara University', 'Chapman University',
+            'Occidental College', 'Pitzer College', 'Claremont McKenna College',
+            'Harvey Mudd College', 'Scripps College', 'Pomona College',
+            
+            // University of Texas System
+            'University of Texas at Austin', 'University of Texas at Dallas', 'University of Texas at Arlington',
+            'University of Texas at San Antonio', 'University of Texas at El Paso', 'University of Texas at Tyler',
+            'University of Texas at Permian Basin', 'University of Texas at Rio Grande Valley',
+            'University of Texas at Brownsville', 'University of Texas at Pan American',
+            'University of Texas Medical Branch', 'University of Texas Health Science Center',
+            
+            // Texas A&M System
+            'Texas A&M University', 'Texas A&M University at Galveston', 'Texas A&M University at Qatar',
+            'Texas A&M University at Kingsville', 'Texas A&M University at Corpus Christi',
+            'Texas A&M University at Commerce', 'Texas A&M University at Texarkana',
+            'Texas A&M University at San Antonio', 'Texas A&M University at Central Texas',
+            
+            // Other Texas Universities
+            'Rice University', 'Baylor University', 'Southern Methodist University',
+            'Texas Christian University', 'University of Houston', 'Texas Tech University',
+            'University of North Texas', 'Sam Houston State University', 'Stephen F. Austin State University',
+            'Texas State University', 'University of Texas Rio Grande Valley',
+            
+            // Florida Universities
+            'University of Florida', 'Florida State University', 'University of Miami',
+            'University of Central Florida', 'Florida International University', 'Florida Atlantic University',
+            'University of South Florida', 'Florida Institute of Technology', 'Nova Southeastern University',
+            'Florida A&M University', 'Florida Gulf Coast University', 'University of West Florida',
+            'Florida Polytechnic University', 'New College of Florida',
+            
+            // New York Universities
+            'Columbia University', 'Cornell University', 'New York University', 'University of Rochester',
+            'Rensselaer Polytechnic Institute', 'Syracuse University', 'Fordham University',
+            'Stony Brook University', 'University at Buffalo', 'Binghamton University',
+            'University at Albany', 'CUNY City College', 'CUNY Hunter College', 'CUNY Brooklyn College',
+            'CUNY Queens College', 'CUNY Baruch College', 'CUNY Lehman College', 'CUNY John Jay College',
+            'CUNY York College', 'CUNY Medgar Evers College', 'CUNY College of Staten Island',
+            'CUNY Graduate Center', 'CUNY School of Law', 'CUNY School of Medicine',
+            
+            // Massachusetts Universities
+            'Harvard University', 'Massachusetts Institute of Technology', 'Boston University',
+            'Boston College', 'Northeastern University', 'Tufts University', 'Brandeis University',
+            'University of Massachusetts Amherst', 'University of Massachusetts Boston',
+            'University of Massachusetts Dartmouth', 'University of Massachusetts Lowell',
+            'University of Massachusetts Medical School', 'Worcester Polytechnic Institute',
+            'Clark University', 'Bentley University', 'Babson College', 'Emerson College',
+            'Berklee College of Music', 'New England Conservatory', 'Massachusetts College of Art and Design',
+            
+            // Illinois Universities
+            'University of Chicago', 'Northwestern University', 'University of Illinois at Urbana-Champaign',
+            'University of Illinois at Chicago', 'University of Illinois at Springfield',
+            'Illinois Institute of Technology', 'DePaul University', 'Loyola University Chicago',
+            'Rush University', 'Roosevelt University', 'Columbia College Chicago',
+            'School of the Art Institute of Chicago', 'Illinois State University',
+            'Northern Illinois University', 'Southern Illinois University Carbondale',
+            'Southern Illinois University Edwardsville', 'Western Illinois University',
+            'Eastern Illinois University', 'Governors State University', 'Northeastern Illinois University',
+            
+            // Pennsylvania Universities
+            'University of Pennsylvania', 'Carnegie Mellon University', 'Pennsylvania State University',
+            'University of Pittsburgh', 'Temple University', 'Drexel University', 'Villanova University',
+            'Lehigh University', 'Bucknell University', 'Lafayette College', 'Haverford College',
+            'Swarthmore College', 'Bryn Mawr College', 'Dickinson College', 'Franklin & Marshall College',
+            'Gettysburg College', 'Juniata College', 'Muhlenberg College', 'Susquehanna University',
+            'University of Scranton', 'Villanova University', 'West Chester University',
+            'Indiana University of Pennsylvania', 'Kutztown University', 'Millersville University',
+            'Shippensburg University', 'Slippery Rock University', 'Bloomsburg University',
+            
+            // Ohio Universities
+            'Ohio State University', 'Case Western Reserve University', 'University of Cincinnati',
+            'Ohio University', 'Miami University', 'Bowling Green State University', 'Kent State University',
+            'Wright State University', 'University of Akron', 'Cleveland State University',
+            'Youngstown State University', 'Oberlin College', 'Kenyon College', 'Denison University',
+            'College of Wooster', 'Wittenberg University', 'Ohio Wesleyan University',
+            'Antioch College', 'Cedarville University', 'Malone University',
+            
+            // Michigan Universities
+            'University of Michigan', 'Michigan State University', 'Wayne State University',
+            'Western Michigan University', 'Central Michigan University', 'Eastern Michigan University',
+            'Northern Michigan University', 'Ferris State University', 'Grand Valley State University',
+            'Oakland University', 'Saginaw Valley State University', 'University of Michigan-Dearborn',
+            'University of Michigan-Flint', 'Michigan Technological University',
+            'Kalamazoo College', 'Albion College', 'Alma College', 'Calvin University',
+            'Hope College', 'Hillsdale College', 'Kettering University',
+            
+            // Georgia Universities
+            'Georgia Institute of Technology', 'University of Georgia', 'Emory University',
+            'Georgia State University', 'Georgia Southern University', 'Kennesaw State University',
+            'University of West Georgia', 'Valdosta State University', 'Columbus State University',
+            'Georgia College & State University', 'Mercer University', 'Berry College',
+            'Agnes Scott College', 'Spelman College', 'Morehouse College', 'Clark Atlanta University',
+            
+            // North Carolina Universities
+            'Duke University', 'University of North Carolina at Chapel Hill', 'North Carolina State University',
+            'Wake Forest University', 'University of North Carolina at Charlotte', 'University of North Carolina at Greensboro',
+            'University of North Carolina at Wilmington', 'East Carolina University', 'Appalachian State University',
+            'Western Carolina University', 'North Carolina A&T State University', 'Davidson College',
+            'Elon University', 'High Point University', 'Meredith College', 'Salem College',
+            
+            // Virginia Universities
+            'University of Virginia', 'Virginia Tech', 'College of William & Mary', 'Virginia Commonwealth University',
+            'George Mason University', 'Old Dominion University', 'James Madison University',
+            'University of Richmond', 'Washington and Lee University', 'Hampden-Sydney College',
+            'Randolph-Macon College', 'Hollins University', 'Sweet Briar College',
+            'Virginia Military Institute', 'Norfolk State University', 'Virginia State University',
+            
+            // Washington Universities
+            'University of Washington', 'Washington State University', 'Gonzaga University',
+            'Seattle University', 'Pacific Lutheran University', 'University of Puget Sound',
+            'Whitman College', 'Whitworth University', 'Western Washington University',
+            'Central Washington University', 'Eastern Washington University', 'Evergreen State College',
+            
+            // Oregon Universities
+            'University of Oregon', 'Oregon State University', 'Portland State University',
+            'Lewis & Clark College', 'Reed College', 'Willamette University', 'University of Portland',
+            'Pacific University', 'Linfield College', 'George Fox University',
+            'Southern Oregon University', 'Eastern Oregon University', 'Western Oregon University',
+            
+            // Colorado Universities
+            'University of Colorado Boulder', 'Colorado State University', 'University of Denver',
+            'Colorado School of Mines', 'University of Colorado Denver', 'University of Northern Colorado',
+            'Colorado College', 'Fort Lewis College', 'Mesa State University',
+            'Adams State University', 'Western State Colorado University', 'Regis University',
+            
+            // Arizona Universities
+            'University of Arizona', 'Arizona State University', 'Northern Arizona University',
+            'Grand Canyon University', 'University of Phoenix', 'Prescott College',
+            
+            // Utah Universities
+            'University of Utah', 'Brigham Young University', 'Utah State University',
+            'Weber State University', 'Southern Utah University', 'Westminster College',
+            'Utah Valley University', 'Dixie State University',
+            
+            // Nevada Universities
+            'University of Nevada, Las Vegas', 'University of Nevada, Reno', 'Nevada State College',
+            
+            // New Mexico Universities
+            'University of New Mexico', 'New Mexico State University', 'New Mexico Institute of Mining and Technology',
+            
+            // Montana Universities
+            'University of Montana', 'Montana State University', 'Montana Tech',
+            
+            // Wyoming Universities
+            'University of Wyoming', 'Casper College', 'Laramie County Community College',
+            
+            // Idaho Universities
+            'University of Idaho', 'Boise State University', 'Idaho State University',
+            'Lewis-Clark State College', 'College of Idaho',
+            
+            // Alaska Universities
+            'University of Alaska Anchorage', 'University of Alaska Fairbanks', 'University of Alaska Southeast',
+            
+            // Hawaii Universities
+            'University of Hawaii at Manoa', 'University of Hawaii at Hilo', 'Hawaii Pacific University',
+            'Brigham Young University Hawaii', 'Chaminade University of Honolulu',
+            
+            // Arkansas Universities
+            'University of Arkansas', 'Arkansas State University', 'University of Central Arkansas',
+            'Hendrix College', 'Ouachita Baptist University',
+            
+            // Louisiana Universities
+            'Louisiana State University', 'Tulane University', 'University of Louisiana at Lafayette',
+            'University of New Orleans', 'Loyola University New Orleans', 'Xavier University of Louisiana',
+            'Dillard University', 'Southern University', 'Grambling State University',
+            
+            // Mississippi Universities
+            'University of Mississippi', 'Mississippi State University', 'Jackson State University',
+            'Millsaps College', 'Belhaven University',
+            
+            // Alabama Universities
+            'University of Alabama', 'Auburn University', 'University of Alabama at Birmingham',
+            'Samford University', 'Troy University', 'University of South Alabama',
+            'Alabama State University', 'Alabama A&M University',
+            
+            // Tennessee Universities
+            'Vanderbilt University', 'University of Tennessee', 'Rhodes College',
+            'Sewanee: The University of the South', 'Middle Tennessee State University',
+            'Tennessee State University', 'Austin Peay State University',
+            
+            // Kentucky Universities
+            'University of Kentucky', 'University of Louisville', 'Berea College',
+            'Centre College', 'Transylvania University', 'Western Kentucky University',
+            
+            // West Virginia Universities
+            'West Virginia University', 'Marshall University', 'Shepherd University',
+            'West Virginia State University', 'Fairmont State University',
+            
+            // Delaware Universities
+            'University of Delaware', 'Delaware State University', 'Wesley College',
+            
+            // Maryland Universities
+            'Johns Hopkins University', 'University of Maryland', 'University of Maryland, Baltimore County',
+            'Towson University', 'Salisbury University', 'Frostburg State University',
+            'Morgan State University', 'St. Mary\'s College of Maryland',
+            
+            // New Jersey Universities
+            'Princeton University', 'Rutgers University', 'Stevens Institute of Technology',
+            'New Jersey Institute of Technology', 'Seton Hall University', 'Rider University',
+            'Monmouth University', 'Drew University', 'Ramapo College', 'The College of New Jersey',
+            
+            // Connecticut Universities
+            'Yale University', 'University of Connecticut', 'Wesleyan University',
+            'Trinity College', 'Connecticut College', 'Fairfield University',
+            'Quinnipiac University', 'Sacred Heart University', 'University of New Haven',
+            
+            // Rhode Island Universities
+            'Brown University', 'University of Rhode Island', 'Providence College',
+            'Rhode Island School of Design', 'Bryant University', 'Roger Williams University',
+            
+            // Vermont Universities
+            'University of Vermont', 'Middlebury College', 'Bennington College',
+            'St. Michael\'s College', 'Champlain College', 'Norwich University',
+            
+            // New Hampshire Universities
+            'Dartmouth College', 'University of New Hampshire', 'Keene State College',
+            'Plymouth State University', 'Franklin Pierce University', 'Southern New Hampshire University',
+            
+            // Maine Universities
+            'Bowdoin College', 'Colby College', 'Bates College', 'University of Maine',
+            'University of Southern Maine', 'Maine Maritime Academy', 'Thomas College',
+            
+            // Minnesota Universities
+            'University of Minnesota', 'Carleton College', 'Macalester College',
+            'St. Olaf College', 'Gustavus Adolphus College', 'College of St. Benedict',
+            'St. John\'s University', 'Hamline University', 'Augsburg University',
+            
+            // Wisconsin Universities
+            'University of Wisconsin-Madison', 'Marquette University', 'Lawrence University',
+            'Beloit College', 'Ripon College', 'St. Norbert College', 'Carthage College',
+            'University of Wisconsin-Milwaukee', 'University of Wisconsin-La Crosse',
+            
+            // Iowa Universities
+            'University of Iowa', 'Iowa State University', 'Grinnell College',
+            'Drake University', 'Luther College', 'Coe College', 'Cornell College',
+            'University of Northern Iowa', 'Simpson College',
+            
+            // Missouri Universities
+            'Washington University in St. Louis', 'University of Missouri', 'Saint Louis University',
+            'Missouri University of Science and Technology', 'Truman State University',
+            'University of Missouri-Kansas City', 'Missouri State University',
+            
+            // Kansas Universities
+            'University of Kansas', 'Kansas State University', 'Washburn University',
+            'Emporia State University', 'Pittsburg State University', 'Fort Hays State University',
+            
+            // Nebraska Universities
+            'University of Nebraska-Lincoln', 'Creighton University', 'University of Nebraska at Omaha',
+            'University of Nebraska at Kearney', 'Chadron State College', 'Wayne State College',
+            
+            // South Dakota Universities
+            'University of South Dakota', 'South Dakota State University', 'Augustana University',
+            'Dakota State University', 'Northern State University', 'Black Hills State University',
+            
+            // North Dakota Universities
+            'University of North Dakota', 'North Dakota State University', 'Minot State University',
+            'Dickinson State University', 'Valley City State University', 'Mayville State University',
+            
+            // Oklahoma Universities
+            'University of Oklahoma', 'Oklahoma State University', 'University of Tulsa',
+            'Oklahoma City University', 'Oral Roberts University', 'Northeastern State University',
+            
+            // Community Colleges and Technical Schools
+            'Miami Dade College', 'Broward College', 'Valencia College', 'Santa Monica College',
+            'Pasadena City College', 'De Anza College', 'Foothill College', 'Diablo Valley College',
+            'Los Angeles Pierce College', 'Los Angeles Valley College', 'Orange Coast College',
+            'Saddleback College', 'Cypress College', 'Fullerton College', 'Golden West College',
+            'Irvine Valley College', 'Santiago Canyon College', 'Coastline Community College',
+            'Golden West College', 'Orange Coast College', 'Saddleback College',
+            
+            // International Universities (Major ones)
+            'University of Oxford', 'University of Cambridge', 'Imperial College London',
+            'London School of Economics', 'University College London', 'King\'s College London',
+            'University of Edinburgh', 'University of Glasgow', 'University of St Andrews',
+            'University of Manchester', 'University of Birmingham', 'University of Leeds',
+            'University of Sheffield', 'University of Liverpool', 'University of Bristol',
+            'University of Nottingham', 'University of Southampton', 'University of Warwick',
+            'University of York', 'University of Durham', 'University of Exeter',
+            'University of Bath', 'University of Surrey', 'University of Sussex',
+            'Lancaster University', 'University of Reading', 'University of Kent',
+            'University of Essex', 'University of East Anglia', 'University of Leicester',
+            'University of Hull', 'University of Bradford', 'University of Huddersfield',
+            'University of Salford', 'Manchester Metropolitan University', 'University of Central Lancashire',
+            'Sheffield Hallam University', 'Leeds Beckett University', 'Liverpool John Moores University',
+            'University of Brighton', 'University of Portsmouth', 'University of Plymouth',
+            'University of the West of England', 'University of Gloucestershire', 'University of Worcester',
+            'University of Chester', 'University of Cumbria', 'University of Derby',
+            'University of Lincoln', 'University of Northampton', 'University of Sunderland',
+            'Teesside University', 'University of Wolverhampton', 'University of Worcester',
+            'York St John University', 'Leeds Trinity University', 'University of Chichester',
+            'Canterbury Christ Church University', 'University of Greenwich', 'University of East London',
+            'London Metropolitan University', 'Middlesex University', 'University of West London',
+            'Kingston University', 'Roehampton University', 'University of the Arts London',
+            'Goldsmiths, University of London', 'Birkbeck, University of London', 'SOAS University of London',
+            'Royal Holloway, University of London', 'Queen Mary University of London',
+            'St George\'s, University of London', 'City, University of London',
+            'University of the West of Scotland', 'University of Strathclyde', 'University of Stirling',
+            'University of Aberdeen', 'University of Dundee', 'University of Abertay Dundee',
+            'Edinburgh Napier University', 'Glasgow Caledonian University', 'Heriot-Watt University',
+            'Queen Margaret University', 'Robert Gordon University', 'University of the Highlands and Islands',
+            'Cardiff University', 'Swansea University', 'Bangor University', 'Aberystwyth University',
+            'University of South Wales', 'Cardiff Metropolitan University', 'University of Wales Trinity Saint David',
+            'Wrexham Glyndwr University', 'University of Ulster', 'Queen\'s University Belfast',
+            'Ulster University', 'Stranmillis University College', 'St Mary\'s University College',
+            'Trinity College Dublin', 'University College Dublin', 'National University of Ireland, Galway',
+            'University College Cork', 'Dublin City University', 'University of Limerick',
+            'Maynooth University', 'Technological University Dublin', 'Athlone Institute of Technology',
+            'Cork Institute of Technology', 'Dundalk Institute of Technology', 'Galway-Mayo Institute of Technology',
+            'Institute of Technology, Carlow', 'Institute of Technology, Sligo', 'Institute of Technology, Tallaght',
+            'Institute of Technology, Tralee', 'Letterkenny Institute of Technology', 'Limerick Institute of Technology',
+            'Waterford Institute of Technology', 'Dublin Institute of Technology',
+            'University of Toronto', 'University of British Columbia', 'McGill University',
+            'McMaster University', 'University of Alberta', 'University of Waterloo',
+            'Western University', 'Queen\'s University', 'University of Calgary',
+            'Simon Fraser University', 'University of Ottawa', 'Dalhousie University',
+            'University of Montreal', 'Concordia University', 'Laval University',
+            'University of Sherbrooke', 'Carleton University', 'University of Victoria',
+            'York University', 'Ryerson University', 'University of Guelph',
+            'University of Saskatchewan', 'Memorial University of Newfoundland', 'University of New Brunswick',
+            'Acadia University', 'Mount Allison University', 'St. Francis Xavier University',
+            'University of Prince Edward Island', 'Bishop\'s University', 'Trent University',
+            'Lakehead University', 'Laurentian University', 'Nipissing University',
+            'University of Northern British Columbia', 'Thompson Rivers University',
+            'University of the Fraser Valley', 'Kwantlen Polytechnic University', 'Capilano University',
+            'Vancouver Island University', 'University of Northern British Columbia',
+            'University of Lethbridge', 'Mount Royal University', 'University of Regina',
+            'Brandon University', 'University of Winnipeg', 'University of Manitoba',
+            'University of New Brunswick', 'Mount Allison University', 'St. Thomas University',
+            'Université de Moncton', 'Cape Breton University', 'Nova Scotia College of Art and Design',
+            'Mount Saint Vincent University', 'Saint Mary\'s University', 'St. Francis Xavier University',
+            'Acadia University', 'Dalhousie University', 'University of King\'s College',
+            'NSCAD University', 'Université Sainte-Anne', 'Atlantic School of Theology',
+            'Canadian Coast Guard College', 'Nova Scotia Community College', 'Collège de l\'Île',
+            'Holland College', 'University of Prince Edward Island', 'Collège de l\'Acadie',
+            'Collège de l\'Atlantique', 'Collège de l\'Île-du-Prince-Édouard',
+            'Université de l\'Île-du-Prince-Édouard', 'Collège de l\'Acadie', 'Holland College',
+            'University of Prince Edward Island', 'Collège de l\'Acadie', 'Holland College',
+            'University of Prince Edward Island', 'Collège de l\'Acadie', 'Holland College'
         ];
 
         let currentSuggestions = [];
