@@ -10262,6 +10262,16 @@ img {
     transform: translate(-50%, -50%) scale(0.95);
 }
 
+.ghost-text-hint {
+    color: #666;
+    font-style: italic;
+    font-size: 14px;
+    margin-bottom: 10px;
+    opacity: 0.7;
+    pointer-events: none;
+    user-select: none;
+}
+
 /* AI Checker Styles */
 .ai-checker-summary {
     position: fixed;
