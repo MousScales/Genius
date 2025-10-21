@@ -645,8 +645,8 @@ async function loadDocuments(classData) {
         return;
     }
     
-    // Show loading
-    documentsList.innerHTML = '<div class="loading-documents">Loading documents...</div>';
+    // Show clean loading state
+    documentsList.innerHTML = '';
     if (emptyDocuments) emptyDocuments.style.display = 'none';
     
     try {
@@ -3849,8 +3849,8 @@ async function loadStudyGuides(classData, viewMode = 'list') {
         return;
     }
     
-    // Show loading
-    studyGuidesList.innerHTML = '<div class="loading-study-guides">Loading study guides...</div>';
+    // Show clean loading state
+    studyGuidesList.innerHTML = '';
     if (emptyStudyGuides) emptyStudyGuides.style.display = 'none';
     
     try {

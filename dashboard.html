@@ -89,6 +89,9 @@
                 <span>+</span> Add Class
             </button>
             <div class="dashboard-content">
+                <div class="loading-state" id="loadingState">
+                    <!-- Clean loading state - just background -->
+                </div>
                 <div class="classes-grid" id="classesGrid">
                     <!-- Classes will be dynamically added here -->
                 </div>
@@ -568,6 +571,17 @@
                 return;
             }
 
+            // Show loading state
+            const loadingState = document.getElementById('loadingState');
+            const classesGrid = document.getElementById('classesGrid');
+            const emptyState = document.getElementById('emptyState');
+            const addClassBtn = document.getElementById('addClassBtn');
+            
+            loadingState.style.display = 'flex';
+            classesGrid.style.display = 'none';
+            emptyState.style.display = 'none';
+            addClassBtn.style.display = 'none';
+
             // Wait for class modules to be loaded
             if (typeof window.showClassView !== 'function') {
                 console.log('Class modules not loaded yet, waiting...');
@@ -604,9 +618,8 @@
                         classes = [];
             }
             
-            const classesGrid = document.getElementById('classesGrid');
-            const emptyState = document.getElementById('emptyState');
-            const addClassBtn = document.getElementById('addClassBtn');
+            // Hide loading state and show appropriate content
+            loadingState.style.display = 'none';
             
             if (classes.length === 0) {
                 emptyState.style.display = 'flex';
