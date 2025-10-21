@@ -185,20 +185,6 @@
             border-bottom: none;
         }
 
-        .ghost-text {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            padding: 15px 20px;
-            color: rgba(255, 255, 255, 0.3);
-            pointer-events: none;
-            font-size: 16px;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            background: transparent;
-            z-index: 1;
-            display: none;
-        }
 
 
         select option {
@@ -353,7 +339,6 @@
                 <div class="form-group">
                     <div class="autocomplete-container">
                         <input type="text" id="collegeName" required>
-                        <div class="ghost-text" id="ghostText"></div>
                         <div class="autocomplete-suggestions" id="suggestions"></div>
                     </div>
                 </div>
@@ -1193,16 +1178,14 @@
         function initializeAutocomplete() {
             const collegeInput = document.getElementById('collegeName');
             const suggestionsDiv = document.getElementById('suggestions');
-            const ghostTextDiv = document.getElementById('ghostText');
 
-            if (!collegeInput || !suggestionsDiv || !ghostTextDiv) return;
+            if (!collegeInput || !suggestionsDiv) return;
 
             collegeInput.addEventListener('input', async function(e) {
                 const value = e.target.value.toLowerCase();
                 
                 if (value.length === 0) {
                     hideSuggestions();
-                    hideGhostText();
                     return;
                 }
 
@@ -1218,10 +1201,8 @@
 
                     if (currentSuggestions.length > 0) {
                         showSuggestions();
-                        updateGhostText(value, currentSuggestions[0]);
                     } else {
                         hideSuggestions();
-                        hideGhostText();
                     }
                 } catch (error) {
                     console.log('Search error:', error);
@@ -1232,10 +1213,8 @@
 
                     if (currentSuggestions.length > 0) {
                         showSuggestions();
-                        updateGhostText(value, currentSuggestions[0]);
                     } else {
                         hideSuggestions();
-                        hideGhostText();
                     }
                 }
             });
@@ -1263,7 +1242,6 @@
                 // Delay hiding to allow clicks on suggestions
                 setTimeout(() => {
                     hideSuggestions();
-                    hideGhostText();
                 }, 200);
             });
 
@@ -1273,7 +1251,6 @@
                     const suggestion = e.target.textContent;
                     collegeInput.value = suggestion;
                     hideSuggestions();
-                    hideGhostText();
                     selectedIndex = -1;
                 }
             });
@@ -1303,12 +1280,6 @@
             suggestions.forEach((suggestion, index) => {
                 suggestion.classList.toggle('highlighted', index === selectedIndex);
             });
-
-            if (selectedIndex >= 0 && currentSuggestions[selectedIndex]) {
-                const collegeInput = document.getElementById('collegeName');
-                const value = collegeInput.value.toLowerCase();
-                updateGhostText(value, currentSuggestions[selectedIndex]);
-            }
         }
 
         function completeSelection() {
@@ -1316,50 +1287,10 @@
                 const collegeInput = document.getElementById('collegeName');
                 collegeInput.value = currentSuggestions[selectedIndex];
                 hideSuggestions();
-                hideGhostText();
                 selectedIndex = -1;
             }
         }
 
-        function updateGhostText(inputValue, suggestion) {
-            const ghostTextDiv = document.getElementById('ghostText');
-            const collegeInput = document.getElementById('collegeName');
-            if (!ghostTextDiv || !collegeInput) return;
-
-            if (suggestion && suggestion.toLowerCase().startsWith(inputValue.toLowerCase())) {
-                const remaining = suggestion.substring(inputValue.length);
-                ghostTextDiv.textContent = remaining;
-                ghostTextDiv.style.display = 'block';
-                
-                // Position ghost text to start where user's text ends
-                // Create a temporary span to measure the width of the user's text
-                const tempSpan = document.createElement('span');
-                tempSpan.style.visibility = 'hidden';
-                tempSpan.style.position = 'absolute';
-                tempSpan.style.fontSize = getComputedStyle(collegeInput).fontSize;
-                tempSpan.style.fontFamily = getComputedStyle(collegeInput).fontFamily;
-                tempSpan.style.fontWeight = getComputedStyle(collegeInput).fontWeight;
-                tempSpan.style.letterSpacing = getComputedStyle(collegeInput).letterSpacing;
-                tempSpan.textContent = inputValue;
-                document.body.appendChild(tempSpan);
-                
-                const textWidth = tempSpan.offsetWidth;
-                document.body.removeChild(tempSpan);
-                
-                // Position ghost text to start after the user's text
-                ghostTextDiv.style.left = (20 + textWidth) + 'px';
-                ghostTextDiv.style.right = '20px';
-            } else {
-                hideGhostText();
-            }
-        }
-
-        function hideGhostText() {
-            const ghostTextDiv = document.getElementById('ghostText');
-            if (ghostTextDiv) {
-                ghostTextDiv.style.display = 'none';
-            }
-        }
 
         // Initialize autocomplete when the page loads
         document.addEventListener('DOMContentLoaded', async function() {
