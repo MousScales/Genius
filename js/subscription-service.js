@@ -8,15 +8,25 @@ class SubscriptionService {
     // Initialize the service
     async init() {
         try {
-            // Wait for Firebase to be available
-            if (typeof window.firebase !== 'undefined' && window.firebase.firestore) {
-                this.db = window.firebase.firestore();
-                console.log('✅ Subscription service initialized');
-                return true;
-            } else {
-                console.error('❌ Firebase not available for subscription service');
-                return false;
+            // Wait for Firebase to be available and initialized
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            while (attempts < maxAttempts) {
+                if (typeof window.firebase !== 'undefined' && 
+                    window.firebase.apps && 
+                    window.firebase.apps.length > 0 && 
+                    window.firebase.firestore) {
+                    this.db = window.firebase.firestore();
+                    console.log('✅ Subscription service initialized');
+                    return true;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
             }
+            
+            console.error('❌ Firebase not available for subscription service after waiting');
+            return false;
         } catch (error) {
             console.error('❌ Error initializing subscription service:', error);
             return false;
@@ -215,5 +225,8 @@ window.subscriptionService = new SubscriptionService();
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
-    await window.subscriptionService.init();
+    // Wait a bit longer for other Firebase initializations to complete
+    setTimeout(async () => {
+        await window.subscriptionService.init();
+    }, 1000);
 });
