@@ -599,8 +599,14 @@
 
                 const data = await response.json();
                 
-                // Redirect to Stripe customer portal
-                window.open(data.url, '_blank');
+                // Check if this is a fallback response (billing portal not configured)
+                if (data.fallback) {
+                    // Show fallback message instead of opening portal
+                    alert(`${data.message}\n\nEmail: ${data.email}`);
+                } else {
+                    // Redirect to Stripe customer portal
+                    window.open(data.url, '_blank');
+                }
                 
                 // Reset button state
                 manageBtn.innerHTML = originalText;

@@ -166,21 +166,63 @@ async function handleCreatePortalSession(req, res) {
 
     const { userId, customerId } = req.body;
 
+    console.log('Creating portal session for:', { userId, customerId });
+
     if (!userId || !customerId) {
+        console.log('Missing required parameters:', { userId, customerId });
         return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     try {
+        // First, verify the customer exists in Stripe
+        console.log('Verifying customer exists:', customerId);
+        const customer = await stripe.customers.retrieve(customerId);
+        console.log('Customer verified:', customer.id);
+
         // Create portal session
+        console.log('Creating billing portal session...');
         const portalSession = await stripe.billingPortal.sessions.create({
             customer: customerId,
             return_url: `${process.env.NODE_ENV === 'production' ? 'https://genius-site.com' : 'http://localhost:3001'}/dashboard`,
         });
 
+        console.log('Portal session created successfully:', portalSession.id);
         res.status(200).json({ url: portalSession.url });
     } catch (error) {
         console.error('Stripe portal error:', error);
-        res.status(500).json({ error: 'Failed to create portal session', details: error.message });
+        console.error('Error type:', error.type);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to create portal session';
+        let shouldShowFallback = false;
+        
+        if (error.type === 'StripeInvalidRequestError') {
+            if (error.code === 'resource_missing') {
+                errorMessage = 'Customer not found in Stripe';
+            } else if (error.message.includes('billing portal') || error.message.includes('portal')) {
+                errorMessage = 'Billing portal not configured. Please contact support.';
+                shouldShowFallback = true;
+            }
+        }
+        
+        // If billing portal isn't configured, provide alternative
+        if (shouldShowFallback) {
+            return res.status(200).json({ 
+                error: 'Billing portal not available',
+                fallback: true,
+                message: 'Please contact support at support@genius-site.com to manage your subscription.',
+                email: 'support@genius-site.com'
+            });
+        }
+        
+        res.status(500).json({ 
+            error: errorMessage, 
+            details: error.message,
+            type: error.type,
+            code: error.code
+        });
     }
 }
 
