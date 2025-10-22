@@ -359,7 +359,7 @@
         async function createCheckoutSession(priceId, planType) {
             try {
                 const serverUrl = window.location.hostname === 'genius-site.com' 
-                    ? 'https://genius-site.com'  // Use your live domain
+                    ? ''  // Use same domain for Vercel API routes
                     : 'http://localhost:3001';   // Use local server for development
                 
                 console.log('Creating checkout session:', { priceId, planType, serverUrl });
