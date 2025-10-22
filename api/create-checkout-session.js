@@ -33,7 +33,7 @@ export default async function handler(req, res) {
                         recurring: {
                             interval: planType === 'monthly' ? 'month' : 'year',
                         },
-                        unit_amount: planType === 'monthly' ? 999 : 9999, // $9.99 and $99.99 in cents
+                        unit_amount: planType === 'monthly' ? 1500 : 12000, // $15 and $120 in cents
                     },
                     quantity: 1,
                 },
