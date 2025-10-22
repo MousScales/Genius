@@ -571,7 +571,7 @@
                 manageBtn.disabled = true;
 
                 // Create Stripe customer portal session
-                const response = await fetch('/api/create-portal-session', {
+                const response = await fetch('/api/stripe?action=create-portal-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

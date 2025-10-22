@@ -307,7 +307,7 @@
         // Get subscription details from session
         async function getSubscriptionDetails(sessionId) {
             try {
-                const response = await fetch(`/api/get-subscription-details?session_id=${sessionId}`);
+                const response = await fetch(`/api/stripe?action=get-subscription-details&session_id=${sessionId}`);
                 if (!response.ok) {
                     throw new Error('Failed to get subscription details');
                 }
