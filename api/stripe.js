@@ -38,15 +38,15 @@ async function handleCreateCheckoutSession(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { userId, planType, userEmail } = req.body;
+    const { userId, planType, userEmail, couponCode } = req.body;
 
     if (!userId || !planType || !userEmail) {
         return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     try {
-        // Create checkout session with price data
-        const session = await stripe.checkout.sessions.create({
+        // Prepare checkout session data
+        const sessionData = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -72,7 +72,29 @@ async function handleCreateCheckoutSession(req, res) {
                 userId: userId,
                 planType: planType,
             },
-        });
+        };
+
+        // Add coupon if provided
+        if (couponCode) {
+            try {
+                // Verify the coupon exists in Stripe
+                const coupon = await stripe.coupons.retrieve(couponCode);
+                if (coupon && coupon.valid) {
+                    sessionData.discounts = [{
+                        coupon: couponCode
+                    }];
+                    console.log(`Coupon ${couponCode} applied to checkout session`);
+                } else {
+                    console.log(`Invalid coupon ${couponCode}, proceeding without discount`);
+                }
+            } catch (couponError) {
+                console.log(`Coupon ${couponCode} not found or invalid:`, couponError.message);
+                // Continue without coupon if it's invalid
+            }
+        }
+
+        // Create checkout session
+        const session = await stripe.checkout.sessions.create(sessionData);
 
         res.status(200).json({ sessionId: session.id });
     } catch (error) {
