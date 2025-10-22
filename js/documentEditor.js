@@ -4065,7 +4065,14 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         const allContent = document.querySelectorAll('.doc-editor-content');
         let fullText = '';
         allContent.forEach(content => {
-            fullText += content.innerText + '\n\n';
+            // Clone the content to avoid modifying the original
+            const clonedContent = content.cloneNode(true);
+            
+            // Remove ghost text elements
+            const ghostTextElements = clonedContent.querySelectorAll('.ghost-text-hint');
+            ghostTextElements.forEach(ghost => ghost.remove());
+            
+            fullText += clonedContent.innerText + '\n\n';
         });
         return fullText.trim();
     }
@@ -4114,9 +4121,21 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
                 
              } else {
                  // Edit mode: suggestions or content generation
-                 // Check if document is empty
+                 // Check if document is empty (excluding ghost text)
                  const content = document.getElementById('docEditorContent');
-                 const isDocumentEmpty = !content || !content.innerText || content.innerText.trim().length === 0;
+                 let isDocumentEmpty = true;
+                 
+                 if (content) {
+                     // Clone content to avoid modifying original
+                     const clonedContent = content.cloneNode(true);
+                     
+                     // Remove ghost text elements
+                     const ghostTextElements = clonedContent.querySelectorAll('.ghost-text-hint');
+                     ghostTextElements.forEach(ghost => ghost.remove());
+                     
+                     // Check if there's any real content left
+                     isDocumentEmpty = !clonedContent.innerText || clonedContent.innerText.trim().length === 0;
+                 }
                  
                  console.log('Edit mode - isDocumentEmpty:', isDocumentEmpty, 'content:', content?.innerText);
                  
