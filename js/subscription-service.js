@@ -1,5 +1,5 @@
 // Subscription Service
-export class SubscriptionService {
+class SubscriptionService {
     constructor() {
         this.db = null;
         this.currentUser = null;
