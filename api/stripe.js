@@ -22,6 +22,8 @@ module.exports = async (req, res) => {
                 return await handleGetSubscriptionDetails(req, res);
             case 'create-portal-session':
                 return await handleCreatePortalSession(req, res);
+            case 'check-subscription-status':
+                return await handleCheckSubscriptionStatus(req, res);
             case 'health':
                 return await handleHealthCheck(req, res);
             default:
@@ -179,6 +181,68 @@ async function handleCreatePortalSession(req, res) {
     } catch (error) {
         console.error('Stripe portal error:', error);
         res.status(500).json({ error: 'Failed to create portal session', details: error.message });
+    }
+}
+
+async function handleCheckSubscriptionStatus(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const { userId, customerId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    try {
+        let customerIdToCheck = customerId;
+        
+        // If no customerId provided, try to find it from Firebase
+        if (!customerIdToCheck) {
+            // We'll need to get it from Firebase user data
+            // For now, return error if no customerId provided
+            return res.status(400).json({ error: 'Customer ID is required' });
+        }
+
+        // Get customer from Stripe
+        const customer = await stripe.customers.retrieve(customerIdToCheck);
+        
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        // Get active subscriptions for this customer
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customerIdToCheck,
+            status: 'active',
+            limit: 1
+        });
+
+        const hasActiveSubscription = subscriptions.data.length > 0;
+        let subscriptionDetails = null;
+
+        if (hasActiveSubscription) {
+            const subscription = subscriptions.data[0];
+            subscriptionDetails = {
+                id: subscription.id,
+                status: subscription.status,
+                currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                planType: subscription.items.data[0].price.recurring.interval === 'year' ? 'yearly' : 'monthly',
+                customerId: customerIdToCheck
+            };
+        }
+
+        res.status(200).json({
+            hasActiveSubscription,
+            subscription: subscriptionDetails,
+            customerId: customerIdToCheck
+        });
+
+    } catch (error) {
+        console.error('Stripe subscription check error:', error);
+        res.status(500).json({ error: 'Failed to check subscription status', details: error.message });
     }
 }
 

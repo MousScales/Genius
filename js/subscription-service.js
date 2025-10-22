@@ -49,6 +49,8 @@ class SubscriptionService {
 
         try {
             console.log('🔍 Checking subscription for user:', this.currentUser.uid);
+            
+            // First, get user data from Firebase to get customerId
             const userDoc = await this.db.collection('users').doc(this.currentUser.uid).get();
             
             if (!userDoc.exists) {
@@ -58,20 +60,39 @@ class SubscriptionService {
 
             const userData = userDoc.data();
             console.log('📄 User data:', userData);
-            const subscription = userData.subscription;
-            console.log('💳 Subscription data:', subscription);
-
-            if (!subscription) {
-                console.log('⚠️ No subscription data found');
+            
+            // Check if user has customerId from Stripe
+            const customerId = userData.subscription?.customerId;
+            
+            if (!customerId) {
+                console.log('⚠️ No Stripe customer ID found');
                 return false;
             }
 
-            // Check if subscription is active
-            const isActive = subscription.status === 'active';
-            console.log(`📊 Subscription status: ${subscription.status}, Active: ${isActive}`);
-            console.log('🎯 Full subscription object:', JSON.stringify(subscription, null, 2));
+            console.log('💳 Checking Stripe subscription for customer:', customerId);
             
-            return isActive;
+            // Call Stripe API to check subscription status
+            const response = await fetch('/api/stripe?action=check-subscription-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: this.currentUser.uid,
+                    customerId: customerId
+                })
+            });
+
+            if (!response.ok) {
+                console.error('❌ Failed to check subscription status:', response.status);
+                return false;
+            }
+
+            const data = await response.json();
+            console.log('🎯 Stripe subscription check result:', data);
+            
+            return data.hasActiveSubscription;
+            
         } catch (error) {
             console.error('❌ Error checking subscription status:', error);
             return false;
