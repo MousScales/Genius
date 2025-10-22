@@ -2437,84 +2437,22 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
         async function loadClassModules() {
             console.log('Loading class modules...');
             
-            return new Promise((resolve) => {
-                let loadedCount = 0;
-                const totalScripts = 3; // Updated to include documentEditor
-                
-                function checkComplete() {
-                    loadedCount++;
-                    console.log(`Loaded ${loadedCount}/${totalScripts} scripts`);
-                    
-                    if (loadedCount === totalScripts) {
-                        // Check if functions are available
-                        if (typeof window.addClass === 'function' && 
-                            typeof window.showClassView === 'function' && 
-                            typeof window.closeClassView === 'function' &&
-                            typeof window.openDocumentEditor === 'function' &&
-                            typeof window.closeDocumentEditor === 'function') {
-                            console.log('All modules loaded successfully via scripts');
-                            resolve(true);
-                        } else {
-                            console.error('Scripts loaded but functions not available');
-                            console.log('Available functions:', {
-                                addClass: typeof window.addClass,
-                                showClassView: typeof window.showClassView,
-                                closeClassView: typeof window.closeClassView,
-                                openDocumentEditor: typeof window.openDocumentEditor,
-                                closeDocumentEditor: typeof window.closeDocumentEditor
-                            });
-                            resolve(false);
-                        }
-                    }
+            // The modules are now loaded via script tags at the bottom of the HTML
+            // Just wait for them to be available
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            while (attempts < maxAttempts) {
+                if (typeof window.showClassView === 'function' && typeof window.addClass === 'function') {
+                    console.log('✅ Class modules loaded successfully');
+                    return true;
                 }
-                
-                // Load classForm.js
-                const script1 = document.createElement('script');
-                script1.src = './js/classForm.js';
-                script1.onload = () => {
-                    console.log('classForm.js loaded successfully');
-                    checkComplete();
-                };
-                script1.onerror = (e) => {
-                    console.error('Failed to load classForm.js:', e);
-                    checkComplete();
-                };
-                document.head.appendChild(script1);
-                
-                // Load classView.js
-                const script2 = document.createElement('script');
-                script2.src = './js/classView.js';
-                script2.onload = () => {
-                    console.log('classView.js loaded successfully');
-                    checkComplete();
-                };
-                script2.onerror = (e) => {
-                    console.error('Failed to load classView.js:', e);
-                    checkComplete();
-                };
-                document.head.appendChild(script2);
-                
-                // Load documentEditor.js
-                const script3 = document.createElement('script');
-                script3.src = './js/documentEditor.js';
-                script3.onload = () => {
-                    console.log('documentEditor.js loaded successfully');
-                    checkComplete();
-                };
-                script3.onerror = (e) => {
-                    console.error('Failed to load documentEditor.js:', e);
-                    checkComplete();
-                };
-                document.head.appendChild(script3);
-                
-                // Timeout after 10 seconds
-                setTimeout(() => {
-                    if (loadedCount < totalScripts) {
-                        console.error('Script loading timeout after 10 seconds');
-                        resolve(false);
-                    }
-                }, 10000);
-            });
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            console.warn('⚠️ Class modules not fully loaded, but continuing...');
+            return true; // Continue anyway
         }
 
         // Class menu functions

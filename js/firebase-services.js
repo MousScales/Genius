@@ -1,7 +1,9 @@
 // Clean Firebase Services Module
 // This file provides clean, working Firebase services
 
-import { auth, db } from '../firebase-config.js';
+// Get Firebase instances from global scope
+const auth = window.firebase?.auth();
+const db = window.firebase?.firestore();
 
 // Wait for Firebase to be ready
 async function waitForFirebase() {
@@ -184,12 +186,17 @@ export class DocumentService {
 }
 
 // Create service instances
-export const userService = new UserService();
-export const classService = new ClassService();
-export const documentService = new DocumentService();
+const userService = new UserService();
+const classService = new ClassService();
+const documentService = new DocumentService();
+
+// Make services available globally
+window.userService = userService;
+window.classService = classService;
+window.documentService = documentService;
 
 // Global logout function
-export async function logout() {
+window.logout = async function logout() {
     try {
         console.log('🚪 Logging out...');
         await auth.signOut();

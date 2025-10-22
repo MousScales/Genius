@@ -5,15 +5,15 @@ function getCurrentUser() {
     return userData ? JSON.parse(userData) : null;
 }
 
-// Store uploaded image URL
-let uploadedImageUrl = null;
+// Store uploaded image URL (use global variable)
+// let uploadedImageUrl = null; // Removed - using window.uploadedImageUrl instead
 
 // Class creation functions
 function addClass() {
     console.log('Add Class clicked - function called!');
     
     // Reset uploaded image
-    uploadedImageUrl = null;
+    window.uploadedImageUrl = null;
     
     // Hide the dashboard content
     const dashboardContent = document.querySelector('.dashboard-content');
@@ -465,7 +465,7 @@ function handleImageUpload(event) {
         // Compress the image
         compressImage(file).then(compressedImageUrl => {
             // Store the compressed image URL globally
-            uploadedImageUrl = compressedImageUrl;
+            window.uploadedImageUrl = compressedImageUrl;
             
             // Update the preview on the right
             const preview = document.querySelector('.preview-image');
@@ -584,7 +584,7 @@ function updatePreview() {
     
     // Update preview image with initial if no image uploaded
     const previewImage = document.querySelector('.preview-image');
-    if (previewImage && !uploadedImageUrl) {
+    if (previewImage && !window.uploadedImageUrl) {
         if (className && className.trim()) {
             // Show first letter as initial
             const initial = className.trim()[0].toUpperCase();
@@ -646,7 +646,7 @@ async function createClass(event) {
         });
     
     // Use the stored image URL (set by handleImageUpload)
-    let imageUrl = uploadedImageUrl;
+    let imageUrl = window.uploadedImageUrl;
     
     // Check if image is too large for Firestore (1MB limit)
     if (imageUrl && imageUrl.length > 1000000) { // ~1MB in base64
@@ -700,8 +700,12 @@ async function createClass(event) {
         let firebaseSaved = false;
         
         try {
-            const { classService } = await import('./firebase-services.js');
-            classId = await classService.addClass(user.uid, formData);
+            // Use global classService
+            if (window.classService) {
+                classId = await window.classService.addClass(user.uid, formData);
+            } else {
+                throw new Error('Class service not available');
+            }
             console.log('✅ Class saved to Firebase with ID:', classId);
             firebaseSaved = true;
             
