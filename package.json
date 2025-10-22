@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "stripe": "node stripe-server.js",
     "electron": "electron main.js"
   },
   "dependencies": {
@@ -13,7 +14,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "stripe": "^14.11.0"
   },
   "devDependencies": {
     "electron": "^38.3.0"

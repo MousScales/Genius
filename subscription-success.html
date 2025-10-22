@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius - Subscription Successful</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #000000, #1a1a1a);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #cccccc;
+            margin-bottom: 40px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .subscription-details {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #888888;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .continue-btn {
+            width: 100%;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #4a9eff, #0066cc);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.4);
+        }
+
+        .loading {
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1>Subscription Successful!</h1>
+        <p class="subtitle">Thank you for subscribing to Genius. Your payment has been processed successfully.</p>
+
+        <div class="subscription-details" id="subscriptionDetails">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading subscription details...</p>
+            </div>
+        </div>
+
+        <button class="continue-btn" id="continueBtn" onclick="continueToDashboard()">
+            Continue to Dashboard
+        </button>
+    </div>
+
+    <!-- Subscription Service -->
+    <script src="js/subscription-service.js"></script>
+
+    <script>
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        // Process subscription
+        async function processSubscription() {
+            try {
+                if (sessionId) {
+                    // In a real implementation, you would verify the session with your backend
+                    console.log('Session ID:', sessionId);
+                    
+                    // For now, get plan type from localStorage or URL
+                    const planType = localStorage.getItem('pendingPlanType') || 'monthly';
+                    localStorage.removeItem('pendingPlanType');
+                    
+                    // Create subscription data
+                    const subscriptionData = {
+                        plan: planType,
+                        status: 'active',
+                        startDate: new Date().toISOString(),
+                        endDate: planType === 'monthly' 
+                            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                        stripeSessionId: sessionId
+                    };
+                    
+                    // Save subscription using subscription service
+                    if (window.subscriptionService) {
+                        window.subscriptionService.setSubscription(subscriptionData);
+                    } else {
+                        localStorage.setItem('subscription', JSON.stringify(subscriptionData));
+                    }
+                    
+                    // Display subscription details
+                    displaySubscriptionDetails(subscriptionData);
+                } else {
+                    // No session ID, check if already subscribed
+                    const subscription = window.subscriptionService?.getSubscription();
+                    if (subscription) {
+                        displaySubscriptionDetails(subscription);
+                    } else {
+                        throw new Error('No subscription information found');
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing subscription:', error);
+                document.getElementById('subscriptionDetails').innerHTML = `
+                    <div style="color: #ff6b6b; padding: 20px;">
+                        <p>Error loading subscription details. Redirecting to dashboard...</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            }
+        }
+
+        function displaySubscriptionDetails(subscription) {
+            const planName = subscription.plan === 'yearly' ? 'Yearly Plan' : 'Monthly Plan';
+            const planPrice = subscription.plan === 'yearly' ? '$99.99/year' : '$9.99/month';
+            const endDate = new Date(subscription.endDate).toLocaleDateString();
+            
+            document.getElementById('subscriptionDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Plan</span>
+                    <span class="detail-value">${planName}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Price</span>
+                    <span class="detail-value">${planPrice}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value" style="color: #4caf50;">Active</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Next Billing Date</span>
+                    <span class="detail-value">${endDate}</span>
+                </div>
+            `;
+        }
+
+        function continueToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Process subscription when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            processSubscription();
+        });
+    </script>
+</body>
+</html>

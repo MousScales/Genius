@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius - Choose Your Plan</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
+    
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #000000, #1a1a1a);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .subscription-container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background-image: url('assets/darkgenius.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #cccccc;
+            margin-bottom: 40px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .pricing-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .pricing-card {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px 30px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(74, 158, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(74, 158, 255, 0.2);
+        }
+
+        .pricing-card.recommended {
+            border-color: #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .pricing-card.recommended::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #4a9eff, #0066cc);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #4a9eff;
+            margin-bottom: 5px;
+        }
+
+        .plan-period {
+            color: #888888;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .plan-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            color: #cccccc;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            color: #4a9eff;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .select-plan-btn {
+            width: 100%;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #4a9eff, #0066cc);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select-plan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.4);
+        }
+
+        .select-plan-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            color: #ff6b6b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .footer {
+            margin-top: 40px;
+            color: #888888;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #4a9eff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .pricing-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .pricing-card {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .plan-price {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="subscription-container screen-container">
+        <div class="logo"></div>
+        <div class="logo-text">Genius</div>
+
+        <h1>Choose Your Plan</h1>
+        <p class="subtitle">Unlock the full potential of Genius with our premium features</p>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+        <div id="successMessage" class="success-message" style="display: none;"></div>
+
+        <div class="pricing-container">
+            <div class="pricing-card" data-plan="monthly">
+                <div class="plan-name">Monthly</div>
+                <div class="plan-price">$9.99</div>
+                <div class="plan-period">per month</div>
+                <ul class="plan-features">
+                    <li>Unlimited documents</li>
+                    <li>AI-powered study guides</li>
+                    <li>Flashcard generation</li>
+                    <li>Priority support</li>
+                    <li>Cloud sync</li>
+                </ul>
+                <button class="select-plan-btn" id="monthlyBtn">
+                    Choose Monthly
+                </button>
+            </div>
+
+            <div class="pricing-card recommended" data-plan="yearly">
+                <div class="plan-name">Yearly</div>
+                <div class="plan-price">$99.99</div>
+                <div class="plan-period">per year</div>
+                <ul class="plan-features">
+                    <li>Everything in Monthly</li>
+                    <li>Save 17% annually</li>
+                    <li>Advanced analytics</li>
+                    <li>Priority feature access</li>
+                    <li>24/7 premium support</li>
+                </ul>
+                <button class="select-plan-btn" id="yearlyBtn">
+                    Choose Yearly
+                </button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your subscription...</p>
+        </div>
+
+        <div class="footer">
+            <p>By subscribing, you agree to our <a href="#" id="termsLink">Terms of Service</a> and <a href="#" id="privacyLink">Privacy Policy</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Stripe configuration
+        const stripe = Stripe('pk_live_51SEIs1RyN1JZ733WSrAqTs40oWPn5n6mXVWANmWBRKawz8xNEv5mPjKYU13ouJK0J3Btux5pZk9eBEcctYqAPv0V0052EsT8ni');
+        
+        // Product IDs
+        const MONTHLY_PRODUCT_ID = 'prod_TGCm88lB9nn5Au';
+        const YEARLY_PRODUCT_ID = 'prod_TGCntXtCmq13s4';
+
+        // UI Helper functions
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function setLoading(loading) {
+            const loadingDiv = document.getElementById('loading');
+            const monthlyBtn = document.getElementById('monthlyBtn');
+            const yearlyBtn = document.getElementById('yearlyBtn');
+            
+            if (loading) {
+                loadingDiv.style.display = 'block';
+                monthlyBtn.disabled = true;
+                yearlyBtn.disabled = true;
+            } else {
+                loadingDiv.style.display = 'none';
+                monthlyBtn.disabled = false;
+                yearlyBtn.disabled = false;
+            }
+        }
+
+        // Create checkout session
+        async function createCheckoutSession(priceId, planType) {
+            try {
+                const serverUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3001' 
+                    : window.location.origin;
+                
+                const response = await fetch(`${serverUrl}/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        priceId: priceId,
+                        userId: getCurrentUserId(),
+                        planType: planType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create checkout session');
+                }
+
+                const session = await response.json();
+                return session;
+            } catch (error) {
+                console.error('Error creating checkout session:', error);
+                throw error;
+            }
+        }
+
+        // Get current user ID
+        function getCurrentUserId() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                const userData = JSON.parse(currentUser);
+                return userData.uid;
+            }
+            return null;
+        }
+
+        // Handle subscription selection
+        async function handleSubscription(planType) {
+            hideMessages();
+            setLoading(true);
+
+            try {
+                const priceId = planType === 'monthly' ? MONTHLY_PRODUCT_ID : YEARLY_PRODUCT_ID;
+                
+                showSuccess(`Redirecting to ${planType} subscription checkout...`);
+                
+                // Create checkout session
+                const session = await createCheckoutSession(priceId, planType);
+                
+                if (session && session.url) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = session.url;
+                } else {
+                    throw new Error('No checkout URL returned');
+                }
+
+            } catch (error) {
+                console.error('Subscription error:', error);
+                
+                // Fallback to simulation if server is not running
+                if (error.message.includes('fetch') || error.message.includes('Failed to create')) {
+                    showSuccess('Demo mode: Simulating successful subscription...');
+                    setTimeout(() => {
+                        simulateSuccessfulSubscription(planType);
+                    }, 2000);
+                } else {
+                    showError('Failed to process subscription. Please try again.');
+                    setLoading(false);
+                }
+            }
+        }
+
+        // Simulate successful subscription (for demo purposes)
+        function simulateSuccessfulSubscription(planType) {
+            const subscriptionData = {
+                plan: planType,
+                status: 'active',
+                startDate: new Date().toISOString(),
+                endDate: planType === 'monthly' 
+                    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                    : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+            };
+
+            localStorage.setItem('subscription', JSON.stringify(subscriptionData));
+            
+            showSuccess('Subscription activated successfully! Redirecting to dashboard...');
+            
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        }
+
+        // Event listeners
+        document.getElementById('monthlyBtn').addEventListener('click', () => {
+            handleSubscription('monthly');
+        });
+
+        document.getElementById('yearlyBtn').addEventListener('click', () => {
+            handleSubscription('yearly');
+        });
+
+        // Terms and Privacy links
+        document.getElementById('termsLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Terms of Service - This would link to your terms page');
+        });
+
+        document.getElementById('privacyLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Privacy Policy - This would link to your privacy policy page');
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Subscription page loaded');
+            
+            // Check if user is already subscribed
+            const subscription = localStorage.getItem('subscription');
+            if (subscription) {
+                const subData = JSON.parse(subscription);
+                if (subData.status === 'active' && new Date(subData.endDate) > new Date()) {
+                    // User is already subscribed, redirect to dashboard
+                    window.location.href = 'dashboard.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

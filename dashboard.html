@@ -29,6 +29,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Subscription Service -->
+    <script src="js/subscription-service.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -120,9 +122,8 @@
                             <span class="status-label">Current Plan:</span>
                             <span class="status-value" id="currentPlan">Free Plan</span>
                         </div>
-                        <button id="manageSubscriptionBtn" class="settings-action-btn" disabled>
+                        <button id="manageSubscriptionBtn" class="settings-action-btn">
                             <span>💳</span> Manage Subscription
-                            <span class="coming-soon-badge">Coming Soon</span>
                         </button>
                     </div>
                 </div>
@@ -191,6 +192,13 @@
                 onAuthStateChanged = window.firebase.auth().onAuthStateChanged;
                 
                 console.log('Firebase initialized successfully');
+                
+                // Check subscription status
+                if (window.subscriptionService && window.subscriptionService.needsSubscription()) {
+                    console.log('User needs subscription, redirecting...');
+                    window.location.href = 'subscription.html';
+                    return;
+                }
                 
             } catch (error) {
                 console.error('Error initializing Firebase:', error);
@@ -440,10 +448,29 @@
             // Load academic info from profile if available
             loadAcademicInfo();
             
+            // Update subscription status
+            updateSubscriptionStatus();
+            
             // Trigger smooth transition
             setTimeout(() => {
                 modal.classList.add('show');
             }, 10);
+        }
+        
+        // Update subscription status in settings modal
+        function updateSubscriptionStatus() {
+            const currentPlan = document.getElementById('currentPlan');
+            if (currentPlan && window.subscriptionService) {
+                const subscription = window.subscriptionService.getSubscription();
+                if (subscription && subscription.status === 'active') {
+                    const planType = subscription.plan === 'yearly' ? 'Yearly' : 'Monthly';
+                    currentPlan.textContent = `${planType} Plan - ${window.subscriptionService.getStatusDisplay()}`;
+                    currentPlan.style.color = '#4caf50';
+                } else {
+                    currentPlan.textContent = 'No Active Subscription';
+                    currentPlan.style.color = '#ff6b6b';
+                }
+            }
         }
 
         function closeSettingsModal() {
@@ -501,9 +528,42 @@
         //     }
         // });
 
-        // Manage subscription button (coming soon)
-        document.getElementById('manageSubscriptionBtn').addEventListener('click', () => {
-            alert('Subscription management is coming soon! Stay tuned for updates.');
+        // Manage subscription button
+        document.getElementById('manageSubscriptionBtn').addEventListener('click', async () => {
+            try {
+                const subscription = window.subscriptionService?.getSubscription();
+                
+                if (!subscription || !subscription.stripeCustomerId) {
+                    // If no Stripe customer ID, redirect to subscription page
+                    window.location.href = 'subscription.html';
+                    return;
+                }
+                
+                // Create billing portal session
+                const serverUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3001' 
+                    : window.location.origin;
+                
+                const response = await fetch(`${serverUrl}/create-portal-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customerId: subscription.stripeCustomerId
+                    })
+                });
+                
+                if (response.ok) {
+                    const { url } = await response.json();
+                    window.location.href = url;
+                } else {
+                    throw new Error('Failed to create portal session');
+                }
+            } catch (error) {
+                console.error('Error opening billing portal:', error);
+                alert('Unable to open subscription management. Please contact support.');
+            }
         });
 
 
@@ -753,13 +813,13 @@
 
         // Make loadClasses available globally
         window.loadClasses = loadClasses;
-        
+
         // Load classes on page load
         loadClasses();
 
         // Make addClass available globally
         window.addClass = addClass;
-        
+
         // Add class button (top right)
         document.getElementById('addClassBtn').addEventListener('click', () => {
             console.log('Add class button clicked!');

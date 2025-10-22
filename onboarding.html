@@ -587,10 +587,10 @@
                 setLoading(true);
                 try {
                     await saveUserProfile();
-                    showSuccess('Profile completed successfully! Redirecting to dashboard...');
+                    showSuccess('Profile completed successfully! Redirecting to subscription...');
                     
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = 'subscription.html';
                     }, 2000);
                 } catch (error) {
                     showError('Failed to save profile. Please try again.');
