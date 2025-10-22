@@ -231,6 +231,26 @@
             }
         }
 
+        // Load class modules function
+        async function loadClassModules() {
+            // The modules are now loaded via script tags at the bottom of the HTML
+            // Just wait for them to be available
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            while (attempts < maxAttempts) {
+                if (typeof window.showClassView === 'function' && typeof window.addClass === 'function') {
+                    console.log('✅ Class modules loaded successfully');
+                    return true;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            console.warn('⚠️ Class modules not fully loaded, but continuing...');
+            return true; // Continue anyway
+        }
+
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', async () => {
             // Load class modules first
@@ -249,9 +269,6 @@
         function initializeDashboard() {
             // Load user profile from Firestore
             loadProfileInfo();
-            
-            // Load classes after user is authenticated
-            loadClasses();
 
         // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
@@ -560,8 +577,6 @@
                 console.log('No current user available for class loading');
                 return;
             }
-            
-            console.log('🔄 Loading classes from Firebase for user:', currentUser.uid);
 
             // Show loading state
             const loadingState = document.getElementById('loadingState');
@@ -595,26 +610,21 @@
             
             // Load classes from Firebase
             try {
-                console.log('📡 Connecting to Firebase Firestore...');
                 const db = window.firebase.firestore();
                 const classesRef = db.collection('users').doc(currentUser.uid).collection('classes');
-                console.log('📚 Querying classes collection...');
                 const querySnapshot = await classesRef.orderBy('createdAt', 'desc').get();
                 classes = [];
                 querySnapshot.forEach((doc) => {
-                    const classData = {
+                    classes.push({
                         id: doc.id,
                         ...doc.data()
-                    };
-                    classes.push(classData);
-                    console.log('📖 Loaded class:', classData.name, 'ID:', classData.id);
+                    });
                 });
-                console.log('✅ Successfully loaded', classes.length, 'classes from Firebase');
+                console.log('Loaded classes from Firebase:', classes);
             } catch (error) {
-                console.error('❌ Error loading classes from Firebase:', error);
-                console.error('Error details:', error.code, error.message);
+                console.error('Error loading classes from Firebase:', error);
                 alert('Error loading classes. Please refresh the page and try again.');
-                classes = [];
+                        classes = [];
             }
             
             // Hide loading state and show appropriate content
@@ -741,8 +751,15 @@
             // Counters removed - no longer loading document, study guide, and flashcard counts
         }
 
-        // Load classes is now called in initializeDashboard() after authentication
+        // Make loadClasses available globally
+        window.loadClasses = loadClasses;
+        
+        // Load classes on page load
+        loadClasses();
 
+        // Make addClass available globally
+        window.addClass = addClass;
+        
         // Add class button (top right)
         document.getElementById('addClassBtn').addEventListener('click', () => {
             console.log('Add class button clicked!');
@@ -3115,6 +3132,12 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
     <!-- Import Firebase Services -->
     <script src="js/firebase-service.js"></script>
     <script src="js/csharp-flashcard-service.js"></script>
+    
+    <!-- Import Class Form Module -->
+    <script src="js/classForm.js"></script>
+    
+    <!-- Import Class View Module -->
+    <script src="js/classView.js"></script>
     
     <!-- Import Math.js for scientific calculations -->
     <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>

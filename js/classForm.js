@@ -10,8 +10,7 @@ let uploadedImageUrl = null;
 
 // Class creation functions
 function addClass() {
-    console.log('🚀 Add Class clicked - function called!');
-    console.log('🔍 About to create class form...');
+    console.log('Add Class clicked - function called!');
     
     // Reset uploaded image
     uploadedImageUrl = null;
@@ -41,30 +40,17 @@ function addClass() {
     }
 
     // Create the class form
-    console.log('🏗️ Creating class form...');
     const classForm = createClassForm();
-    console.log('✅ Class form created:', classForm);
-    
-    console.log('📎 Appending form to document body...');
     document.body.appendChild(classForm);
-    console.log('✅ Form appended to body');
 
-    // Setup event listeners immediately
-    console.log('🔧 Setting up event listeners...');
-    setupClassFormEventListeners(classForm);
-    console.log('✅ Event listeners setup complete');
-    
     // Setup live preview
-    console.log('🎨 Setting up live preview...');
     setTimeout(setupLivePreview, 100);
 }
 
 // Create class form HTML
 function createClassForm() {
-    console.log('🏗️ Creating class form HTML...');
     const formContainer = document.createElement('div');
     formContainer.className = 'class-form-container';
-    console.log('📦 Form container created');
     formContainer.innerHTML = `
         <div class="form-column">
             <div class="form-header-custom">
@@ -77,7 +63,7 @@ function createClassForm() {
                 
                 <div class="form-group">
                     <label for="classImage">Class Image</label>
-                    <div class="image-upload-area" id="imageUploadArea">
+                    <div class="image-upload-area" onclick="document.getElementById('classImage').click()">
                         <input type="file" id="classImage" accept="image/*" style="display: none;">
                         <div class="image-preview">
                             <span>📷</span>
@@ -244,110 +230,7 @@ function createClassForm() {
         </div>
     `;
     
-    console.log('✅ Class form HTML created successfully');
     return formContainer;
-}
-
-// Setup event listeners for the class form
-function setupClassFormEventListeners(formContainer) {
-    console.log('🔧 Setting up class form event listeners...');
-    
-    // Setup image upload
-    const imageUploadArea = formContainer.querySelector('#imageUploadArea');
-    const imageInput = formContainer.querySelector('#classImage');
-    if (imageUploadArea && imageInput) {
-        imageUploadArea.addEventListener('click', () => {
-            console.log('📷 Image upload area clicked');
-            imageInput.click();
-        });
-        imageInput.addEventListener('change', handleImageUpload);
-        console.log('✅ Image upload listeners added');
-    }
-    
-    // Setup form buttons
-    const cancelBtn = formContainer.querySelector('#cancelBtn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', (e) => {
-            console.log('❌ Cancel button clicked');
-            e.preventDefault();
-            cancelClassCreation();
-        });
-        console.log('✅ Cancel button listener added');
-    }
-    
-    const createBtn = formContainer.querySelector('#createBtn');
-    if (createBtn) {
-        console.log('✅ Create Class button found:', createBtn);
-        console.log('✅ Button text:', createBtn.textContent);
-        console.log('✅ Button disabled:', createBtn.disabled);
-        console.log('✅ Button classes:', createBtn.className);
-        console.log('✅ Button type:', createBtn.type);
-        
-        // Add click event listener
-        createBtn.addEventListener('click', (e) => {
-            console.log('🖱️ Create Class button clicked!');
-            console.log('🖱️ Event details:', e);
-            e.preventDefault();
-            e.stopPropagation();
-            createClass(e);
-        });
-        
-        // Add a simple test click
-        setTimeout(() => {
-            console.log('🧪 Testing button click programmatically...');
-            console.log('🧪 createClass function available:', typeof createClass);
-            createBtn.click();
-        }, 2000);
-        
-        // Add mousedown for debugging
-        createBtn.addEventListener('mousedown', () => {
-            console.log('🖱️ Create Class button mousedown!');
-        });
-        
-        // Test if button is clickable
-        setTimeout(() => {
-            console.log('🧪 Testing button clickability...');
-            const rect = createBtn.getBoundingClientRect();
-            console.log('📍 Button position:', rect);
-            console.log('📍 Button visible:', rect.width > 0 && rect.height > 0);
-            console.log('📍 Button z-index:', window.getComputedStyle(createBtn).zIndex);
-            console.log('📍 Button pointer-events:', window.getComputedStyle(createBtn).pointerEvents);
-        }, 100);
-        
-        console.log('✅ Create Class button listeners added');
-    } else {
-        console.error('❌ Create Class button not found!');
-        console.error('❌ Available buttons:', formContainer.querySelectorAll('button'));
-    }
-    
-    const backBtnCustom = formContainer.querySelector('#backBtnCustom');
-    if (backBtnCustom) {
-        backBtnCustom.addEventListener('click', (e) => {
-            console.log('⬅️ Back button clicked');
-            e.preventDefault();
-            cancelClassCreation();
-        });
-        console.log('✅ Back button listener added');
-    }
-    
-    // Setup time input formatting
-    const timeInputs = formContainer.querySelectorAll('.day-start-time, .day-end-time');
-    timeInputs.forEach(input => {
-        input.addEventListener('input', () => formatTimeInput(input));
-    });
-    
-    // Add global click debugging
-    document.addEventListener('click', (event) => {
-        console.log('🌍 Global click detected on:', event.target);
-        if (event.target.id === 'createBtn') {
-            console.log('🌍 Global click detected on createBtn!');
-        }
-        if (event.target.classList.contains('btn-primary')) {
-            console.log('🌍 Global click detected on btn-primary!');
-        }
-    });
-    
-    console.log('✅ All class form event listeners setup complete');
 }
 
 // Format time input as user types
@@ -514,7 +397,27 @@ function setupLivePreview() {
         });
     });
     
-    // Note: Button event listeners are now handled in setupClassFormEventListeners
+    // Setup image upload
+    const imageInput = document.getElementById('classImage');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImageUpload);
+    }
+    
+    // Setup form buttons
+    const cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', cancelClassCreation);
+    }
+    
+    const createBtn = document.getElementById('createBtn');
+    if (createBtn) {
+        createBtn.addEventListener('click', createClass);
+    }
+    
+    const backBtnCustom = document.getElementById('backBtnCustom');
+    if (backBtnCustom) {
+        backBtnCustom.addEventListener('click', cancelClassCreation);
+    }
     
     console.log('Live preview setup complete');
 }
@@ -708,30 +611,18 @@ function updatePreview() {
 
 // Create class
 async function createClass(event) {
-    console.log('🚀 Create Class function called!');
+    console.log('Create Class button clicked!');
     
     if (event) {
         event.preventDefault();
     }
     
-    // Add visual feedback
-    const createBtn = document.getElementById('createBtn');
-    if (createBtn) {
-        createBtn.textContent = 'Creating...';
-        createBtn.disabled = true;
-    }
-    
-    console.log('📝 Creating class...');
+    console.log('Creating class...');
     
     const user = getCurrentUser();
     if (!user) {
         alert('Please log in to create a class');
         console.error('No user logged in');
-        // Reset button
-        if (createBtn) {
-            createBtn.textContent = 'Create Class';
-            createBtn.disabled = false;
-        }
         return;
     }
     
@@ -772,34 +663,16 @@ async function createClass(event) {
     const classInstructor = document.getElementById('classInstructor')?.value || '';
     const classMaterials = document.getElementById('classMaterials')?.value || '';
     
-    // Validate required fields
+    // Validate required fields (only class name is required)
     if (!className || !className.trim()) {
-        alert('Please enter a class name to continue.');
+        alert('Please enter a class name to continue. You can fill in other details later.');
         console.log('Validation failed: No class name');
+        // Focus on the class name input
         const classNameInput = document.getElementById('className');
         if (classNameInput) {
             classNameInput.focus();
         }
-        // Reset button
-        if (createBtn) {
-            createBtn.textContent = 'Create Class';
-            createBtn.disabled = false;
-        }
-        return;
-    }
-    
-    if (!classLevel || !classLevel.trim()) {
-        alert('Please select a class level to continue.');
-        console.log('Validation failed: No class level');
-        const classLevelSelect = document.getElementById('classLevel');
-        if (classLevelSelect) {
-            classLevelSelect.focus();
-        }
-        // Reset button
-        if (createBtn) {
-            createBtn.textContent = 'Create Class';
-            createBtn.disabled = false;
-        }
+        // Don't close form, let user keep editing
         return;
     }
     
@@ -827,10 +700,7 @@ async function createClass(event) {
         let firebaseSaved = false;
         
         try {
-            console.log('📡 Importing Firebase services...');
             const { classService } = await import('./firebase-services.js');
-            console.log('💾 Saving class to Firebase...');
-            console.log('📋 Class data being saved:', formData);
             classId = await classService.addClass(user.uid, formData);
             console.log('✅ Class saved to Firebase with ID:', classId);
             firebaseSaved = true;
@@ -859,14 +729,12 @@ async function createClass(event) {
         // Close the form and return to main screen
         cancelClassCreation();
         
-        // Trigger class reload event instead of full page reload
-        if (firebaseSaved) {
-            // Dispatch event to reload classes from Firebase
-            window.dispatchEvent(new CustomEvent('classCreated'));
-            console.log('✅ Class creation event dispatched - dashboard will reload from Firebase');
+        // Reload the dashboard classes without full page reload
+        if (typeof window.loadClasses === 'function') {
+            console.log('Reloading dashboard classes...');
+            window.loadClasses();
         } else {
-            // Fallback to page reload if Firebase save failed
-            console.warn('⚠️ Firebase save failed, using page reload as fallback');
+            // Fallback to page reload if loadClasses function not available
             setTimeout(() => {
                 window.location.reload();
             }, 100);
@@ -875,11 +743,6 @@ async function createClass(event) {
     } catch (error) {
         console.error('Error creating class:', error);
         alert('Error creating class: ' + error.message);
-        // Reset button
-        if (createBtn) {
-            createBtn.textContent = 'Create Class';
-            createBtn.disabled = false;
-        }
     }
 }
 
