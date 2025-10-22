@@ -286,10 +286,18 @@ function setupClassFormEventListeners(formContainer) {
         // Add click event listener
         createBtn.addEventListener('click', (e) => {
             console.log('🖱️ Create Class button clicked!');
+            console.log('🖱️ Event details:', e);
             e.preventDefault();
             e.stopPropagation();
             createClass(e);
         });
+        
+        // Add a simple test click
+        setTimeout(() => {
+            console.log('🧪 Testing button click programmatically...');
+            console.log('🧪 createClass function available:', typeof createClass);
+            createBtn.click();
+        }, 2000);
         
         // Add mousedown for debugging
         createBtn.addEventListener('mousedown', () => {
@@ -326,6 +334,17 @@ function setupClassFormEventListeners(formContainer) {
     const timeInputs = formContainer.querySelectorAll('.day-start-time, .day-end-time');
     timeInputs.forEach(input => {
         input.addEventListener('input', () => formatTimeInput(input));
+    });
+    
+    // Add global click debugging
+    document.addEventListener('click', (event) => {
+        console.log('🌍 Global click detected on:', event.target);
+        if (event.target.id === 'createBtn') {
+            console.log('🌍 Global click detected on createBtn!');
+        }
+        if (event.target.classList.contains('btn-primary')) {
+            console.log('🌍 Global click detected on btn-primary!');
+        }
     });
     
     console.log('✅ All class form event listeners setup complete');
