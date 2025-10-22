@@ -10,7 +10,8 @@ let uploadedImageUrl = null;
 
 // Class creation functions
 function addClass() {
-    console.log('Add Class clicked - function called!');
+    console.log('🚀 Add Class clicked - function called!');
+    console.log('🔍 About to create class form...');
     
     // Reset uploaded image
     uploadedImageUrl = null;
@@ -40,20 +41,30 @@ function addClass() {
     }
 
     // Create the class form
+    console.log('🏗️ Creating class form...');
     const classForm = createClassForm();
+    console.log('✅ Class form created:', classForm);
+    
+    console.log('📎 Appending form to document body...');
     document.body.appendChild(classForm);
+    console.log('✅ Form appended to body');
 
     // Setup event listeners immediately
+    console.log('🔧 Setting up event listeners...');
     setupClassFormEventListeners(classForm);
+    console.log('✅ Event listeners setup complete');
     
     // Setup live preview
+    console.log('🎨 Setting up live preview...');
     setTimeout(setupLivePreview, 100);
 }
 
 // Create class form HTML
 function createClassForm() {
+    console.log('🏗️ Creating class form HTML...');
     const formContainer = document.createElement('div');
     formContainer.className = 'class-form-container';
+    console.log('📦 Form container created');
     formContainer.innerHTML = `
         <div class="form-column">
             <div class="form-header-custom">
@@ -233,6 +244,7 @@ function createClassForm() {
         </div>
     `;
     
+    console.log('✅ Class form HTML created successfully');
     return formContainer;
 }
 
@@ -268,6 +280,8 @@ function setupClassFormEventListeners(formContainer) {
         console.log('✅ Create Class button found:', createBtn);
         console.log('✅ Button text:', createBtn.textContent);
         console.log('✅ Button disabled:', createBtn.disabled);
+        console.log('✅ Button classes:', createBtn.className);
+        console.log('✅ Button type:', createBtn.type);
         
         // Add click event listener
         createBtn.addEventListener('click', (e) => {
@@ -282,9 +296,20 @@ function setupClassFormEventListeners(formContainer) {
             console.log('🖱️ Create Class button mousedown!');
         });
         
+        // Test if button is clickable
+        setTimeout(() => {
+            console.log('🧪 Testing button clickability...');
+            const rect = createBtn.getBoundingClientRect();
+            console.log('📍 Button position:', rect);
+            console.log('📍 Button visible:', rect.width > 0 && rect.height > 0);
+            console.log('📍 Button z-index:', window.getComputedStyle(createBtn).zIndex);
+            console.log('📍 Button pointer-events:', window.getComputedStyle(createBtn).pointerEvents);
+        }, 100);
+        
         console.log('✅ Create Class button listeners added');
     } else {
         console.error('❌ Create Class button not found!');
+        console.error('❌ Available buttons:', formContainer.querySelectorAll('button'));
     }
     
     const backBtnCustom = formContainer.querySelector('#backBtnCustom');
