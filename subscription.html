@@ -10,6 +10,25 @@
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
     
+    <!-- Vercel Analytics -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script>
+        // Only load Vercel Analytics on Vercel deployment
+        if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com') || window.location.hostname.includes('genius-site.com')) {
+            const script = document.createElement('script');
+            script.src = '/_vercel/insights/script.js';
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <!-- Stripe.js -->
     <script src="https://js.stripe.com/v3/"></script>
     
@@ -55,7 +74,8 @@
             font-size: 32px;
             font-weight: 700;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
         h1 {
@@ -72,46 +92,53 @@
             line-height: 1.5;
         }
 
-        .pricing-container {
+        .plans-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 30px;
             margin-bottom: 40px;
         }
 
-        .pricing-card {
+        .plan-card {
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             padding: 40px 30px;
-            position: relative;
+            text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
-        .pricing-card:hover {
+        .plan-card:hover {
             transform: translateY(-5px);
-            border-color: rgba(74, 158, 255, 0.5);
-            box-shadow: 0 10px 30px rgba(74, 158, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
-        .pricing-card.recommended {
+        .plan-card.selected {
             border-color: #4a9eff;
+            background: linear-gradient(145deg, #1a1a2a, #2a2a3a);
             box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
         }
 
-        .pricing-card.recommended::before {
+        .plan-card.popular {
+            border-color: #4a9eff;
+            background: linear-gradient(145deg, #1a1a2a, #2a2a3a);
+        }
+
+        .plan-card.popular::before {
             content: 'Most Popular';
             position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #4a9eff, #0066cc);
+            top: 20px;
+            right: -30px;
+            background: #4a9eff;
             color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
+            padding: 5px 40px;
             font-size: 12px;
             font-weight: 600;
+            transform: rotate(45deg);
         }
 
         .plan-name {
@@ -131,7 +158,18 @@
         .plan-period {
             color: #888888;
             font-size: 16px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+        }
+
+        .plan-savings {
+            background: rgba(74, 158, 255, 0.1);
+            color: #4a9eff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-block;
         }
 
         .plan-features {
@@ -158,26 +196,44 @@
 
         .select-plan-btn {
             width: 100%;
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #4a9eff, #0066cc);
-            color: white;
+            padding: 15px;
             border: none;
             border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            background: linear-gradient(135deg, #4a9eff, #357abd);
+            color: white;
         }
 
         .select-plan-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.4);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
         }
 
         .select-plan-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            color: #ff6b6b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(76, 175, 80, 0.2);
         }
 
         .loading {
@@ -201,46 +257,48 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error-message {
-            background: rgba(244, 67, 54, 0.1);
-            color: #ff6b6b;
-            padding: 15px;
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
-            margin: 20px 0;
-            border: 1px solid rgba(244, 67, 54, 0.2);
-        }
-
-        .success-message {
-            background: rgba(76, 175, 80, 0.1);
-            color: #4caf50;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 1px solid rgba(76, 175, 80, 0.2);
-        }
-
-        .footer {
-            margin-top: 40px;
-            color: #888888;
-            font-size: 14px;
-        }
-
-        .footer a {
-            color: #4a9eff;
+            color: #ffffff;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .footer a:hover {
-            text-decoration: underline;
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 768px) {
-            .pricing-container {
+            .plans-container {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
             
-            .pricing-card {
+            .plan-card {
                 padding: 30px 20px;
             }
             
@@ -255,45 +313,56 @@
     </style>
 </head>
 <body>
+    <a href="onboarding.html" class="back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m15 18-6-6 6-6"/>
+        </svg>
+        Back
+    </a>
+
     <div class="subscription-container screen-container">
         <div class="logo"></div>
         <div class="logo-text">Genius</div>
-
         <h1>Choose Your Plan</h1>
         <p class="subtitle">Unlock the full potential of Genius with our premium features</p>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
         <div id="successMessage" class="success-message" style="display: none;"></div>
 
-        <div class="pricing-container">
-            <div class="pricing-card" data-plan="monthly">
+        <div class="plans-container">
+            <!-- Monthly Plan -->
+            <div class="plan-card" id="monthlyPlan" data-plan="monthly">
                 <div class="plan-name">Monthly</div>
                 <div class="plan-price">$9.99</div>
                 <div class="plan-period">per month</div>
                 <ul class="plan-features">
-                    <li>Unlimited documents</li>
-                    <li>AI-powered study guides</li>
-                    <li>Flashcard generation</li>
+                    <li>Unlimited AI-powered study guides</li>
+                    <li>Advanced flashcard generation</li>
+                    <li>Document analysis and summarization</li>
                     <li>Priority support</li>
-                    <li>Cloud sync</li>
+                    <li>Cloud sync across devices</li>
+                    <li>Export to PDF and other formats</li>
                 </ul>
-                <button class="select-plan-btn" id="monthlyBtn">
+                <button class="select-plan-btn" onclick="selectPlan('monthly')">
                     Choose Monthly
                 </button>
             </div>
 
-            <div class="pricing-card recommended" data-plan="yearly">
+            <!-- Yearly Plan -->
+            <div class="plan-card popular" id="yearlyPlan" data-plan="yearly">
                 <div class="plan-name">Yearly</div>
                 <div class="plan-price">$99.99</div>
                 <div class="plan-period">per year</div>
+                <div class="plan-savings">Save 17%</div>
                 <ul class="plan-features">
                     <li>Everything in Monthly</li>
-                    <li>Save 17% annually</li>
-                    <li>Advanced analytics</li>
-                    <li>Priority feature access</li>
-                    <li>24/7 premium support</li>
+                    <li>Advanced analytics dashboard</li>
+                    <li>Custom study schedules</li>
+                    <li>Team collaboration features</li>
+                    <li>API access for developers</li>
+                    <li>Priority feature requests</li>
                 </ul>
-                <button class="select-plan-btn" id="yearlyBtn">
+                <button class="select-plan-btn" onclick="selectPlan('yearly')">
                     Choose Yearly
                 </button>
             </div>
@@ -303,19 +372,52 @@
             <div class="spinner"></div>
             <p>Processing your subscription...</p>
         </div>
-
-        <div class="footer">
-            <p>By subscribing, you agree to our <a href="#" id="termsLink">Terms of Service</a> and <a href="#" id="privacyLink">Privacy Policy</a></p>
-        </div>
     </div>
 
     <script>
-        // Stripe configuration - using your live publishable key
-        const stripe = Stripe('pk_live_51SEIs1RyN1JZ733WSrAqTs40oWPn5n6mXVWANmWBRKawz8xNEv5mPjKYU13ouJK0J3Btux5pZk9eBEcctYqAPv0V0052EsT8ni');
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+            authDomain: "genius-b5656.firebaseapp.com",
+            projectId: "genius-b5656",
+            storageBucket: "genius-b5656.firebasestorage.app",
+            messagingSenderId: "567988128391",
+            appId: "1:567988128391:web:8a48294d736ec4013f8622",
+            measurementId: "G-3SEG2XJQMP"
+        };
+
+        // Initialize Firebase
+        let app, auth, db;
+        let currentUser = null;
+        let stripe = null;
         
-        // Product IDs
-        const MONTHLY_PRODUCT_ID = 'prod_TGCm88lB9nn5Au';
-        const YEARLY_PRODUCT_ID = 'prod_TGCntXtCmq13s4';
+        function initFirebase() {
+            try {
+                app = window.firebase.initializeApp(firebaseConfig);
+                auth = window.firebase.auth();
+                db = window.firebase.firestore();
+                
+                console.log('Firebase initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                showError('Failed to initialize authentication. Please refresh the page.');
+                return false;
+            }
+        }
+
+        // Initialize Stripe
+        function initStripe() {
+            try {
+                stripe = Stripe('pk_live_51SEIs1RyN1JZ733WSrAqTs40oWPn5n6mXVWANmWBRKawz8xNEv5mPjKYU13ouJK0J3Btux5pZk9eBEcctYqAPv0V0052EsT8ni');
+                console.log('Stripe initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Stripe initialization error:', error);
+                showError('Failed to initialize payment system. Please refresh the page.');
+                return false;
+            }
+        }
 
         // UI Helper functions
         function showError(message) {
@@ -341,8 +443,8 @@
 
         function setLoading(loading) {
             const loadingDiv = document.getElementById('loading');
-            const monthlyBtn = document.getElementById('monthlyBtn');
-            const yearlyBtn = document.getElementById('yearlyBtn');
+            const monthlyBtn = document.querySelector('#monthlyPlan .select-plan-btn');
+            const yearlyBtn = document.querySelector('#yearlyPlan .select-plan-btn');
             
             if (loading) {
                 loadingDiv.style.display = 'block';
@@ -355,69 +457,56 @@
             }
         }
 
-        // Create checkout session
-        async function createCheckoutSession(priceId, planType) {
+        // Plan selection
+        function selectPlan(planType) {
+            hideMessages();
+            
+            // Update visual selection
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById(planType + 'Plan').classList.add('selected');
+            
+            // Process subscription
+            processSubscription(planType);
+        }
+
+        // Process subscription with Stripe
+        async function processSubscription(planType) {
+            if (!currentUser) {
+                showError('Please log in to continue');
+                return;
+            }
+
+            setLoading(true);
+
             try {
-                const serverUrl = window.location.hostname === 'genius-site.com' 
-                    ? ''  // Use same domain for Vercel API routes
-                    : 'http://localhost:3001';   // Use local server for development
-                
-                console.log('Creating checkout session:', { priceId, planType, serverUrl });
-                
-                const response = await fetch(`${serverUrl}/api/create-checkout-session`, {
+                // Create checkout session
+                const response = await fetch('/api/create-checkout-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        priceId: priceId,
-                        userId: getCurrentUserId(),
-                        planType: planType
+                        userId: currentUser.uid,
+                        planType: planType,
+                        userEmail: currentUser.email
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
+                    throw new Error('Failed to create checkout session');
                 }
 
-                const session = await response.json();
-                console.log('Checkout session created:', session);
-                return session;
-            } catch (error) {
-                console.error('Error creating checkout session:', error);
-                throw error;
-            }
-        }
+                const { sessionId } = await response.json();
 
-        // Get current user ID
-        function getCurrentUserId() {
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                const userData = JSON.parse(currentUser);
-                return userData.uid;
-            }
-            return null;
-        }
+                // Redirect to Stripe Checkout
+                const { error } = await stripe.redirectToCheckout({
+                    sessionId: sessionId
+                });
 
-        // Handle subscription selection
-        async function handleSubscription(planType) {
-            hideMessages();
-            setLoading(true);
-
-            try {
-                const priceId = planType === 'monthly' ? MONTHLY_PRODUCT_ID : YEARLY_PRODUCT_ID;
-                
-                showSuccess(`Processing ${planType} subscription...`);
-                
-                // Create checkout session
-                const session = await createCheckoutSession(priceId, planType);
-                
-                if (session && session.url) {
-                    // Redirect to real Stripe checkout
-                    showSuccess(`Redirecting to ${planType} subscription checkout...`);
-                    window.location.href = session.url;
-                } else {
-                    throw new Error('No checkout URL returned');
+                if (error) {
+                    throw new Error(error.message);
                 }
 
             } catch (error) {
@@ -427,59 +516,53 @@
             }
         }
 
-        // Simulate successful subscription (for demo purposes)
-        function simulateSuccessfulSubscription(planType) {
-            const subscriptionData = {
-                plan: planType,
-                status: 'active',
-                startDate: new Date().toISOString(),
-                endDate: planType === 'monthly' 
-                    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                    : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-            };
-
-            localStorage.setItem('subscription', JSON.stringify(subscriptionData));
-            
-            showSuccess('Subscription activated successfully! Redirecting to dashboard...');
-            
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 2000);
+        // Check if user has active subscription
+        async function checkSubscriptionStatus(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    if (userData.subscription && userData.subscription.status === 'active') {
+                        console.log('User has active subscription, redirecting to dashboard');
+                        window.location.href = 'dashboard.html';
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking subscription status:', error);
+                return false;
+            }
         }
 
-        // Event listeners
-        document.getElementById('monthlyBtn').addEventListener('click', () => {
-            handleSubscription('monthly');
-        });
-
-        document.getElementById('yearlyBtn').addEventListener('click', () => {
-            handleSubscription('yearly');
-        });
-
-        // Terms and Privacy links
-        document.getElementById('termsLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Terms of Service - This would link to your terms page');
-        });
-
-        document.getElementById('privacyLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Privacy Policy - This would link to your privacy policy page');
-        });
-
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', () => {
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', async () => {
             console.log('Subscription page loaded');
             
-            // Check if user is already subscribed
-            const subscription = localStorage.getItem('subscription');
-            if (subscription) {
-                const subData = JSON.parse(subscription);
-                if (subData.status === 'active' && new Date(subData.endDate) > new Date()) {
-                    // User is already subscribed, redirect to dashboard
-                    window.location.href = 'dashboard.html';
-                }
+            if (!initFirebase()) {
+                return;
             }
+
+            if (!initStripe()) {
+                return;
+            }
+
+            // Check if user is authenticated
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentUser = user;
+                    console.log('User authenticated:', user.uid);
+                    
+                    // Check if user already has an active subscription
+                    const hasActiveSubscription = await checkSubscriptionStatus(user);
+                    if (hasActiveSubscription) {
+                        return;
+                    }
+                } else {
+                    console.log('No user authenticated, redirecting to login');
+                    window.location.href = 'login.html';
+                }
+            });
         });
     </script>
 </body>

@@ -4,12 +4,32 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/create-checkout-session.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/get-subscription-details.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/stripe-webhook.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
+      "src": "/api/create-checkout-session",
+      "dest": "/api/create-checkout-session.js"
+    },
+    {
+      "src": "/api/get-subscription-details",
+      "dest": "/api/get-subscription-details.js"
+    },
+    {
+      "src": "/api/stripe-webhook",
+      "dest": "/api/stripe-webhook.js"
     },
     {
       "src": "/(.*)",

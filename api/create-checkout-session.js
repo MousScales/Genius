@@ -1,81 +1,56 @@
-// Vercel serverless function for Stripe checkout
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
-        const { priceId, userId, planType } = req.body;
-        
-        console.log('Creating real Stripe checkout session:', { priceId, userId, planType });
-        
-        // Your product IDs
-        const PRODUCTS = {
-            monthly: 'prod_TGCm88lB9nn5Au',
-            yearly: 'prod_TGCntXtCmq13s4'
-        };
+        const { userId, planType, userEmail } = req.body;
 
-        // Get the correct price ID based on plan type
-        let finalPriceId = priceId;
-        
-        // If we received a product ID, get the price ID
-        if (priceId === PRODUCTS.monthly || priceId === PRODUCTS.yearly) {
-            const prices = await stripe.prices.list({
-                product: priceId,
-                active: true,
-                limit: 1
-            });
-            
-            if (prices.data.length === 0) {
-                throw new Error(`No active price found for product ${priceId}`);
-            }
-            
-            finalPriceId = prices.data[0].id;
+        if (!userId || !planType || !userEmail) {
+            return res.status(400).json({ error: 'Missing required parameters' });
         }
-        
-        // Create the actual Stripe checkout session
-        const origin = req.headers.origin || 'https://genius-site.com';
-        
+
+        // Determine product ID based on plan type
+        let productId;
+        if (planType === 'monthly') {
+            productId = process.env.STRIPE_MONTHLY_PRODUCT_ID;
+        } else if (planType === 'yearly') {
+            productId = process.env.STRIPE_YEARLY_PRODUCT_ID;
+        } else {
+            return res.status(400).json({ error: 'Invalid plan type' });
+        }
+
+        // Create checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
                 {
-                    price: finalPriceId,
+                    price_data: {
+                        currency: 'usd',
+                        product: productId,
+                        recurring: {
+                            interval: planType === 'monthly' ? 'month' : 'year',
+                        },
+                        unit_amount: planType === 'monthly' ? 999 : 9999, // $9.99 and $99.99 in cents
+                    },
                     quantity: 1,
                 },
             ],
             mode: 'subscription',
-            success_url: `${origin}/subscription-success.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/subscription.html`,
-            client_reference_id: userId,
+            success_url: `${process.env.NODE_ENV === 'production' ? 'https://genius-site.com' : 'http://localhost:3000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NODE_ENV === 'production' ? 'https://genius-site.com' : 'http://localhost:3000'}/subscription.html`,
+            customer_email: userEmail,
             metadata: {
                 userId: userId,
-                planType: planType || 'monthly'
-            }
+                planType: planType,
+            },
         });
-        
-        console.log('Stripe checkout session created:', session.id);
-        
-        res.json({
-            sessionId: session.id,
-            url: session.url
-        });
-        
+
+        res.status(200).json({ sessionId: session.id });
     } catch (error) {
-        console.error('Error creating Stripe checkout session:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error creating checkout session:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 }
