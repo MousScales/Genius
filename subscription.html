@@ -420,8 +420,8 @@
             } catch (error) {
                 console.error('Subscription error:', error);
                 
-                // Fallback to simulation if server is not running
-                if (error.message.includes('fetch') || error.message.includes('Failed to create')) {
+                // Fallback to simulation if server is not running or API not available
+                if (error.message.includes('fetch') || error.message.includes('Failed to create') || error.message.includes('404')) {
                     showSuccess('Demo mode: Simulating successful subscription...');
                     setTimeout(() => {
                         simulateSuccessfulSubscription(planType);
