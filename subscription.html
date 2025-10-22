@@ -858,7 +858,8 @@
             setTimeout(() => {
                 if (couponCode === 'FREEMO') {
                     appliedCoupon = {
-                        code: couponCode,
+                        code: '1jhwL8Ar', // Use the actual coupon ID from Stripe
+                        promotionCode: couponCode, // Keep the promotion code for display
                         discount: 100,
                         description: '100% off forever'
                     };
@@ -902,7 +903,7 @@
             // Add coupon indicator
             const couponIndicator = document.createElement('div');
             couponIndicator.className = 'coupon-applied';
-            couponIndicator.innerHTML = `🎟️ ${appliedCoupon.code} applied`;
+            couponIndicator.innerHTML = `🎟️ ${appliedCoupon.promotionCode || appliedCoupon.code} applied`;
             couponIndicator.style.cssText = `
                 position: absolute;
                 top: -10px;

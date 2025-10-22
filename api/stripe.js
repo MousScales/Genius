@@ -77,13 +77,20 @@ async function handleCreateCheckoutSession(req, res) {
         // Add coupon if provided
         if (couponCode) {
             try {
+                // Map promotion codes to actual coupon IDs
+                const couponMapping = {
+                    'FREEMO': '1jhwL8Ar' // Map FREEMO promotion code to actual coupon ID
+                };
+                
+                const actualCouponId = couponMapping[couponCode] || couponCode;
+                
                 // Verify the coupon exists in Stripe
-                const coupon = await stripe.coupons.retrieve(couponCode);
+                const coupon = await stripe.coupons.retrieve(actualCouponId);
                 if (coupon && coupon.valid) {
                     sessionData.discounts = [{
-                        coupon: couponCode
+                        coupon: actualCouponId
                     }];
-                    console.log(`Coupon ${couponCode} applied to checkout session`);
+                    console.log(`Coupon ${couponCode} (ID: ${actualCouponId}) applied to checkout session`);
                 } else {
                     console.log(`Invalid coupon ${couponCode}, proceeding without discount`);
                 }
