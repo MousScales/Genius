@@ -42,10 +42,13 @@ class SubscriptionService {
     async hasActiveSubscription() {
         if (!this.currentUser || !this.db) {
             console.log('⚠️ No user or database available for subscription check');
+            console.log('Current user:', this.currentUser);
+            console.log('Database:', this.db);
             return false;
         }
 
         try {
+            console.log('🔍 Checking subscription for user:', this.currentUser.uid);
             const userDoc = await this.db.collection('users').doc(this.currentUser.uid).get();
             
             if (!userDoc.exists) {
@@ -54,7 +57,9 @@ class SubscriptionService {
             }
 
             const userData = userDoc.data();
+            console.log('📄 User data:', userData);
             const subscription = userData.subscription;
+            console.log('💳 Subscription data:', subscription);
 
             if (!subscription) {
                 console.log('⚠️ No subscription data found');
@@ -64,6 +69,7 @@ class SubscriptionService {
             // Check if subscription is active
             const isActive = subscription.status === 'active';
             console.log(`📊 Subscription status: ${subscription.status}, Active: ${isActive}`);
+            console.log('🎯 Full subscription object:', JSON.stringify(subscription, null, 2));
             
             return isActive;
         } catch (error) {

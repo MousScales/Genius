@@ -210,7 +210,7 @@
                     window.firebase.apps.length > 0 && 
                     window.firebase.auth) {
                     
-                    window.firebase.auth().onAuthStateChanged((user) => {
+                    window.firebase.auth().onAuthStateChanged(async (user) => {
                         if (user) {
                             console.log('User authenticated:', user.uid);
                             currentUser = {
@@ -220,7 +220,24 @@
                                 photoURL: user.photoURL
                             };
                             
-                            // Initialize dashboard after user is set
+                            // Set current user in subscription service
+                            if (window.subscriptionService) {
+                                window.subscriptionService.setCurrentUser(user);
+                            }
+                            
+                            // Check subscription status AFTER user is authenticated
+                            if (window.subscriptionService) {
+                                await window.subscriptionService.init();
+                                const hasActiveSubscription = await window.subscriptionService.hasActiveSubscription();
+                                
+                                if (!hasActiveSubscription) {
+                                    console.log('🔒 No active subscription, redirecting to subscription page');
+                                    window.location.href = 'subscription.html';
+                                    return;
+                                }
+                            }
+                            
+                            // Initialize dashboard after user is set and subscription is verified
                             setTimeout(() => {
                                 initializeDashboard();
                             }, 100);
@@ -269,22 +286,7 @@
             }
             
             // Check Firebase authentication state first
-                checkAuthState();
-            
-            // Check subscription status BEFORE initializing dashboard
-            if (window.subscriptionService) {
-                await window.subscriptionService.init();
-                const hasActiveSubscription = await window.subscriptionService.hasActiveSubscription();
-                
-                if (!hasActiveSubscription) {
-                    console.log('🔒 No active subscription, redirecting to subscription page');
-                    window.location.href = 'subscription.html';
-                    return;
-                }
-            }
-            
-            // Only initialize dashboard if user has active subscription
-            initDashboard();
+            checkAuthState();
         });
 
         function initializeDashboard() {
