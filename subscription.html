@@ -358,9 +358,10 @@
         // Create checkout session
         async function createCheckoutSession(priceId, planType) {
             try {
-                const serverUrl = window.location.hostname === 'localhost' 
-                    ? 'http://localhost:3001' 
-                    : window.location.origin;
+                // Use Vercel API route for production, localhost for development
+                const serverUrl = window.location.hostname === 'genius-site.com' 
+                    ? '/api'  // Vercel API route
+                    : 'http://localhost:3001';
                 
                 const response = await fetch(`${serverUrl}/create-checkout-session`, {
                     method: 'POST',
