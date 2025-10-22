@@ -77,26 +77,26 @@ async function handleCreateCheckoutSession(req, res) {
         // Add coupon if provided
         if (couponCode) {
             try {
-                // Map promotion codes to actual coupon IDs
-                const couponMapping = {
-                    'FREEMO': '1jhwL8Ar' // Map FREEMO promotion code to actual coupon ID
+                // Map promotion codes to actual promotion code IDs
+                const promotionCodeMapping = {
+                    'FREEMO': 'promo_1SKsg6RyN1JZ733Wy3jB7gPe' // Map FREEMO promotion code to actual promotion code ID
                 };
                 
-                const actualCouponId = couponMapping[couponCode] || couponCode;
+                const actualPromotionCodeId = promotionCodeMapping[couponCode] || couponCode;
                 
-                // Verify the coupon exists in Stripe
-                const coupon = await stripe.coupons.retrieve(actualCouponId);
-                if (coupon && coupon.valid) {
+                // Verify the promotion code exists in Stripe
+                const promotionCode = await stripe.promotionCodes.retrieve(actualPromotionCodeId);
+                if (promotionCode && promotionCode.active) {
                     sessionData.discounts = [{
-                        coupon: actualCouponId
+                        promotion_code: actualPromotionCodeId
                     }];
-                    console.log(`Coupon ${couponCode} (ID: ${actualCouponId}) applied to checkout session`);
+                    console.log(`Promotion code ${couponCode} (ID: ${actualPromotionCodeId}) applied to checkout session`);
                 } else {
-                    console.log(`Invalid coupon ${couponCode}, proceeding without discount`);
+                    console.log(`Invalid promotion code ${couponCode}, proceeding without discount`);
                 }
-            } catch (couponError) {
-                console.log(`Coupon ${couponCode} not found or invalid:`, couponError.message);
-                // Continue without coupon if it's invalid
+            } catch (promotionCodeError) {
+                console.log(`Promotion code ${couponCode} not found or invalid:`, promotionCodeError.message);
+                // Continue without promotion code if it's invalid
             }
         }
 
