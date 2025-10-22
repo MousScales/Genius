@@ -43,6 +43,9 @@ function addClass() {
     const classForm = createClassForm();
     document.body.appendChild(classForm);
 
+    // Setup event listeners immediately
+    setupClassFormEventListeners(classForm);
+    
     // Setup live preview
     setTimeout(setupLivePreview, 100);
 }
@@ -63,7 +66,7 @@ function createClassForm() {
                 
                 <div class="form-group">
                     <label for="classImage">Class Image</label>
-                    <div class="image-upload-area" onclick="document.getElementById('classImage').click()">
+                    <div class="image-upload-area" id="imageUploadArea">
                         <input type="file" id="classImage" accept="image/*" style="display: none;">
                         <div class="image-preview">
                             <span>📷</span>
@@ -210,7 +213,7 @@ function createClassForm() {
             
             <div class="form-actions">
                 <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                <button type="button" class="btn btn-primary" id="createBtn" onclick="console.log('Direct onclick test');">Create Class</button>
+                <button type="button" class="btn btn-primary" id="createBtn">Create Class</button>
             </div>
         </div>
         
@@ -231,6 +234,76 @@ function createClassForm() {
     `;
     
     return formContainer;
+}
+
+// Setup event listeners for the class form
+function setupClassFormEventListeners(formContainer) {
+    console.log('🔧 Setting up class form event listeners...');
+    
+    // Setup image upload
+    const imageUploadArea = formContainer.querySelector('#imageUploadArea');
+    const imageInput = formContainer.querySelector('#classImage');
+    if (imageUploadArea && imageInput) {
+        imageUploadArea.addEventListener('click', () => {
+            console.log('📷 Image upload area clicked');
+            imageInput.click();
+        });
+        imageInput.addEventListener('change', handleImageUpload);
+        console.log('✅ Image upload listeners added');
+    }
+    
+    // Setup form buttons
+    const cancelBtn = formContainer.querySelector('#cancelBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', (e) => {
+            console.log('❌ Cancel button clicked');
+            e.preventDefault();
+            cancelClassCreation();
+        });
+        console.log('✅ Cancel button listener added');
+    }
+    
+    const createBtn = formContainer.querySelector('#createBtn');
+    if (createBtn) {
+        console.log('✅ Create Class button found:', createBtn);
+        console.log('✅ Button text:', createBtn.textContent);
+        console.log('✅ Button disabled:', createBtn.disabled);
+        
+        // Add click event listener
+        createBtn.addEventListener('click', (e) => {
+            console.log('🖱️ Create Class button clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            createClass(e);
+        });
+        
+        // Add mousedown for debugging
+        createBtn.addEventListener('mousedown', () => {
+            console.log('🖱️ Create Class button mousedown!');
+        });
+        
+        console.log('✅ Create Class button listeners added');
+    } else {
+        console.error('❌ Create Class button not found!');
+    }
+    
+    const backBtnCustom = formContainer.querySelector('#backBtnCustom');
+    if (backBtnCustom) {
+        backBtnCustom.addEventListener('click', (e) => {
+            console.log('⬅️ Back button clicked');
+            e.preventDefault();
+            cancelClassCreation();
+        });
+        console.log('✅ Back button listener added');
+    }
+    
+    // Setup time input formatting
+    const timeInputs = formContainer.querySelectorAll('.day-start-time, .day-end-time');
+    timeInputs.forEach(input => {
+        input.addEventListener('input', () => formatTimeInput(input));
+    });
+    
+    console.log('✅ All class form event listeners setup complete');
 }
 
 // Format time input as user types
@@ -397,78 +470,7 @@ function setupLivePreview() {
         });
     });
     
-    // Setup image upload
-    const imageInput = document.getElementById('classImage');
-    if (imageInput) {
-        imageInput.addEventListener('change', handleImageUpload);
-    }
-    
-    // Setup form buttons
-    const cancelBtn = document.getElementById('cancelBtn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', cancelClassCreation);
-    }
-    
-    const createBtn = document.getElementById('createBtn');
-    if (createBtn) {
-        console.log('✅ Create Class button found:', createBtn);
-        console.log('✅ Button text:', createBtn.textContent);
-        console.log('✅ Button disabled:', createBtn.disabled);
-        console.log('✅ Button style:', createBtn.style.display);
-        
-        // Add multiple event listeners to debug
-        createBtn.addEventListener('click', (event) => {
-            console.log('🖱️ Create Class button clicked!');
-            event.preventDefault();
-            event.stopPropagation();
-            createClass(event);
-        });
-        
-        createBtn.addEventListener('mousedown', () => {
-            console.log('🖱️ Create Class button mousedown!');
-        });
-        
-        createBtn.addEventListener('mouseup', () => {
-            console.log('🖱️ Create Class button mouseup!');
-        });
-        
-        // Also try onclick as backup
-        createBtn.onclick = (event) => {
-            console.log('🖱️ Create Class button onclick!');
-            event.preventDefault();
-            event.stopPropagation();
-            createClass(event);
-        };
-        
-        console.log('✅ Create Class button event listeners added');
-        
-        // Test if button is clickable
-        setTimeout(() => {
-            console.log('🧪 Testing button clickability...');
-            const rect = createBtn.getBoundingClientRect();
-            console.log('📍 Button position:', rect);
-            console.log('📍 Button visible:', rect.width > 0 && rect.height > 0);
-            console.log('📍 Button z-index:', window.getComputedStyle(createBtn).zIndex);
-            console.log('📍 Button pointer-events:', window.getComputedStyle(createBtn).pointerEvents);
-        }, 100);
-    } else {
-        console.error('❌ Create Class button not found!');
-    }
-    
-    const backBtnCustom = document.getElementById('backBtnCustom');
-    if (backBtnCustom) {
-        backBtnCustom.addEventListener('click', cancelClassCreation);
-    }
-    
-    // Add global click debugging
-    document.addEventListener('click', (event) => {
-        if (event.target.id === 'createBtn') {
-            console.log('🌍 Global click detected on createBtn!');
-        }
-        if (event.target.classList.contains('btn-primary')) {
-            console.log('🌍 Global click detected on btn-primary!');
-        }
-    });
+    // Note: Button event listeners are now handled in setupClassFormEventListeners
     
     console.log('Live preview setup complete');
 }
