@@ -20,6 +20,10 @@
     {
       "src": "api/create-portal-session.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/health.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -38,6 +42,10 @@
     {
       "src": "/api/create-portal-session",
       "dest": "/api/create-portal-session.js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.js"
     },
     {
       "src": "/(.*)",
