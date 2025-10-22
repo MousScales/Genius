@@ -358,12 +358,13 @@
         // Create checkout session
         async function createCheckoutSession(priceId, planType) {
             try {
-                // Use Vercel API route for production, localhost for development
                 const serverUrl = window.location.hostname === 'genius-site.com' 
-                    ? '/api'  // Vercel API route
-                    : 'http://localhost:3001';
+                    ? 'https://genius-site.com'  // Use your live domain
+                    : 'http://localhost:3001';   // Use local server for development
                 
-                const response = await fetch(`${serverUrl}/create-checkout-session`, {
+                console.log('Creating checkout session:', { priceId, planType, serverUrl });
+                
+                const response = await fetch(`${serverUrl}/api/create-checkout-session`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -376,10 +377,11 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to create checkout session');
+                    throw new Error(`Server responded with ${response.status}`);
                 }
 
                 const session = await response.json();
+                console.log('Checkout session created:', session);
                 return session;
             } catch (error) {
                 console.error('Error creating checkout session:', error);
@@ -405,31 +407,30 @@
             try {
                 const priceId = planType === 'monthly' ? MONTHLY_PRODUCT_ID : YEARLY_PRODUCT_ID;
                 
-                showSuccess(`Redirecting to ${planType} subscription checkout...`);
+                showSuccess(`Processing ${planType} subscription...`);
                 
                 // Create checkout session
                 const session = await createCheckoutSession(priceId, planType);
                 
                 if (session && session.url) {
-                    // Redirect to Stripe Checkout
-                    window.location.href = session.url;
+                    // For demo mode, simulate the checkout process
+                    if (session.url === '#demo-checkout') {
+                        showSuccess('Demo mode: Simulating successful subscription...');
+                        setTimeout(() => {
+                            simulateSuccessfulSubscription(planType);
+                        }, 2000);
+                    } else {
+                        // Real Stripe checkout
+                        window.location.href = session.url;
+                    }
                 } else {
                     throw new Error('No checkout URL returned');
                 }
 
             } catch (error) {
                 console.error('Subscription error:', error);
-                
-                // Fallback to simulation if server is not running or API not available
-                if (error.message.includes('fetch') || error.message.includes('Failed to create') || error.message.includes('404')) {
-                    showSuccess('Demo mode: Simulating successful subscription...');
-                    setTimeout(() => {
-                        simulateSuccessfulSubscription(planType);
-                    }, 2000);
-                } else {
-                    showError('Failed to process subscription. Please try again.');
-                    setLoading(false);
-                }
+                showError('Failed to process subscription. Please try again.');
+                setLoading(false);
             }
         }
 

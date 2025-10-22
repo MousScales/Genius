@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "stripe": "node stripe-server.js",
+    "stripe": "node server-stripe.js",
     "electron": "electron main.js"
   },
   "dependencies": {
