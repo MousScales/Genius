@@ -3,6 +3,13 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config(); // For environment variables
 
+// Initialize Stripe after loading environment variables
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Debug: Log Stripe key status
+console.log('Stripe Secret Key loaded:', process.env.STRIPE_SECRET_KEY ? 'YES' : 'NO');
+console.log('Stripe Secret Key length:', process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.length : 0);
+
 // Load environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -80,6 +87,14 @@ app.get('/signup', (req, res) => {
 
 app.get('/onboarding', (req, res) => {
     res.sendFile(path.join(__dirname, 'onboarding.html'));
+});
+
+app.get('/subscription', (req, res) => {
+    res.sendFile(path.join(__dirname, 'subscription.html'));
+});
+
+app.get('/subscription-success', (req, res) => {
+    res.sendFile(path.join(__dirname, 'subscription-success.html'));
 });
 
 // Serve static files with proper MIME types
@@ -207,6 +222,94 @@ app.post('/api/zerogpt', async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('ZeroGPT API error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Stripe API endpoints
+app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+        const { userId, planType, userEmail } = req.body;
+
+        if (!userId || !planType || !userEmail) {
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+
+        // Create checkout session with price data
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `Genius ${planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan`,
+                            description: `Genius AI Study Assistant - ${planType === 'monthly' ? 'Monthly' : 'Yearly'} subscription`,
+                        },
+                        recurring: {
+                            interval: planType === 'monthly' ? 'month' : 'year',
+                        },
+                        unit_amount: planType === 'monthly' ? 1500 : 12000, // $15 and $120 in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'subscription',
+            success_url: `${process.env.NODE_ENV === 'production' ? 'https://genius-site.com' : 'http://localhost:3001'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NODE_ENV === 'production' ? 'https://genius-site.com' : 'http://localhost:3001'}/subscription.html`,
+            customer_email: userEmail,
+            metadata: {
+                userId: userId,
+                planType: planType,
+            },
+        });
+
+        res.status(200).json({ sessionId: session.id });
+    } catch (error) {
+        console.error('Error creating checkout session:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/get-subscription-details', async (req, res) => {
+    try {
+        const { session_id } = req.query;
+
+        if (!session_id) {
+            return res.status(400).json({ error: 'Session ID is required' });
+        }
+
+        // Retrieve the checkout session
+        const session = await stripe.checkout.sessions.retrieve(session_id, {
+            expand: ['subscription', 'customer']
+        });
+
+        if (!session.subscription) {
+            return res.status(400).json({ error: 'No subscription found for this session' });
+        }
+
+        // Get subscription details
+        const subscription = session.subscription;
+        const customer = session.customer;
+
+        // Determine plan type from subscription
+        let planType = 'monthly';
+        if (subscription.items.data[0].price.recurring.interval === 'year') {
+            planType = 'yearly';
+        }
+
+        const subscriptionData = {
+            subscriptionId: subscription.id,
+            customerId: customer.id,
+            planType: planType,
+            status: subscription.status,
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        };
+
+        res.status(200).json(subscriptionData);
+    } catch (error) {
+        console.error('Error getting subscription details:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

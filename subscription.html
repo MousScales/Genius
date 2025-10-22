@@ -92,130 +92,264 @@
             line-height: 1.5;
         }
 
-        .plans-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+        .features-section {
+            margin-bottom: 50px;
+        }
+
+        .features-section h2 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .flashcard-container {
+            display: flex;
+            justify-content: center;
+            margin: 0 auto;
+            max-width: 600px;
+            perspective: 1000px;
+        }
+
+        .flashcard {
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            animation: slideInFromBottom 0.8s ease-out;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard.new-card {
+            animation: dragFromBottom 0.8s ease-out;
+        }
+
+        .flashcard.swipe-out {
+            animation: swipeOutRight 0.6s ease-in;
+        }
+
+        @keyframes swipeOutRight {
+            0% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(100px) scale(0.8);
+            }
+        }
+
+        .flashcard-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .flashcard-front {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .flashcard-back {
+            background: linear-gradient(145deg, #1a1a2a, #2a2a3a);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-question,
+        .flashcard-answer {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.5;
+            max-width: 100%;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flashcard {
+            animation: slideInFromBottom 0.6s ease-out;
+        }
+
+        @keyframes slideInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(100px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes dragFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(150px) scale(0.7) rotateX(15deg);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(50px) scale(0.9) rotateX(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+            }
+        }
+
+        .flashcard.flipped .flashcard-back {
+            animation: flipIn 0.6s ease-in-out;
+        }
+
+        @keyframes flipIn {
+            from {
+                opacity: 0;
+                transform: rotateY(90deg);
+            }
+            to {
+                opacity: 1;
+                transform: rotateY(180deg);
+            }
+        }
+
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .pricing-section {
             margin-bottom: 40px;
         }
 
-        .plan-card {
+        .pricing-section h2 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .pricing-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pricing-btn {
+            flex: 1;
             background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
             border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 40px 30px;
-            text-align: center;
-            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 8px 15px;
             cursor: pointer;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
-        .plan-card:hover {
-            transform: translateY(-5px);
+        .pricing-btn:hover {
+            transform: translateY(-3px);
             border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
-        .plan-card.selected {
+        .pricing-btn.selected {
             border-color: #4a9eff;
             background: linear-gradient(145deg, #1a1a2a, #2a2a3a);
             box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
         }
 
-        .plan-card.popular {
+        .pricing-btn.popular {
             border-color: #4a9eff;
             background: linear-gradient(145deg, #1a1a2a, #2a2a3a);
         }
 
-        .plan-card.popular::before {
+        .pricing-btn.popular::before {
             content: 'Most Popular';
             position: absolute;
-            top: 20px;
-            right: -30px;
+            top: 15px;
+            right: -25px;
             background: #4a9eff;
             color: white;
-            padding: 5px 40px;
-            font-size: 12px;
+            padding: 4px 30px;
+            font-size: 11px;
             font-weight: 600;
             transform: rotate(45deg);
         }
 
+        .pricing-btn.selected {
+            border-color: #4a9eff;
+            background: linear-gradient(145deg, #1a1a2a, #2a2a3a);
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .pricing-info {
+            text-align: center;
+        }
+
         .plan-name {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: 700;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 2px;
         }
 
         .plan-price {
-            font-size: 48px;
+            font-size: 24px;
             font-weight: 700;
             color: #4a9eff;
-            margin-bottom: 5px;
+            margin-bottom: 1px;
         }
 
         .plan-period {
             color: #888888;
-            font-size: 16px;
-            margin-bottom: 20px;
+            font-size: 12px;
+            margin-bottom: 2px;
         }
 
         .plan-savings {
             background: rgba(74, 158, 255, 0.1);
             color: #4a9eff;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: 600;
-            margin-bottom: 20px;
             display: inline-block;
-        }
-
-        .plan-features {
-            list-style: none;
-            text-align: left;
-            margin-bottom: 30px;
-        }
-
-        .plan-features li {
-            padding: 8px 0;
-            color: #cccccc;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-        }
-
-        .plan-features li::before {
-            content: '✓';
-            color: #4a9eff;
-            font-weight: bold;
-            margin-right: 12px;
-            font-size: 18px;
-        }
-
-        .select-plan-btn {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #4a9eff, #357abd);
-            color: white;
-        }
-
-        .select-plan-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
-        }
-
-        .select-plan-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
         }
 
         .error-message {
@@ -313,58 +447,49 @@
     </style>
 </head>
 <body>
-    <a href="onboarding.html" class="back-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m15 18-6-6 6-6"/>
-        </svg>
-        Back
-    </a>
 
     <div class="subscription-container screen-container">
         <div class="logo"></div>
         <div class="logo-text">Genius</div>
-        <h1>Choose Your Plan</h1>
-        <p class="subtitle">Unlock the full potential of Genius with our premium features</p>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
         <div id="successMessage" class="success-message" style="display: none;"></div>
 
-        <div class="plans-container">
-            <!-- Monthly Plan -->
-            <div class="plan-card" id="monthlyPlan" data-plan="monthly">
-                <div class="plan-name">Monthly</div>
-                <div class="plan-price">$15</div>
-                <div class="plan-period">per month</div>
-                <ul class="plan-features">
-                    <li>Unlimited AI-powered study guides</li>
-                    <li>Advanced flashcard generation</li>
-                    <li>Document analysis and summarization</li>
-                    <li>Priority support</li>
-                    <li>Cloud sync across devices</li>
-                    <li>Export to PDF and other formats</li>
-                </ul>
-                <button class="select-plan-btn" onclick="selectPlan('monthly')">
-                    Choose Monthly
+        <!-- Pricing Section -->
+        <div class="pricing-section">
+            <div class="pricing-buttons">
+                <button class="pricing-btn" id="monthlyBtn" onclick="selectPlan('monthly')">
+                    <div class="pricing-info">
+                        <div class="plan-name">Monthly</div>
+                        <div class="plan-price">$15</div>
+                        <div class="plan-period">per month</div>
+                    </div>
+                </button>
+                
+                <button class="pricing-btn popular" id="yearlyBtn" onclick="selectPlan('yearly')">
+                    <div class="pricing-info">
+                        <div class="plan-name">Yearly</div>
+                        <div class="plan-price">$120</div>
+                        <div class="plan-period">per year</div>
+                        <div class="plan-savings">Save 33%</div>
+                    </div>
                 </button>
             </div>
+        </div>
 
-            <!-- Yearly Plan -->
-            <div class="plan-card popular" id="yearlyPlan" data-plan="yearly">
-                <div class="plan-name">Yearly</div>
-                <div class="plan-price">$120</div>
-                <div class="plan-period">per year</div>
-                <div class="plan-savings">Save 33%</div>
-                <ul class="plan-features">
-                    <li>Everything in Monthly</li>
-                    <li>Advanced analytics dashboard</li>
-                    <li>Custom study schedules</li>
-                    <li>Team collaboration features</li>
-                    <li>API access for developers</li>
-                    <li>Priority feature requests</li>
-                </ul>
-                <button class="select-plan-btn" onclick="selectPlan('yearly')">
-                    Choose Yearly
-                </button>
+        <!-- Features Section -->
+        <div class="features-section">
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-content">
+                        <div class="flashcard-front">
+                            <div class="flashcard-question" id="flashcardQuestion"></div>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="flashcard-answer" id="flashcardAnswer"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -443,17 +568,17 @@
 
         function setLoading(loading) {
             const loadingDiv = document.getElementById('loading');
-            const monthlyBtn = document.querySelector('#monthlyPlan .select-plan-btn');
-            const yearlyBtn = document.querySelector('#yearlyPlan .select-plan-btn');
+            const monthlyBtn = document.getElementById('monthlyBtn');
+            const yearlyBtn = document.getElementById('yearlyBtn');
             
             if (loading) {
                 loadingDiv.style.display = 'block';
-                monthlyBtn.disabled = true;
-                yearlyBtn.disabled = true;
+                if (monthlyBtn) monthlyBtn.disabled = true;
+                if (yearlyBtn) yearlyBtn.disabled = true;
             } else {
                 loadingDiv.style.display = 'none';
-                monthlyBtn.disabled = false;
-                yearlyBtn.disabled = false;
+                if (monthlyBtn) monthlyBtn.disabled = false;
+                if (yearlyBtn) yearlyBtn.disabled = false;
             }
         }
 
@@ -462,10 +587,13 @@
             hideMessages();
             
             // Update visual selection
-            document.querySelectorAll('.plan-card').forEach(card => {
-                card.classList.remove('selected');
+            document.querySelectorAll('.pricing-btn').forEach(btn => {
+                btn.classList.remove('selected');
             });
-            document.getElementById(planType + 'Plan').classList.add('selected');
+            const selectedBtn = document.getElementById(planType + 'Btn');
+            if (selectedBtn) {
+                selectedBtn.classList.add('selected');
+            }
             
             // Process subscription
             processSubscription(planType);
@@ -535,9 +663,161 @@
             }
         }
 
+        // Flashcard functionality
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let autoFlipInterval;
+        let isAnimating = false;
+
+        const flashcardData = [
+            {
+                question: "Transform Your Study Sessions",
+                answer: "Genius uses advanced AI to create personalized study guides that adapt to your learning style. Generate unlimited materials for any subject, from complex physics equations to historical timelines, all tailored to your specific courses and exam requirements."
+            },
+            {
+                question: "Master Any Subject with Smart Flashcards",
+                answer: "Our AI-powered flashcard system uses spaced repetition algorithms to optimize your memory retention. Create cards from your notes, textbooks, or lectures, and watch as Genius schedules reviews at the perfect intervals to maximize long-term learning."
+            },
+            {
+                question: "Turn Documents into Study Gold",
+                answer: "Upload any document - PDFs, lecture notes, research papers - and Genius instantly extracts key concepts, creates summaries, and generates study questions. Perfect for processing dense academic material and transforming it into digestible study content."
+            },
+            {
+                question: "Study Anywhere, Anytime",
+                answer: "Your study materials sync instantly across all devices. Start on your laptop, continue on your phone during commute, and finish on your tablet at home. Never lose progress or miss a study opportunity with seamless cloud synchronization."
+            },
+            {
+                question: "Track Your Academic Journey",
+                answer: "Get detailed insights into your learning patterns, study habits, and performance trends. See which subjects need more attention, track your improvement over time, and receive personalized recommendations to optimize your study strategy."
+            },
+            {
+                question: "Get Help When You Need It",
+                answer: "Stuck on a difficult concept? Our priority support team provides fast, expert assistance. Get personalized help with complex topics, technical issues, or study strategies from our team of academic professionals and AI specialists."
+            },
+            {
+                question: "Your Data, Your Privacy",
+                answer: "Enterprise-grade security protects your academic work and personal information. All data is encrypted, stored securely, and never shared. Focus on learning while we handle the technical security details with military-grade protection."
+            },
+            {
+                question: "Collaborate with Classmates",
+                answer: "Share study materials, work on group projects, and learn together in real-time. Create shared study groups, collaborate on flashcards, and benefit from collective knowledge while maintaining individual progress tracking."
+            },
+            {
+                question: "Study on Any Device",
+                answer: "Whether you're on your phone between classes, tablet in the library, or laptop at home, Genius provides a seamless experience. Our responsive design ensures optimal performance and usability across all screen sizes and operating systems."
+            },
+            {
+                question: "AI That Learns You",
+                answer: "Genius doesn't just provide tools - it learns your study patterns, preferred learning methods, and academic goals. The AI adapts its recommendations, adjusts difficulty levels, and personalizes content delivery to maximize your learning efficiency and academic success."
+            }
+        ];
+
+        function initializeFlashcards() {
+            updateFlashcard();
+            startAutoFlip();
+        }
+
+        function updateFlashcard() {
+            const questionElement = document.getElementById('flashcardQuestion');
+            const answerElement = document.getElementById('flashcardAnswer');
+            const flashcard = document.getElementById('flashcard');
+            
+            if (questionElement && answerElement && flashcard) {
+                // Add drag from bottom animation
+                flashcard.classList.add('new-card');
+                
+                // Reset after animation
+                setTimeout(() => {
+                    flashcard.classList.remove('new-card');
+                }, 800);
+                
+                questionElement.textContent = flashcardData[currentCardIndex].question;
+                answerElement.textContent = flashcardData[currentCardIndex].answer;
+                
+                // Reset flip state
+                isFlipped = false;
+                flashcard.classList.remove('flipped');
+            }
+        }
+
+        function swipeOutCard() {
+            const flashcard = document.getElementById('flashcard');
+            if (flashcard && !isAnimating) {
+                isAnimating = true;
+                flashcard.classList.add('swipe-out');
+                
+                // After swipe animation, update to next card
+                setTimeout(() => {
+                    flashcard.classList.remove('swipe-out');
+                    nextCard();
+                    isAnimating = false;
+                }, 600);
+            }
+        }
+
+        function flipCard() {
+            const flashcard = document.getElementById('flashcard');
+            if (flashcard) {
+                isFlipped = !isFlipped;
+                flashcard.classList.toggle('flipped', isFlipped);
+            }
+        }
+
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % flashcardData.length;
+            updateFlashcard();
+        }
+
+        function startAutoFlip() {
+            // Start the first cycle immediately
+            startCardCycle();
+            
+            // Set up recurring sequence every 6 seconds
+            autoFlipInterval = setInterval(() => {
+                startCardCycle();
+            }, 6000);
+        }
+
+        function startCardCycle() {
+            // Show question for 3 seconds, then flip to answer
+            setTimeout(() => {
+                flipCard();
+                
+                // Show answer for 2 seconds, then swipe out
+                setTimeout(() => {
+                    swipeOutCard();
+                }, 2000);
+            }, 3000);
+        }
+
+        function stopAutoFlip() {
+            if (autoFlipInterval) {
+                clearInterval(autoFlipInterval);
+            }
+        }
+
+        // Set current date
+        function setCurrentDate() {
+            const dateElement = document.getElementById('currentDate');
+            if (dateElement) {
+                const now = new Date();
+                const dateString = now.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                dateElement.textContent = dateString;
+            }
+        }
+
         // Initialize the app
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('Subscription page loaded');
+            
+            // Initialize flashcards
+            initializeFlashcards();
             
             if (!initFirebase()) {
                 return;
