@@ -5010,6 +5010,38 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.empty-study-guides {
+    display: none; /* Hidden by default, shown only when no study guides */
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+}
+
+.empty-study-guides .empty-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-study-guides h3 {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.empty-study-guides p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
 /* Full-Screen Document Editor (Google Docs Style) */
 .document-editor-screen {
     flex: 1;
