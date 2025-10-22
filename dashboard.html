@@ -203,31 +203,40 @@
 
         // Check authentication state
         function checkAuthState() {
-            if (window.firebase && window.firebase.auth) {
-                window.firebase.auth().onAuthStateChanged((user) => {
-                    if (user) {
-                        console.log('User authenticated:', user.uid);
-                        currentUser = {
-                            uid: user.uid,
-                            email: user.email,
-                            displayName: user.displayName,
-                            photoURL: user.photoURL
-                        };
-                        
-                        // Initialize dashboard after user is set
-                        setTimeout(() => {
-                            initializeDashboard();
-                        }, 100);
-                    } else {
-                        console.log('No user authenticated, redirecting to login');
-                        // Redirect to login
-                        window.location.href = 'login.html';
-                    }
-                });
-            } else {
-                console.log('Firebase auth not available, redirecting to login');
-                window.location.href = 'login.html';
-            }
+            // Wait for Firebase to be properly initialized
+            const checkFirebase = () => {
+                if (window.firebase && 
+                    window.firebase.apps && 
+                    window.firebase.apps.length > 0 && 
+                    window.firebase.auth) {
+                    
+                    window.firebase.auth().onAuthStateChanged((user) => {
+                        if (user) {
+                            console.log('User authenticated:', user.uid);
+                            currentUser = {
+                                uid: user.uid,
+                                email: user.email,
+                                displayName: user.displayName,
+                                photoURL: user.photoURL
+                            };
+                            
+                            // Initialize dashboard after user is set
+                            setTimeout(() => {
+                                initializeDashboard();
+                            }, 100);
+                        } else {
+                            console.log('No user authenticated, redirecting to login');
+                            // Redirect to login
+                            window.location.href = 'login.html';
+                        }
+                    });
+                } else {
+                    console.log('Firebase not ready, waiting...');
+                    setTimeout(checkFirebase, 100);
+                }
+            };
+            
+            checkFirebase();
         }
 
         // Load class modules function
