@@ -413,16 +413,9 @@
                 const session = await createCheckoutSession(priceId, planType);
                 
                 if (session && session.url) {
-                    // For demo mode, simulate the checkout process
-                    if (session.url === '#demo-checkout') {
-                        showSuccess('Demo mode: Simulating successful subscription...');
-                        setTimeout(() => {
-                            simulateSuccessfulSubscription(planType);
-                        }, 2000);
-                    } else {
-                        // Real Stripe checkout
-                        window.location.href = session.url;
-                    }
+                    // Redirect to real Stripe checkout
+                    showSuccess(`Redirecting to ${planType} subscription checkout...`);
+                    window.location.href = session.url;
                 } else {
                     throw new Error('No checkout URL returned');
                 }
