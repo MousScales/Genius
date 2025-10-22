@@ -456,6 +456,22 @@
             }
         }
 
+        // Check subscription status
+        async function checkSubscriptionStatus(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const subscription = userData.subscription;
+                    return subscription && subscription.status === 'active';
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking subscription status:', error);
+                return false;
+            }
+        }
+
         // Redirect after successful authentication
         async function handleSuccessfulSignup(user) {
             saveUserData(user);
@@ -466,8 +482,16 @@
                 console.log('User needs onboarding, redirecting to onboarding page');
                 window.location.href = 'onboarding.html';
             } else {
-                console.log('User is onboarded, redirecting to dashboard');
-                window.location.href = 'dashboard.html';
+                // Check subscription status before redirecting to dashboard
+                const hasActiveSubscription = await checkSubscriptionStatus(user);
+                
+                if (hasActiveSubscription) {
+                    console.log('User has active subscription, redirecting to dashboard');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    console.log('User has no active subscription, redirecting to subscription page');
+                    window.location.href = 'subscription.html';
+                }
             }
         }
 

@@ -386,12 +386,12 @@ function createEditorScreen(classData, existingDoc) {
         
         <div class="genius-chat-container" id="geniusChatContainer">
         <div class="genius-chat-input-wrapper" id="geniusInputWrapper">
-            <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
-            <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
-            <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
+                <img src="assets/darkgenius.png" alt="Genius" class="genius-chat-icon">
+                <input type="text" class="genius-chat-input" id="geniusChatInput" placeholder="Talk to Genius">
+                <div class="genius-mode-toggle" id="geniusModeToggle" title="Change mode">
                 <span class="mode-icon" id="modeIcon" style="font-size: 16px; font-weight: bold; color: #fff;">?</span>
+                </div>
             </div>
-        </div>
         </div>
         
         <div class="genius-sidebar" id="geniusSidebar">
@@ -482,7 +482,7 @@ function setupEditorControls(classData, existingDoc) {
     
     // Initialize placeholder visibility with a small delay to ensure DOM is ready
     setTimeout(() => {
-        updatePlaceholderVisibility();
+    updatePlaceholderVisibility();
         // Ensure content is properly editable
         if (content) {
             content.setAttribute('contenteditable', 'true');
@@ -1741,14 +1741,14 @@ window.autoSaveDocument = function(classData, existingDoc) {
                         documents[docIndex].title = title;
                         documents[docIndex].content = content;
                         documents[docIndex].lastModified = new Date().toISOString();
-                    } else {
+        } else {
                         // Add new document to localStorage
                         documents.push({
-                            id: newDocId,
-                            title: title,
-                            content: content,
+                id: newDocId,
+                title: title,
+                content: content,
                             type: 'text',
-                            createdAt: new Date().toISOString(),
+                createdAt: new Date().toISOString(),
                             lastModified: new Date().toISOString(),
                             folderId: existingDoc?.folderId || null
                         });
@@ -2774,29 +2774,29 @@ function updatePlaceholderVisibility() {
     const content = document.getElementById('docEditorContent');
     if (!content) return;
     
-        // Check if content is empty (only whitespace, placeholder, or chat messages)
-        const textContent = content.innerText || '';
-        const htmlContent = content.innerHTML || '';
-        
+    // Check if content is empty (only whitespace, placeholder, or chat messages)
+    const textContent = content.innerText || '';
+    const htmlContent = content.innerHTML || '';
+    
         // Remove chat message content from consideration
-        const contentWithoutPlaceholder = htmlContent
-            .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
-            .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
+    const contentWithoutPlaceholder = htmlContent
+        .replace(/<div class="genius-chat-container">[\s\S]*?<\/div>/g, '')
+        .replace(/<div class="genius-thinking-container">[\s\S]*?<\/div>/g, '')
             .replace(/<div class="ghost-text-hint">[\s\S]*?<\/div>/g, '') // Remove ghost text from consideration
-            .replace(/<br\s*\/?>/g, '') // Remove line breaks
-            .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-            .replace(/\s+/g, ' ') // Normalize whitespace
-            .trim();
-        
+        .replace(/<br\s*\/?>/g, '') // Remove line breaks
+        .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+    
         // Check if there's any real content (not just whitespace, ghost text, or empty elements)
         const hasRealContent = contentWithoutPlaceholder.length > 0 && 
                                !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius') &&
                                contentWithoutPlaceholder !== '';
-        
-        if (hasRealContent) {
+    
+    if (hasRealContent) {
             // Remove ghost text if it exists
             removeGhostText();
-        } else {
+    } else {
             // Always show genius essay writing text when document is empty
             if (!content.querySelector('.ghost-text-hint')) {
                 // Add ghost text without replacing the entire content
@@ -2808,7 +2808,7 @@ function updatePlaceholderVisibility() {
                 ghostText.textContent = 'Click the ? to switch to edit with Genius to write your essay for you';
                 content.appendChild(ghostText);
             }
-        }
+    }
 }
 
 function setupPlaceholderExamples(classData, existingDoc) {
@@ -3859,8 +3859,8 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
                 currentMode = 'edit';
                 modeIcon.innerHTML = `
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                 `;
                 modeToggle.title = 'Edit mode - Click to switch to Help mode';

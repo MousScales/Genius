@@ -49,18 +49,85 @@
             100% { transform: rotate(360deg); }
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Subscription Service -->
+    <script src="js/subscription-service.js"></script>
+    
     <script>
-        console.log('Genius App - Redirecting to login...');
+        console.log('Genius App - Checking authentication and subscription...');
         
-        // Check if user is already logged in
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-            console.log('User found in localStorage, redirecting to dashboard');
-            window.location.href = 'dashboard.html';
-        } else {
-            console.log('No user found, redirecting to login');
-            window.location.href = 'login.html';
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
+            authDomain: "genius-b5656.firebaseapp.com",
+            projectId: "genius-b5656",
+            storageBucket: "genius-b5656.firebasestorage.app",
+            messagingSenderId: "567988128391",
+            appId: "1:567988128391:web:8a48294d736ec4013f8622",
+            measurementId: "G-3SEG2XJQMP"
+        };
+
+        // Initialize Firebase
+        let app, auth, db;
+        
+        function initFirebase() {
+            try {
+                app = window.firebase.initializeApp(firebaseConfig);
+                auth = window.firebase.auth();
+                db = window.firebase.firestore();
+                console.log('Firebase initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                return false;
+            }
         }
+
+        // Check user authentication and subscription status
+        async function checkUserStatus() {
+            if (!initFirebase()) {
+                console.log('Firebase initialization failed, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check if user is authenticated
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    console.log('User authenticated:', user.uid);
+                    
+                    // Initialize subscription service
+                    if (window.subscriptionService) {
+                        await window.subscriptionService.init();
+                        window.subscriptionService.setCurrentUser(user);
+                        
+                        // Check if user has active subscription
+                        const hasActiveSubscription = await window.subscriptionService.hasActiveSubscription();
+                        
+                        if (hasActiveSubscription) {
+                            console.log('User has active subscription, redirecting to dashboard');
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            console.log('User has no active subscription, redirecting to subscription page');
+                            window.location.href = 'subscription.html';
+                        }
+                    } else {
+                        console.log('Subscription service not available, redirecting to subscription page');
+                        window.location.href = 'subscription.html';
+                    }
+                } else {
+                    console.log('No user authenticated, redirecting to login');
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Start the check
+        checkUserStatus();
     </script>
 </head>
 <body>
