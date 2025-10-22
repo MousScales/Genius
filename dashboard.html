@@ -120,9 +120,8 @@
                             <span class="status-label">Current Plan:</span>
                             <span class="status-value" id="currentPlan">Free Plan</span>
                         </div>
-                        <button id="manageSubscriptionBtn" class="settings-action-btn" disabled>
+                        <button id="manageSubscriptionBtn" class="settings-action-btn">
                             <span>💳</span> Manage Subscription
-                            <span class="coming-soon-badge">Coming Soon</span>
                         </button>
                     </div>
                 </div>
@@ -484,9 +483,31 @@
                     // Use collegeName instead of school to match the profile structure
                     document.getElementById('schoolName').value = userData.collegeName || userData.school || '';
                     document.getElementById('majorField').value = userData.major || '';
+                    
+                    // Load subscription status
+                    loadSubscriptionStatus(userData);
                 }
             } catch (error) {
                 console.error('Error loading academic info:', error);
+            }
+        }
+
+        // Load subscription status
+        function loadSubscriptionStatus(userData) {
+            const currentPlanElement = document.getElementById('currentPlan');
+            const manageBtn = document.getElementById('manageSubscriptionBtn');
+            
+            if (userData.subscription && userData.subscription.status === 'active') {
+                const planType = userData.subscription.planType || 'monthly';
+                const planName = planType === 'monthly' ? 'Monthly Plan ($15/month)' : 'Yearly Plan ($120/year)';
+                currentPlanElement.textContent = planName;
+                currentPlanElement.style.color = '#4CAF50'; // Green for active
+                manageBtn.disabled = false;
+            } else {
+                currentPlanElement.textContent = 'No Active Subscription';
+                currentPlanElement.style.color = '#f44336'; // Red for inactive
+                manageBtn.disabled = true;
+                manageBtn.innerHTML = '<span>💳</span> Manage Subscription <span class="coming-soon-badge">No Active Plan</span>';
             }
         }
 
@@ -514,9 +535,75 @@
         //     }
         // });
 
-        // Manage subscription button (coming soon)
-        document.getElementById('manageSubscriptionBtn').addEventListener('click', () => {
-            alert('Subscription management is coming soon! Stay tuned for updates.');
+        // Manage subscription button
+        document.getElementById('manageSubscriptionBtn').addEventListener('click', async () => {
+            try {
+                // Get current user
+                const currentUserData = localStorage.getItem('currentUser');
+                if (!currentUserData) {
+                    alert('User not found. Please log in again.');
+                    return;
+                }
+
+                const currentUser = JSON.parse(currentUserData);
+                
+                // Get user's subscription data from Firebase
+                const db = window.firebase.firestore();
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                
+                if (!userDoc.exists) {
+                    alert('User profile not found. Please contact support.');
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const subscription = userData.subscription;
+
+                if (!subscription || !subscription.customerId) {
+                    alert('No active subscription found. Please subscribe first.');
+                    return;
+                }
+
+                // Show loading state
+                const manageBtn = document.getElementById('manageSubscriptionBtn');
+                const originalText = manageBtn.innerHTML;
+                manageBtn.innerHTML = '<span>⏳</span> Loading...';
+                manageBtn.disabled = true;
+
+                // Create Stripe customer portal session
+                const response = await fetch('/api/create-portal-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: currentUser.uid,
+                        customerId: subscription.customerId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create portal session');
+                }
+
+                const data = await response.json();
+                
+                // Redirect to Stripe customer portal
+                window.open(data.url, '_blank');
+                
+                // Reset button state
+                manageBtn.innerHTML = originalText;
+                manageBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error managing subscription:', error);
+                alert('Error accessing subscription management. Please try again or contact support.');
+                
+                // Reset button state
+                const manageBtn = document.getElementById('manageSubscriptionBtn');
+                manageBtn.innerHTML = '<span>💳</span> Manage Subscription';
+                manageBtn.disabled = false;
+            }
         });
 
 

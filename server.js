@@ -314,6 +314,28 @@ app.get('/api/get-subscription-details', async (req, res) => {
     }
 });
 
+// Create Stripe customer portal session
+app.post('/api/create-portal-session', async (req, res) => {
+    try {
+        const { userId, customerId } = req.body;
+
+        if (!userId || !customerId) {
+            return res.status(400).json({ error: 'Missing required parameters' });
+        }
+
+        // Create portal session
+        const portalSession = await stripe.billingPortal.sessions.create({
+            customer: customerId,
+            return_url: `${process.env.NODE_ENV === 'production' ? 'https://genius-site.com' : 'http://localhost:3001'}/dashboard`,
+        });
+
+        res.status(200).json({ url: portalSession.url });
+    } catch (error) {
+        console.error('Error creating portal session:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Environment configuration endpoint
 app.get('/api/env', (req, res) => {
     res.json({
