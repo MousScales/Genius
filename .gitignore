@@ -109,3 +109,13 @@ logs
 # Temporary files
 tmp/
 temp/
+
+# Build artifacts
+build/
+dist/
+dist-new/
+*.exe
+*.app
+*.dmg
+*.deb
+*.rpm
