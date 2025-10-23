@@ -744,8 +744,8 @@ window.logout = async function() {
         
         console.log('Cleared all user data from localStorage');
         
-        // Redirect to login page
-        window.location.href = 'login.html';
+               // Redirect to main landing page
+               window.location.href = '/';
         
     } catch (error) {
         console.error('Logout error:', error);
