@@ -789,6 +789,13 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    padding: 0;
+}
+
+.floating-genius-button .floating-genius-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
 }
 
 .floating-genius-button:hover {
@@ -1013,6 +1020,33 @@ body {
 
 .preview-menu-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.preview-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.preview-header-logo:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.preview-header-logo-img {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.preview-header-logo-text {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .preview-header-spacer {
@@ -1727,6 +1761,11 @@ body {
         height: 32px;
         font-size: 14px;
     }
+    
+    .floating-genius-button .floating-genius-icon {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1849,6 +1888,11 @@ body {
         width: 28px;
         height: 28px;
         font-size: 12px;
+    }
+    
+    .floating-genius-button .floating-genius-icon {
+        width: 16px;
+        height: 16px;
     }
     
     .doc-preview-content {
@@ -2002,6 +2046,11 @@ body {
         width: 24px;
         height: 24px;
         font-size: 10px;
+    }
+    
+    .floating-genius-button .floating-genius-icon {
+        width: 14px;
+        height: 14px;
     }
     
     .doc-preview-content {
