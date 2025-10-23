@@ -2807,16 +2807,11 @@ function updatePlaceholderVisibility() {
     } else {
             // Always show simple placeholder when document is empty
             if (!content.querySelector('.document-placeholder')) {
-                // Add simple placeholder text
-                const placeholderText = document.createElement('div');
+                // Add simple placeholder text inline at the beginning
+                const placeholderText = document.createElement('span');
                 placeholderText.className = 'document-placeholder';
-                placeholderText.style.display = 'block';
-                placeholderText.style.pointerEvents = 'none';
-                placeholderText.style.userSelect = 'none';
-                placeholderText.style.color = '#888';
-                placeholderText.style.fontStyle = 'italic';
                 placeholderText.textContent = 'Start typing...';
-                content.appendChild(placeholderText);
+                content.prepend(placeholderText);
             }
     }
 }
