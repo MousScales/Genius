@@ -70,7 +70,7 @@ app.get('/apple-touch-icon.png', (req, res) => {
 
 // Explicit routes for main HTML files
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'indexsite.html'));
 });
 
 app.get('/dashboard', (req, res) => {
@@ -101,6 +101,11 @@ app.get('/subscription-success', (req, res) => {
 app.get('/styles.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
+app.get('/stylessite.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(path.join(__dirname, 'stylessite.css'));
 });
 
 app.get('/firebase-init.js', (req, res) => {
@@ -147,7 +152,7 @@ app.get('/assets/:filename', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'indexsite.html'));
 });
 
 app.get('/dashboard', (req, res) => {

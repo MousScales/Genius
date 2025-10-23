@@ -1497,7 +1497,7 @@ async function saveDocument(classData, existingDoc) {
             
             // Update the existingDoc object with the new ID for future operations
             if (existingDoc) {
-                existingDoc.id = documentId;
+            existingDoc.id = documentId;
             } else {
                 // If no existingDoc was passed, create one for future auto-saves
                 existingDoc = {

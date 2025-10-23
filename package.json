@@ -1,34 +1,17 @@
 {
   "name": "genius-web-app",
   "version": "1.0.0",
-  "description": "Genius Web App - Class Management System",
+  "description": "Genius - AI-powered learning companion",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "electron": "electron main.js"
+    "dev": "node server.js"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.5.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
     "express": "^4.18.2",
-    "firebase-admin": "^12.0.0",
-    "path": "^0.12.7",
-    "stripe": "^14.21.0"
+    "cors": "^2.8.5"
   },
-  "devDependencies": {
-    "electron": "^38.3.0",
-    "electron-builder": "^26.0.12",
-    "electron-is-dev": "^3.0.1",
-    "electron-updater": "^6.6.2"
-  },
-  "keywords": [
-    "web",
-    "app",
-    "class",
-    "management"
-  ],
+  "keywords": ["ai", "learning", "education", "web-app"],
   "author": "Genius Team",
   "license": "MIT"
 }

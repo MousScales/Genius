@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius</title>
+    <link rel="icon" type="image/png" href="darkgenius.png">
+    <link rel="stylesheet" href="stylessite.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vercel Analytics -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="https://va.vercel-scripts.com/v1/script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header compact">
+            <div class="header-content">
+                <div class="logo-section">
+                    <img src="darkgenius.png" alt="Genius Logo" class="logo-image">
+                    <div class="logo-text-container">
+                        <h1 class="logo-text">Genius</h1>
+                        <span class="tagline">your new best friend</span>
+                    </div>
+                </div>
+                <div class="header-buttons">
+                    <button class="login-header-btn" id="loginHeaderBtn">Login</button>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="hero-section">
+                <h2 class="hero-title" id="typewriterText">Built to make you extraordinarily productive,<br>Genius is the best way to learn with AI.</h2>
+                
+                <div class="login-section" id="loginSection">
+                    <button class="login-btn" id="loginBtn">
+                        Get Started
+                        <svg class="login-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12l2 2 4-4"></path>
+                            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="screenshot-container">
+                <div class="computer-screen">
+                    <div class="webapp-window" id="webappWindow">
+                        <div class="browser-content">
+                            <div class="genius-dashboard-preview">
+                                <div class="preview-sidebar">
+                                    <div class="preview-sidebar-header">
+                                        <span class="preview-logo-text">Genius</span>
+                                    </div>
+                                    <div class="preview-nav">
+                                        <div class="preview-nav-item active">
+                                            <span class="preview-nav-icon">🏠</span>
+                                            <span class="preview-nav-text">Dashboard</span>
+                                        </div>
+                                        <div class="preview-nav-item">
+                                            <img src="darkgenius.png" alt="Genius" class="preview-nav-icon">
+                                            <span class="preview-nav-text">Chat with Genius</span>
+                                        </div>
+                                        <div class="preview-nav-item">
+                                            <span class="preview-nav-icon">📱</span>
+                                            <span class="preview-nav-text">Calculator</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-main">
+                                    <div class="preview-header">
+                                        <button class="preview-menu-toggle">☰</button>
+                                        <div class="preview-header-spacer"></div>
+                                        <div class="preview-profile">
+                                            <span class="preview-profile-icon">👤</span>
+                                            <span class="preview-profile-name">User</span>
+                                        </div>
+                                    </div>
+                                    <div class="preview-content">
+                                        <div class="preview-classes-grid">
+                                            <div class="preview-class-card">
+                                                <div class="preview-class-image">
+                                                    <img src="math.jpg" alt="AP Calculus AB" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                                                </div>
+                                                <div class="preview-class-content">
+                                                    <h3 class="preview-class-title">AP Calculus AB</h3>
+                                                    <p class="preview-class-instructor">Dr. Smith</p>
+                                                    <div class="preview-class-meta">
+                                                        <span class="preview-meta-tag">AP</span>
+                                                        <span class="preview-meta-tag">Fall 2024</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="preview-class-card">
+                                                <div class="preview-class-image">
+                                                    <img src="physics.jpg" alt="AP Physics 1" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                                                </div>
+                                                <div class="preview-class-content">
+                                                    <h3 class="preview-class-title">AP Physics 1</h3>
+                                                    <p class="preview-class-instructor">Prof. Johnson</p>
+                                                    <div class="preview-class-meta">
+                                                        <span class="preview-meta-tag">Honors</span>
+                                                        <span class="preview-meta-tag">Fall 2024</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="preview-class-card">
+                                                <div class="preview-class-image">
+                                                    <img src="chemistry.jpg" alt="Honors Chemistry" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                                                </div>
+                                                <div class="preview-class-content">
+                                                    <h3 class="preview-class-title">Honors Chemistry</h3>
+                                                    <p class="preview-class-instructor">Dr. Brown</p>
+                                                    <div class="preview-class-meta">
+                                                        <span class="preview-meta-tag">Regular</span>
+                                                        <span class="preview-meta-tag">Fall 2024</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Document Editor Window -->
+                    <div class="webapp-window document-window" id="documentWindow" style="display: none;">
+                        <div class="browser-content">
+                            <div class="genius-document-preview">
+                                <div class="doc-preview-header">
+                                    <button class="doc-preview-back-btn" onclick="closeDocumentWindow()">←</button>
+                                    <input type="text" class="doc-preview-title" value="Why Genius?" readonly>
+                                    <div class="doc-preview-last-edited" id="lastEdited">Last edited</div>
+                                    <button class="doc-preview-save-btn">💾 Save</button>
+                                    <button class="doc-preview-status">Saved</button>
+                                    <button class="doc-preview-pdf-btn">📥 PDF</button>
+                                    <div class="doc-preview-stats">
+                                        <span id="wordCount">0 words</span>
+                                        <span>•</span>
+                                        <span id="charCount">0 characters</span>
+                                    </div>
+                                    <button class="doc-preview-humanize-btn">Humanize</button>
+                                    <button class="doc-preview-chat-btn">
+                                        <img src="darkgenius.png" alt="Genius AI" class="doc-chat-icon">
+                                    </button>
+                                </div>
+                                
+                                <div class="doc-preview-toolbar">
+                                    <div class="toolbar-group">
+                                        <select class="toolbar-select">
+                                            <option>Times New Roman</option>
+                                        </select>
+                                        <select class="toolbar-select">
+                                            <option>16</option>
+                                        </select>
+                                        <select class="toolbar-select">
+                                            <option>Normal Text</option>
+                                        </select>
+                                    </div>
+                                    <div class="toolbar-divider"></div>
+                                    <div class="toolbar-group">
+                                        <button class="toolbar-btn"><strong>B</strong></button>
+                                        <button class="toolbar-btn"><em>I</em></button>
+                                        <button class="toolbar-btn"><u>U</u></button>
+                                        <button class="toolbar-btn"><s>S</s></button>
+                                    </div>
+                                    <div class="toolbar-divider"></div>
+                                    <div class="toolbar-group">
+                                        <button class="toolbar-btn">•</button>
+                                        <button class="toolbar-btn">1.</button>
+                                        <button class="toolbar-btn">⇤</button>
+                                        <button class="toolbar-btn">⇥</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="doc-preview-content">
+                                    <div class="doc-page" id="documentContent">
+                                    </div>
+                                </div>
+                                
+                                
+                                <!-- Floating Genius Chat Bar -->
+                                <div class="floating-genius-chat-bar">
+                                    <img src="darkgenius.png" alt="Genius" class="floating-genius-icon">
+                                    <div class="floating-genius-text" id="floatingGeniusText">Edit document with genius</div>
+                                    <button class="floating-genius-button">📝</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+        
+        <footer class="footer">
+            <p>&copy; 2025 Genius. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="https://instagram.com/thegenius.app" target="_blank" class="footer-instagram">Insta: @thegenius.app</a>
+                <a href="https://instagram.com/tafa.__" target="_blank" class="footer-founded">Founded by Moustapha</a>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Login Modal -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-modal-content">
+            <div class="login-modal-header">
+                <h2>Welcome to Genius</h2>
+                <button class="close-btn" id="closeLoginModal">&times;</button>
+            </div>
+            <div class="login-modal-body">
+                <div class="login-tabs">
+                    <button class="tab-btn active" id="loginTab">Login</button>
+                    <button class="tab-btn" id="signupTab">Sign Up</button>
+                </div>
+                
+                <!-- Login Form -->
+                <form class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" name="password" required>
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkmark"></span>
+                            Remember me
+                        </label>
+                        <a href="#" class="forgot-password">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="submit-btn">Login</button>
+                </form>
+                
+                <!-- Signup Form -->
+                <form class="signup-form" id="signupForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="signupName">Full Name</label>
+                        <input type="text" id="signupName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="agreeTerms" required>
+                            <span class="checkmark"></span>
+                            I agree to the <a href="#" class="terms-link">Terms of Service</a>
+                        </label>
+                    </div>
+                    <button type="submit" class="submit-btn">Create Account</button>
+                </form>
+                
+                <div class="divider">
+                    <span>or</span>
+                </div>
+                
+                <div class="social-login">
+                    <button class="social-btn google-btn">
+                        <svg class="social-icon" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <script>
+            // Typewriter effect
+            function typeWriter() {
+                const text = "Built to make you extraordinarily productive, Genius is the best way to learn with AI.";
+                const element = document.getElementById('typewriterText');
+                let i = 0;
+                
+                element.innerHTML = '';
+                
+                function type() {
+                    if (i < text.length) {
+                        if (text.charAt(i) === ',') {
+                            element.innerHTML += text.charAt(i) + '<br>';
+                        } else {
+                            element.innerHTML += text.charAt(i);
+                        }
+                        i++;
+                        setTimeout(type, 50);
+                    }
+                }
+                
+                type();
+            }
+            
+            // Start typewriter effect when page loads
+            window.addEventListener('load', typeWriter);
+            
+            // Track page view
+            window.addEventListener('load', function() {
+                if (window.va) {
+                    window.va('track', 'page_view', {
+                        page: 'home',
+                        title: 'Genius - AI Study Assistant'
+                    });
+                }
+            });
+            
+            // Add click animation to login button
+            document.getElementById('loginBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Track button click
+                if (window.va) {
+                    window.va('track', 'login_button_click', {
+                        button_type: 'main_login',
+                        location: 'hero_section'
+                    });
+                }
+                
+                // Add click animation
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+                
+                // Open login modal
+                openLoginModal();
+            });
+            
+            // Add click functionality to header login button
+            document.getElementById('loginHeaderBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Track button click
+                if (window.va) {
+                    window.va('track', 'login_button_click', {
+                        button_type: 'header_login',
+                        location: 'header'
+                    });
+                }
+                
+                // Add click animation
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+                
+                // Open login modal
+                openLoginModal();
+            });
+            
+            // Make webapp window draggable - DISABLED
+            function makeDraggable() {
+                // Dragging functionality removed
+                return;
+            }
+            
+            // Initialize dragging when page loads
+            window.addEventListener('load', makeDraggable);
+            
+            // Sidebar toggle functionality
+            function initializeSidebarToggle() {
+                const menuToggle = document.querySelector('.preview-menu-toggle');
+                const sidebar = document.querySelector('.preview-sidebar');
+                const mainContent = document.querySelector('.preview-main');
+                
+                if (menuToggle && sidebar && mainContent) {
+                    // Check if sidebar is already collapsed (from localStorage)
+                    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                    if (isCollapsed) {
+                        sidebar.classList.add('collapsed');
+                        mainContent.classList.add('sidebar-collapsed');
+                    }
+                    
+                    menuToggle.addEventListener('click', function() {
+                        sidebar.classList.toggle('collapsed');
+                        mainContent.classList.toggle('sidebar-collapsed');
+                        
+                        // Save state to localStorage
+                        const collapsed = sidebar.classList.contains('collapsed');
+                        localStorage.setItem('sidebarCollapsed', collapsed.toString());
+                    });
+                }
+            }
+            
+            // Initialize sidebar toggle when page loads
+            window.addEventListener('load', initializeSidebarToggle);
+            
+            // Auto-open document window after delay
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    openDocumentWindow();
+                    startTypingAnimations();
+                }, 3000); // 3 second delay
+            });
+            
+            // Add floating genius button click handler
+            window.addEventListener('load', function() {
+                const floatingButton = document.querySelector('.floating-genius-button');
+                if (floatingButton) {
+                    floatingButton.addEventListener('click', function() {
+                        // Track floating button click
+                        if (window.va) {
+                            window.va('track', 'floating_button_click', {
+                                button_type: 'genius_edit',
+                                location: 'floating_bar'
+                            });
+                        }
+                        
+                        const documentWindow = document.querySelector('.document-window');
+                        const floatingBar = document.querySelector('.floating-genius-chat-bar');
+                        
+                        if (documentWindow.style.display === 'none' || documentWindow.style.display === '') {
+                            // Track document window opening
+                            trackDocumentInteraction('document_window_opened');
+                            
+                            // Show document window
+                            documentWindow.style.display = 'block';
+                            floatingBar.style.display = 'flex';
+                            
+                            // Start typing animation
+                            setTimeout(() => {
+                                typeDocument();
+                            }, 500);
+                        } else {
+                            // Track document window closing
+                            trackDocumentInteraction('document_window_closed');
+                            
+                            // Hide document window
+                            documentWindow.style.display = 'none';
+                            floatingBar.style.display = 'none';
+                        }
+                    });
+                }
+            });
+            
+            // Start typing animations
+            function startTypingAnimations() {
+                // Start with floating bar typing
+                setTimeout(() => {
+                    typeFloatingBar();
+                }, 2000); // Wait 2 seconds after document opens
+            }
+            
+            // Type the floating bar text
+            function typeFloatingBar() {
+                const text = 'Write an essay on why i should use genius';
+                const element = document.getElementById('floatingGeniusText');
+                let i = 0;
+                
+                element.innerHTML = '';
+                
+                function type() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(type, 50);
+                    } else {
+                        // After floating bar finishes, show cursor and start document typing
+                        element.innerHTML += '<span class="typing-cursor">|</span>';
+                        setTimeout(() => {
+                            typeDocument();
+                        }, 1000);
+                    }
+                }
+                
+                type();
+            }
+            
+            // Track document editor interactions
+            function trackDocumentInteraction(action, details = {}) {
+                if (window.va) {
+                    window.va('track', 'document_interaction', {
+                        action: action,
+                        ...details
+                    });
+                }
+            }
+            
+            // Type the document content
+            function typeDocument() {
+                const essay = `**Why Choose Genius Over Other AI Systems: A Comprehensive Analysis**
+
+**Introduction**
+
+In the rapidly evolving landscape of artificial intelligence, students and educators face an overwhelming array of choices when selecting an AI-powered study assistant. While general-purpose AI chatbots like ChatGPT and Claude offer broad capabilities, (Genius) stands apart as a specialized academic platform designed exclusively for educational purposes. This essay explores the unique advantages that make (Genius) the superior choice for students seeking comprehensive, AI-powered study solutions.
+
+**Academic Specialization and Purpose-Built Design**
+
+Unlike general AI systems that attempt to serve multiple purposes, (Genius) is specifically engineered as a (helpful study assistant) that is (knowledgeable, encouraging, and educational). This specialization manifests in several critical ways. First, the AI maintains an educational focus in all interactions, ensuring that responses are not only accurate but also pedagogically sound. The system is programmed to explain complex concepts in simple terms, making it particularly valuable for students struggling with difficult subject matter.
+
+Furthermore, (Genius) demonstrates subject expertise across various academic disciplines, from complex physics equations to historical timelines. This breadth of knowledge, combined with an educational approach, creates an environment where students receive not just answers, but understanding. The AI's consistent maintenance of a (friendly, supportive, and educational tone) ensures that students feel encouraged rather than intimidated when seeking help.
+
+**Comprehensive Study Management Ecosystem**
+
+One of (Genius's) most significant advantages lies in its comprehensive study management system. Rather than functioning as a standalone chatbot, (Genius) provides a complete academic ecosystem. Students can (create and manage multiple classes) with organized folder structures, allowing for systematic organization of coursework across different subjects and semesters.
+
+The platform's (document management capabilities) enable students to upload and organize various study materials, including PDFs, lecture notes, and research papers. This integration transforms (Genius) from a simple Q&A tool into a centralized hub for all academic resources. Additionally, the system includes (study analytics) that track progress and performance over time, providing students with valuable insights into their learning patterns and areas for improvement.
+
+**Advanced AI-Powered Study Tools**
+
+(Genius) distinguishes itself through its sophisticated suite of AI-powered study tools that go far beyond basic text generation. The platform's (smart flashcard system) utilizes AI to generate flashcards with spaced repetition algorithms, optimizing memory retention through scientifically-proven learning techniques. This feature transforms passive reading into active recall, significantly improving long-term knowledge retention.
+
+The system's ability to (automatically generate comprehensive study guides) from uploaded documents represents a revolutionary approach to study material creation. Students can upload dense academic texts, and (Genius) will extract key concepts, create summaries, and generate study questions tailored to the specific content. This capability is particularly valuable for processing complex academic material and transforming it into digestible study content.
+
+**Document Analysis and Processing Capabilities**
+
+A particularly unique feature of (Genius) is its advanced (document analysis capabilities). When students upload any document, the AI instantly extracts key concepts, creates summaries, and generates study questions. This functionality is powered by OpenAI's Assistants API, which provides more contextual and accurate responses when working with specific documents.
+
+The platform also includes a (document humanization tool), an AI-powered feature that helps students make their writing more natural and human-like. This tool is particularly valuable for academic writing, where maintaining an authentic voice while ensuring clarity and professionalism is crucial.
+
+**Integrated AI Chat with Educational Focus**
+
+While (Genius) includes a ChatGPT-style interface, it is specifically tuned for academic assistance rather than general conversation. The AI chat integration maintains an educational focus, providing help with homework, assignments, research projects, and study strategies. The system can create personalized study plans and schedules, offering guidance on study techniques and time management.
+
+The chat functionality also supports (file upload integration), allowing students to ask questions about specific documents or materials they've uploaded. This contextual understanding enables more accurate and relevant responses compared to general-purpose AI systems that lack access to the student's specific academic materials.
+
+**Competitive Pricing and Value Proposition**
+
+(Genius) offers competitive pricing that makes advanced AI-powered study tools accessible to students. The platform provides two pricing tiers: a (monthly plan at $15 per month) and a (yearly plan at $120 per year), which represents a (33% savings) compared to the monthly option. This transparent pricing structure includes all features without hidden fees, making it an attractive option for budget-conscious students.
+
+**Privacy, Security, and Data Protection**
+
+In an era where data privacy is paramount, (Genius) implements (enterprise-grade security) measures to protect students' academic work and personal information. All data is encrypted and stored securely, with Firebase security rules ensuring user data isolation. This commitment to privacy is particularly important for students who may be working with sensitive research or personal academic information.
+
+**Personalized Learning Experience**
+
+One of (Genius's) most compelling features is its ability to provide a (personalized learning experience). The AI system learns individual study patterns, preferred learning methods, and academic goals, adapting its recommendations and content delivery accordingly. This personalization extends to difficulty level adjustments and content customization, ensuring that each student receives an optimized learning experience tailored to their specific needs.
+
+**Cross-Platform Accessibility and Synchronization**
+
+(Genius) ensures that students can access their study materials and continue their learning journey across all devices. The platform's (seamless cloud synchronization) allows students to start studying on their laptop, continue on their phone during commute, and finish on their tablet at home. This flexibility ensures that students never lose progress or miss study opportunities, regardless of their location or device.
+
+**Collaborative Learning Features**
+
+The platform includes (collaborative learning capabilities) that enable students to share study materials, work on group projects, and learn together in real-time. Students can create shared study groups, collaborate on flashcards, and benefit from collective knowledge while maintaining individual progress tracking. This social learning aspect enhances the educational experience and promotes peer-to-peer knowledge sharing.
+
+**Comparison with General-Purpose AI Systems**
+
+When compared to general-purpose AI systems like ChatGPT or Claude, (Genius) offers several distinct advantages. While other AIs are designed for broad applications, (Genius) is purpose-built for academic success. The platform's integration of study management tools, document processing capabilities, and educational focus creates a comprehensive solution that general AI systems cannot match.
+
+General AI systems lack the specialized features that make (Genius) valuable for students, such as flashcard generation, study guide creation, and academic progress tracking. Additionally, the educational tone and subject-specific expertise of (Genius) create a more supportive learning environment compared to the neutral, general-purpose responses of other AI systems.
+
+**Conclusion**
+
+(Genius) represents a paradigm shift in AI-powered educational tools, offering students a comprehensive, specialized platform that combines the power of modern artificial intelligence with purpose-built academic features. Unlike general-purpose AI systems, (Genius) provides a complete study ecosystem that includes class management, document processing, AI-powered study tools, and personalized learning experiences.
+
+The platform's academic specialization, comprehensive study management capabilities, advanced AI tools, and competitive pricing make it the superior choice for students seeking an AI-powered study assistant. By focusing exclusively on educational applications and providing specialized features that general AI systems cannot offer, (Genius) establishes itself as the premier choice for students who want more than just another chatbot – they want a complete digital study companion.
+
+For students serious about academic success, (Genius) offers the perfect combination of AI power, educational focus, and practical study tools that make learning more effective, organized, and engaging. The platform's commitment to student success, combined with its innovative features and competitive pricing, makes it the clear choice for anyone seeking to enhance their academic performance through AI-powered study assistance.`;
+
+                const element = document.getElementById('documentContent');
+                const wordCountElement = document.getElementById('wordCount');
+                const charCountElement = document.getElementById('charCount');
+                const floatingText = document.getElementById('floatingGeniusText');
+                const lastEditedElement = document.getElementById('lastEdited');
+                
+                // Clear content initially
+                element.innerHTML = '';
+                
+                // Start last edited timer
+                const startTime = new Date();
+                updateLastEdited(startTime);
+                
+                // Define headers
+                const headers = [
+                    'Why Choose Genius Over Other AI Systems: A Comprehensive Analysis',
+                    'Introduction',
+                    'Academic Specialization and Purpose-Built Design',
+                    'Comprehensive Study Management Ecosystem',
+                    'Advanced AI-Powered Study Tools',
+                    'Document Analysis and Processing Capabilities',
+                    'Integrated AI Chat with Educational Focus',
+                    'Competitive Pricing and Value Proposition',
+                    'Privacy, Security, and Data Protection',
+                    'Personalized Learning Experience',
+                    'Cross-Platform Accessibility and Synchronization',
+                    'Collaborative Learning Features',
+                    'Comparison with General-Purpose AI Systems',
+                    'Conclusion'
+                ];
+                
+                let currentHTML = '';
+                let i = 0;
+                
+                function updateCounts() {
+                    // Get text content without HTML tags and cursor
+                    let textContent = element.textContent || element.innerText || '';
+                    
+                    // Remove the typing cursor from count
+                    textContent = textContent.replace(/\|/g, '');
+                    
+                    // Count words (split by whitespace and filter empty strings)
+                    const words = textContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+                    
+                    // Count characters (including spaces and punctuation)
+                    const characters = textContent.length;
+                    
+                    wordCountElement.textContent = `${words.toLocaleString()} words`;
+                    charCountElement.textContent = `${characters.toLocaleString()} characters`;
+                }
+                
+                function type() {
+                    if (i < essay.length) {
+                        const char = essay.charAt(i);
+                        
+                        if (char === '\n') {
+                            // Check if the current line is a header
+                            const lines = currentHTML.split('<br>');
+                            const lastLine = lines[lines.length - 1].trim();
+                            
+                            if (headers.includes(lastLine)) {
+                                // This is a header - replace with bold version
+                                lines[lines.length - 1] = `<h2>${lastLine}</h2>`;
+                                currentHTML = lines.join('<br>');
+                            } else {
+                                currentHTML += '<br>';
+                            }
+                        } else {
+                            currentHTML += char;
+                        }
+                        
+                        // Process bold formatting for markdown and parentheses
+                        currentHTML = processBoldFormatting(currentHTML);
+                        
+                        // Add cursor after current content
+                        element.innerHTML = currentHTML + '<span class="typing-cursor">|</span>';
+                        updateCounts();
+                        i++;
+                        setTimeout(type, 30);
+                    } else {
+                        // All content typed, show final cursor and stop thinking animation
+                        currentHTML = processBoldFormatting(currentHTML);
+                        element.innerHTML = currentHTML + '<span class="typing-cursor">|</span>';
+                        
+                        // Track typing completion
+                        trackDocumentInteraction('typing_completed', {
+                            word_count: element.textContent.split(/\s+/).filter(word => word.length > 0).length,
+                            character_count: element.textContent.length
+                        });
+                        
+                        // Update counts one final time for accuracy
+                        setTimeout(() => {
+                            updateCounts();
+                        }, 100);
+                        
+                        stopThinkingAnimation();
+                    }
+                }
+                
+                // Function to process bold formatting
+                function processBoldFormatting(html) {
+                    // Process markdown bold formatting (**text**)
+                    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    
+                    // Process parentheses bold formatting ((text)) - remove parentheses
+                    html = html.replace(/\(([^)]+)\)/g, '<strong>$1</strong>');
+                    
+                    return html;
+                }
+                
+                // Sequence: Show thinking animation, then start typing after delay
+                showThinkingAnimation();
+                
+                // Start typing after thinking animation delay
+                setTimeout(() => {
+                    stopThinkingAnimation();
+                    setTimeout(type, 500); // Small delay before typing starts
+                }, 2000); // 2 seconds of thinking animation
+            }
+            
+            // Update last edited time
+            function updateLastEdited(startTime) {
+                const lastEditedElement = document.getElementById('lastEdited');
+                
+                function updateTime() {
+                    const now = new Date();
+                    const diffMs = now - startTime;
+                    const diffSeconds = Math.floor(diffMs / 1000);
+                    const diffMinutes = Math.floor(diffSeconds / 60);
+                    const diffHours = Math.floor(diffMinutes / 60);
+                    
+                    let timeText;
+                    if (diffSeconds < 10) {
+                        timeText = 'just now';
+                    } else if (diffSeconds < 60) {
+                        timeText = `${diffSeconds}s ago`;
+                    } else if (diffMinutes < 60) {
+                        timeText = `${diffMinutes}m ago`;
+                    } else {
+                        timeText = `${diffHours}h ago`;
+                    }
+                    
+                    lastEditedElement.textContent = `Last edited ${timeText}`;
+                }
+                
+                // Update immediately
+                updateTime();
+                
+                // Update every second
+                const interval = setInterval(updateTime, 1000);
+                
+                // Store interval for cleanup
+                lastEditedElement.updateInterval = interval;
+            }
+            
+            // Show thinking animation
+            function showThinkingAnimation() {
+                // Track thinking animation start
+                trackDocumentInteraction('thinking_animation_started');
+                
+                const floatingText = document.getElementById('floatingGeniusText');
+                const floatingBar = document.querySelector('.floating-genius-chat-bar');
+                const editButton = floatingBar.querySelector('.floating-genius-button');
+                
+                // Hide the edit button and show thinking text
+                editButton.style.display = 'none';
+                
+                // Center the thinking text
+                floatingText.style.textAlign = 'center';
+                floatingText.style.width = '100%';
+                floatingText.style.justifyContent = 'center';
+                
+                let dots = 0;
+                
+                function animateThinking() {
+                    const thinkingText = 'Genius is thinking' + '.'.repeat(dots % 4);
+                    floatingText.innerHTML = thinkingText;
+                    dots++;
+                }
+                
+                // Start animation
+                floatingText.thinkingInterval = setInterval(animateThinking, 500);
+                animateThinking(); // Show immediately
+            }
+            
+            // Stop thinking animation
+            function stopThinkingAnimation() {
+                // Track thinking animation end
+                trackDocumentInteraction('thinking_animation_ended');
+                
+                const floatingText = document.getElementById('floatingGeniusText');
+                const floatingBar = document.querySelector('.floating-genius-chat-bar');
+                const editButton = floatingBar.querySelector('.floating-genius-button');
+                
+                if (floatingText.thinkingInterval) {
+                    clearInterval(floatingText.thinkingInterval);
+                    floatingText.thinkingInterval = null;
+                }
+                
+                // Show the edit button again and restore text
+                editButton.style.display = 'flex';
+                
+                // Restore text alignment
+                floatingText.style.textAlign = 'left';
+                floatingText.style.width = 'auto';
+                floatingText.style.justifyContent = 'flex-start';
+                floatingText.innerHTML = 'Edit document with genius';
+            }
+            
+            // Document window functions
+            function openDocumentWindow() {
+                console.log('Opening document window...');
+                const documentWindow = document.getElementById('documentWindow');
+                if (documentWindow) {
+                    documentWindow.style.display = 'flex';
+                    makeDraggableDocument();
+                    console.log('Document window opened successfully');
+                } else {
+                    console.error('Document window element not found');
+                }
+            }
+            
+            function closeDocumentWindow() {
+                const documentWindow = document.getElementById('documentWindow');
+                documentWindow.style.display = 'none';
+            }
+            
+            
+            // Make document window draggable - DISABLED
+            function makeDraggableDocument() {
+                // Dragging functionality removed
+                return;
+            }
+            
+            // Login Modal Functions
+            function openLoginModal() {
+                const modal = document.getElementById('loginModal');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // Track modal open
+                if (window.va) {
+                    window.va('track', 'login_modal_opened');
+                }
+            }
+            
+            function closeLoginModal() {
+                const modal = document.getElementById('loginModal');
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                
+                // Reset forms
+                document.getElementById('loginForm').reset();
+                document.getElementById('signupForm').reset();
+                
+                // Switch back to login tab
+                switchToLoginTab();
+            }
+            
+            function switchToLoginTab() {
+                document.getElementById('loginTab').classList.add('active');
+                document.getElementById('signupTab').classList.remove('active');
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('signupForm').style.display = 'none';
+            }
+            
+            function switchToSignupTab() {
+                document.getElementById('signupTab').classList.add('active');
+                document.getElementById('loginTab').classList.remove('active');
+                document.getElementById('signupForm').style.display = 'block';
+                document.getElementById('loginForm').style.display = 'none';
+            }
+            
+            // Initialize login modal functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const modal = document.getElementById('loginModal');
+                const closeBtn = document.getElementById('closeLoginModal');
+                const loginTab = document.getElementById('loginTab');
+                const signupTab = document.getElementById('signupTab');
+                const loginForm = document.getElementById('loginForm');
+                const signupForm = document.getElementById('signupForm');
+                
+                // Close modal when clicking outside
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeLoginModal();
+                    }
+                });
+                
+                // Close modal with close button
+                closeBtn.addEventListener('click', closeLoginModal);
+                
+                // Tab switching
+                loginTab.addEventListener('click', switchToLoginTab);
+                signupTab.addEventListener('click', switchToSignupTab);
+                
+                // Form submissions
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    handleLogin();
+                });
+                
+                signupForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    handleSignup();
+                });
+                
+                // Google login
+                document.querySelector('.google-btn').addEventListener('click', function() {
+                    handleGoogleLogin();
+                });
+            });
+            
+            // Authentication functions
+            function handleLogin() {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const rememberMe = document.getElementById('rememberMe').checked;
+                
+                // Basic validation
+                if (!email || !password) {
+                    showError('Please fill in all fields');
+                    return;
+                }
+                
+                // Simulate login process
+                showLoading('Logging in...');
+                
+                // Simulate API call
+                setTimeout(() => {
+                    // For demo purposes, accept any email/password
+                    if (email && password) {
+                        // Store user session
+                        const user = {
+                            email: email,
+                            name: email.split('@')[0],
+                            loginTime: new Date().toISOString()
+                        };
+                        
+                        if (rememberMe) {
+                            localStorage.setItem('geniusUser', JSON.stringify(user));
+                        } else {
+                            sessionStorage.setItem('geniusUser', JSON.stringify(user));
+                        }
+                        
+                        // Track successful login
+                        if (window.va) {
+                            window.va('track', 'user_login_success', {
+                                method: 'email',
+                                remember_me: rememberMe
+                            });
+                        }
+                        
+                        hideLoading();
+                        closeLoginModal();
+                        redirectToDashboard();
+                    } else {
+                        showError('Invalid email or password');
+                        hideLoading();
+                    }
+                }, 1500);
+            }
+            
+            function handleSignup() {
+                const name = document.getElementById('signupName').value;
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const agreeTerms = document.getElementById('agreeTerms').checked;
+                
+                // Basic validation
+                if (!name || !email || !password || !confirmPassword) {
+                    showError('Please fill in all fields');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showError('Passwords do not match');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters');
+                    return;
+                }
+                
+                if (!agreeTerms) {
+                    showError('Please agree to the Terms of Service');
+                    return;
+                }
+                
+                // Simulate signup process
+                showLoading('Creating account...');
+                
+                // Simulate API call
+                setTimeout(() => {
+                    // Store user session
+                    const user = {
+                        name: name,
+                        email: email,
+                        signupTime: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('geniusUser', JSON.stringify(user));
+                    
+                    // Track successful signup
+                    if (window.va) {
+                        window.va('track', 'user_signup_success', {
+                            method: 'email'
+                        });
+                    }
+                    
+                    hideLoading();
+                    closeLoginModal();
+                    redirectToDashboard();
+                }, 2000);
+            }
+            
+            function handleGoogleLogin() {
+                showLoading('Connecting with Google...');
+                
+                // Simulate Google OAuth
+                setTimeout(() => {
+                    const user = {
+                        name: 'Google User',
+                        email: 'user@gmail.com',
+                        loginTime: new Date().toISOString(),
+                        provider: 'google'
+                    };
+                    
+                    localStorage.setItem('geniusUser', JSON.stringify(user));
+                    
+                    // Track Google login
+                    if (window.va) {
+                        window.va('track', 'user_login_success', {
+                            method: 'google'
+                        });
+                    }
+                    
+                    hideLoading();
+                    closeLoginModal();
+                    redirectToDashboard();
+                }, 2000);
+            }
+            
+            function redirectToDashboard() {
+                // Redirect to the actual login page
+                window.location.href = '/login.html';
+            }
+            
+            function showLoading(message) {
+                const submitBtn = document.querySelector('.submit-btn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = message;
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+            }
+            
+            function hideLoading() {
+                const submitBtn = document.querySelector('.submit-btn');
+                submitBtn.textContent = submitBtn.textContent.includes('Login') ? 'Login' : 'Create Account';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+            
+            function showError(message) {
+                // Remove existing error messages
+                const existingError = document.querySelector('.error-message');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Create error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                errorDiv.style.cssText = `
+                    color: #ff4444;
+                    font-size: 14px;
+                    margin-top: 10px;
+                    padding: 8px;
+                    background: rgba(255, 68, 68, 0.1);
+                    border: 1px solid rgba(255, 68, 68, 0.3);
+                    border-radius: 4px;
+                    text-align: center;
+                `;
+                
+                // Insert error message
+                const form = document.querySelector('.login-form:not([style*="display: none"])');
+                form.appendChild(errorDiv);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.remove();
+                    }
+                }, 5000);
+            }
+            
+            // Check if user is already logged in
+            function checkUserSession() {
+                const user = localStorage.getItem('geniusUser') || sessionStorage.getItem('geniusUser');
+                if (user) {
+                    // User is logged in, update UI
+                    const loginBtn = document.getElementById('loginBtn');
+                    const headerLoginBtn = document.getElementById('loginHeaderBtn');
+                    
+                    try {
+                        const userData = JSON.parse(user);
+                        loginBtn.textContent = `Welcome, ${userData.name}`;
+                        headerLoginBtn.textContent = 'Dashboard';
+                        
+                        // Update click handlers to go to dashboard
+                        loginBtn.onclick = function() {
+                            redirectToDashboard();
+                        };
+                        headerLoginBtn.onclick = function() {
+                            redirectToDashboard();
+                        };
+                    } catch (e) {
+                        console.error('Error parsing user data:', e);
+                    }
+                }
+            }
+            
+            // Check user session on page load
+            window.addEventListener('load', checkUserSession);
+        </script>
+</body>
+</html>
