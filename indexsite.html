@@ -35,16 +35,6 @@
             <div class="hero-section">
                 <h2 class="hero-title" id="typewriterText">Built to make you extraordinarily productive,<br>Genius is the best way to learn with AI.</h2>
                 
-                <div class="login-section" id="loginSection">
-                    <button class="login-btn" id="loginBtn">
-                        Get Started
-                        <svg class="login-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 12l2 2 4-4"></path>
-                            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                        </svg>
-                    </button>
-                </div>
             </div>
             
             <div class="screenshot-container">
@@ -207,86 +197,6 @@
         </footer>
     </div>
     
-    <!-- Login Modal -->
-    <div class="login-modal" id="loginModal">
-        <div class="login-modal-content">
-            <div class="login-modal-header">
-                <h2>Welcome to Genius</h2>
-                <button class="close-btn" id="closeLoginModal">&times;</button>
-            </div>
-            <div class="login-modal-body">
-                <div class="login-tabs">
-                    <button class="tab-btn active" id="loginTab">Login</button>
-                    <button class="tab-btn" id="signupTab">Sign Up</button>
-                </div>
-                
-                <!-- Login Form -->
-                <form class="login-form" id="loginForm">
-                    <div class="form-group">
-                        <label for="loginEmail">Email</label>
-                        <input type="email" id="loginEmail" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" name="password" required>
-                    </div>
-                    <div class="form-options">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="rememberMe">
-                            <span class="checkmark"></span>
-                            Remember me
-                        </label>
-                        <a href="#" class="forgot-password">Forgot password?</a>
-                    </div>
-                    <button type="submit" class="submit-btn">Login</button>
-                </form>
-                
-                <!-- Signup Form -->
-                <form class="signup-form" id="signupForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="signupName">Full Name</label>
-                        <input type="text" id="signupName" name="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signupEmail">Email</label>
-                        <input type="email" id="signupEmail" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signupPassword">Password</label>
-                        <input type="password" id="signupPassword" name="password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirm Password</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" required>
-                    </div>
-                    <div class="form-options">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="agreeTerms" required>
-                            <span class="checkmark"></span>
-                            I agree to the <a href="#" class="terms-link">Terms of Service</a>
-                        </label>
-                    </div>
-                    <button type="submit" class="submit-btn">Create Account</button>
-                </form>
-                
-                <div class="divider">
-                    <span>or</span>
-                </div>
-                
-                <div class="social-login">
-                    <button class="social-btn google-btn">
-                        <svg class="social-icon" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
     
         <script>
             // Typewriter effect
@@ -325,27 +235,6 @@
                 }
             });
             
-            // Add click animation to login button
-            document.getElementById('loginBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Track button click
-                if (window.va) {
-                    window.va('track', 'login_button_click', {
-                        button_type: 'main_login',
-                        location: 'hero_section'
-                    });
-                }
-                
-                // Add click animation
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 150);
-                
-                // Open login modal
-                openLoginModal();
-            });
             
             // Add click functionality to header login button
             document.getElementById('loginHeaderBtn').addEventListener('click', function(e) {
@@ -365,8 +254,8 @@
                     this.style.transform = 'scale(1)';
                 }, 150);
                 
-                // Open login modal
-                openLoginModal();
+                // Redirect to login page
+                window.location.href = '/login.html';
             });
             
             // Make webapp window draggable - DISABLED
@@ -803,296 +692,51 @@ For students serious about academic success, (Genius) offers the perfect combina
                 return;
             }
             
-            // Login Modal Functions
-            function openLoginModal() {
-                const modal = document.getElementById('loginModal');
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                
-                // Track modal open
-                if (window.va) {
-                    window.va('track', 'login_modal_opened');
-                }
-            }
-            
-            function closeLoginModal() {
-                const modal = document.getElementById('loginModal');
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-                
-                // Reset forms
-                document.getElementById('loginForm').reset();
-                document.getElementById('signupForm').reset();
-                
-                // Switch back to login tab
-                switchToLoginTab();
-            }
-            
-            function switchToLoginTab() {
-                document.getElementById('loginTab').classList.add('active');
-                document.getElementById('signupTab').classList.remove('active');
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('signupForm').style.display = 'none';
-            }
-            
-            function switchToSignupTab() {
-                document.getElementById('signupTab').classList.add('active');
-                document.getElementById('loginTab').classList.remove('active');
-                document.getElementById('signupForm').style.display = 'block';
-                document.getElementById('loginForm').style.display = 'none';
-            }
-            
-            // Initialize login modal functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                const modal = document.getElementById('loginModal');
-                const closeBtn = document.getElementById('closeLoginModal');
-                const loginTab = document.getElementById('loginTab');
-                const signupTab = document.getElementById('signupTab');
-                const loginForm = document.getElementById('loginForm');
-                const signupForm = document.getElementById('signupForm');
-                
-                // Close modal when clicking outside
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        closeLoginModal();
-                    }
-                });
-                
-                // Close modal with close button
-                closeBtn.addEventListener('click', closeLoginModal);
-                
-                // Tab switching
-                loginTab.addEventListener('click', switchToLoginTab);
-                signupTab.addEventListener('click', switchToSignupTab);
-                
-                // Form submissions
-                loginForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    handleLogin();
-                });
-                
-                signupForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    handleSignup();
-                });
-                
-                // Google login
-                document.querySelector('.google-btn').addEventListener('click', function() {
-                    handleGoogleLogin();
-                });
-            });
-            
-            // Authentication functions
-            function handleLogin() {
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                const rememberMe = document.getElementById('rememberMe').checked;
-                
-                // Basic validation
-                if (!email || !password) {
-                    showError('Please fill in all fields');
-                    return;
-                }
-                
-                // Simulate login process
-                showLoading('Logging in...');
-                
-                // Simulate API call
-                setTimeout(() => {
-                    // For demo purposes, accept any email/password
-                    if (email && password) {
-                        // Store user session
-                        const user = {
-                            email: email,
-                            name: email.split('@')[0],
-                            loginTime: new Date().toISOString()
-                        };
-                        
-                        if (rememberMe) {
-                            localStorage.setItem('geniusUser', JSON.stringify(user));
-                        } else {
-                            sessionStorage.setItem('geniusUser', JSON.stringify(user));
-                        }
-                        
-                        // Track successful login
-                        if (window.va) {
-                            window.va('track', 'user_login_success', {
-                                method: 'email',
-                                remember_me: rememberMe
-                            });
-                        }
-                        
-                        hideLoading();
-                        closeLoginModal();
-                        redirectToDashboard();
-                    } else {
-                        showError('Invalid email or password');
-                        hideLoading();
-                    }
-                }, 1500);
-            }
-            
-            function handleSignup() {
-                const name = document.getElementById('signupName').value;
-                const email = document.getElementById('signupEmail').value;
-                const password = document.getElementById('signupPassword').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const agreeTerms = document.getElementById('agreeTerms').checked;
-                
-                // Basic validation
-                if (!name || !email || !password || !confirmPassword) {
-                    showError('Please fill in all fields');
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    showError('Passwords do not match');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showError('Password must be at least 6 characters');
-                    return;
-                }
-                
-                if (!agreeTerms) {
-                    showError('Please agree to the Terms of Service');
-                    return;
-                }
-                
-                // Simulate signup process
-                showLoading('Creating account...');
-                
-                // Simulate API call
-                setTimeout(() => {
-                    // Store user session
-                    const user = {
-                        name: name,
-                        email: email,
-                        signupTime: new Date().toISOString()
-                    };
-                    
-                    localStorage.setItem('geniusUser', JSON.stringify(user));
-                    
-                    // Track successful signup
-                    if (window.va) {
-                        window.va('track', 'user_signup_success', {
-                            method: 'email'
-                        });
-                    }
-                    
-                    hideLoading();
-                    closeLoginModal();
-                    redirectToDashboard();
-                }, 2000);
-            }
-            
-            function handleGoogleLogin() {
-                showLoading('Connecting with Google...');
-                
-                // Simulate Google OAuth
-                setTimeout(() => {
-                    const user = {
-                        name: 'Google User',
-                        email: 'user@gmail.com',
-                        loginTime: new Date().toISOString(),
-                        provider: 'google'
-                    };
-                    
-                    localStorage.setItem('geniusUser', JSON.stringify(user));
-                    
-                    // Track Google login
-                    if (window.va) {
-                        window.va('track', 'user_login_success', {
-                            method: 'google'
-                        });
-                    }
-                    
-                    hideLoading();
-                    closeLoginModal();
-                    redirectToDashboard();
-                }, 2000);
-            }
-            
-            function redirectToDashboard() {
-                // Redirect to the actual login page
-                window.location.href = '/login.html';
-            }
-            
-            function showLoading(message) {
-                const submitBtn = document.querySelector('.submit-btn');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = message;
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.7';
-            }
-            
-            function hideLoading() {
-                const submitBtn = document.querySelector('.submit-btn');
-                submitBtn.textContent = submitBtn.textContent.includes('Login') ? 'Login' : 'Create Account';
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-            }
-            
-            function showError(message) {
-                // Remove existing error messages
-                const existingError = document.querySelector('.error-message');
-                if (existingError) {
-                    existingError.remove();
-                }
-                
-                // Create error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'error-message';
-                errorDiv.textContent = message;
-                errorDiv.style.cssText = `
-                    color: #ff4444;
-                    font-size: 14px;
-                    margin-top: 10px;
-                    padding: 8px;
-                    background: rgba(255, 68, 68, 0.1);
-                    border: 1px solid rgba(255, 68, 68, 0.3);
-                    border-radius: 4px;
-                    text-align: center;
-                `;
-                
-                // Insert error message
-                const form = document.querySelector('.login-form:not([style*="display: none"])');
-                form.appendChild(errorDiv);
-                
-                // Auto-remove after 5 seconds
-                setTimeout(() => {
-                    if (errorDiv.parentNode) {
-                        errorDiv.remove();
-                    }
-                }, 5000);
-            }
             
             // Check if user is already logged in
             function checkUserSession() {
-                const user = localStorage.getItem('geniusUser') || sessionStorage.getItem('geniusUser');
-                if (user) {
+                // Check for current user data (Firebase auth)
+                const currentUser = localStorage.getItem('currentUser');
+                const headerLoginBtn = document.getElementById('loginHeaderBtn');
+                
+                console.log('Checking user session - currentUser:', currentUser);
+                
+                if (currentUser) {
                     // User is logged in, update UI
-                    const loginBtn = document.getElementById('loginBtn');
-                    const headerLoginBtn = document.getElementById('loginHeaderBtn');
-                    
                     try {
-                        const userData = JSON.parse(user);
-                        loginBtn.textContent = `Welcome, ${userData.name}`;
+                        const userData = JSON.parse(currentUser);
+                        console.log('User is logged in, showing Dashboard button');
                         headerLoginBtn.textContent = 'Dashboard';
                         
-                        // Update click handlers to go to dashboard
-                        loginBtn.onclick = function() {
-                            redirectToDashboard();
-                        };
+                        // Update click handler to go to dashboard
                         headerLoginBtn.onclick = function() {
-                            redirectToDashboard();
+                            window.location.href = '/dashboard.html';
                         };
                     } catch (e) {
                         console.error('Error parsing user data:', e);
+                        // If parsing fails, treat as logged out
+                        console.log('Error parsing user data, showing Login button');
+                        headerLoginBtn.textContent = 'Login';
+                        headerLoginBtn.onclick = function() {
+                            window.location.href = '/login.html';
+                        };
                     }
+                } else {
+                    // User is not logged in, show login button
+                    console.log('User is not logged in, showing Login button');
+                    headerLoginBtn.textContent = 'Login';
+                    headerLoginBtn.onclick = function() {
+                        window.location.href = '/login.html';
+                    };
                 }
             }
+            
+            // Listen for storage changes (when user logs out from another tab)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'currentUser') {
+                    checkUserSession();
+                }
+            });
             
             // Check user session on page load
             window.addEventListener('load', checkUserSession);

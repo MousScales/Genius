@@ -81,6 +81,9 @@
                         <button id="settingsBtn" class="dropdown-item">
                             <span>⚙️</span> Settings
                         </button>
+                        <button id="visitSiteBtn" class="dropdown-item">
+                            <span>🌐</span> Visit Site
+                        </button>
                         <button id="logoutBtn" class="dropdown-item">
                             <span>🚪</span> Logout
                         </button>
@@ -138,6 +141,7 @@
                         <input type="text" id="majorField" placeholder="Enter your major" class="settings-input">
                     </div>
                 </div>
+
 
                 <!-- <div class="settings-section">
                     <h3>OpenAI API Key</h3>
@@ -410,33 +414,41 @@
             openSettingsModal();
         });
 
+        // Visit Site button
+        document.getElementById('visitSiteBtn').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
         // Logout button
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 console.log('Logging out user...');
                 
-                // Sign out from Firebase
-                await signOut(auth);
-                
-                // Clear all user data from localStorage
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('userData');
-                localStorage.removeItem('genius_chats');
-                
-                // Clear any user-specific data
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && (key.includes('classes_') || key.includes('profile_') || key.includes('genius_'))) {
-                        keysToRemove.push(key);
+                // Use the global logout function from firebase-service.js
+                if (window.logout) {
+                    await window.logout();
+                } else {
+                    // Fallback if global logout is not available
+                    console.log('Global logout not available, using fallback...');
+                    
+                    // Clear all user data from localStorage
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('userData');
+                    localStorage.removeItem('genius_chats');
+                    
+                    // Clear any user-specific data
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.includes('classes_') || key.includes('profile_') || key.includes('genius_'))) {
+                            keysToRemove.push(key);
+                        }
                     }
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+                    
+                    // Redirect to main landing page
+                    window.location.href = '/';
                 }
-                keysToRemove.forEach(key => localStorage.removeItem(key));
-                
-                console.log('User logged out successfully, redirecting to login...');
-                
-                // Redirect to main landing page
-                window.location.href = '/';
             } catch (error) {
                 console.error('Logout error:', error);
                 // Even if there's an error, still redirect to main landing page

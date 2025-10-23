@@ -375,6 +375,53 @@ app.get('/api/env', (req, res) => {
     });
 });
 
+// Stripe API endpoint
+app.post('/api/stripe', async (req, res) => {
+    try {
+        const { action } = req.query;
+        const { userId, customerId } = req.body;
+
+        if (action === 'check-subscription-status') {
+            if (!customerId) {
+                return res.json({ hasActiveSubscription: false });
+            }
+
+            // Check subscription status with Stripe
+            const subscriptions = await stripe.subscriptions.list({
+                customer: customerId,
+                status: 'active',
+                limit: 1
+            });
+
+            const hasActiveSubscription = subscriptions.data.length > 0;
+            
+            res.json({ 
+                hasActiveSubscription,
+                subscription: hasActiveSubscription ? subscriptions.data[0] : null
+            });
+        } else if (action === 'create-portal-session') {
+            if (!customerId) {
+                return res.status(400).json({ error: 'Customer ID required' });
+            }
+
+            // Create Stripe customer portal session
+            const portalSession = await stripe.billingPortal.sessions.create({
+                customer: customerId,
+                return_url: `${req.protocol}://${req.get('host')}/dashboard.html`,
+            });
+
+            res.json({ 
+                url: portalSession.url 
+            });
+        } else {
+            res.status(400).json({ error: 'Invalid action' });
+        }
+    } catch (error) {
+        console.error('Stripe API error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Catch-all route for any other requests
 app.get('*', (req, res) => {
     console.log(`404 - File not found: ${req.url}`);
