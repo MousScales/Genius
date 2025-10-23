@@ -792,10 +792,10 @@ body {
     padding: 0;
 }
 
-.floating-genius-button .floating-genius-icon {
+.floating-genius-button svg {
     width: 20px;
     height: 20px;
-    border-radius: 3px;
+    color: #ffffff;
 }
 
 .floating-genius-button:hover {
@@ -1762,7 +1762,7 @@ body {
         font-size: 14px;
     }
     
-    .floating-genius-button .floating-genius-icon {
+    .floating-genius-button svg {
         width: 18px;
         height: 18px;
     }
@@ -1890,7 +1890,7 @@ body {
         font-size: 12px;
     }
     
-    .floating-genius-button .floating-genius-icon {
+    .floating-genius-button svg {
         width: 16px;
         height: 16px;
     }
@@ -2048,7 +2048,7 @@ body {
         font-size: 10px;
     }
     
-    .floating-genius-button .floating-genius-icon {
+    .floating-genius-button svg {
         width: 14px;
         height: 14px;
     }
