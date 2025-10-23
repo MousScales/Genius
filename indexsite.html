@@ -9,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Vercel Analytics -->
-    <script>
-        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    <script type="module">
+        import { inject } from '@vercel/analytics';
+        inject();
     </script>
-    <script defer src="https://va.vercel-scripts.com/v1/script.js"></script>
 </head>
 <body>
     <div class="container">
@@ -227,12 +227,8 @@
             
             // Track page view
             window.addEventListener('load', function() {
-                if (window.va) {
-                    window.va('track', 'page_view', {
-                        page: 'home',
-                        title: 'Genius - AI Study Assistant'
-                    });
-                }
+                // Page view is automatically tracked by @vercel/analytics
+                console.log('Page loaded - analytics tracking enabled');
             });
             
             
@@ -241,12 +237,7 @@
                 e.preventDefault();
                 
                 // Track button click
-                if (window.va) {
-                    window.va('track', 'login_button_click', {
-                        button_type: 'header_login',
-                        location: 'header'
-                    });
-                }
+                console.log('Login button clicked - analytics tracking enabled');
                 
                 // Add click animation
                 this.style.transform = 'scale(0.95)';
@@ -309,12 +300,7 @@
                 if (floatingButton) {
                     floatingButton.addEventListener('click', function() {
                         // Track floating button click
-                        if (window.va) {
-                            window.va('track', 'floating_button_click', {
-                                button_type: 'genius_edit',
-                                location: 'floating_bar'
-                            });
-                        }
+                        console.log('Floating button clicked - analytics tracking enabled');
                         
                         const documentWindow = document.querySelector('.document-window');
                         const floatingBar = document.querySelector('.floating-genius-chat-bar');
@@ -378,12 +364,7 @@
             
             // Track document editor interactions
             function trackDocumentInteraction(action, details = {}) {
-                if (window.va) {
-                    window.va('track', 'document_interaction', {
-                        action: action,
-                        ...details
-                    });
-                }
+                console.log('Document interaction:', action, details);
             }
             
             // Type the document content
