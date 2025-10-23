@@ -134,23 +134,35 @@ function openDocumentEditor(classData, existingDoc = null) {
         content.addEventListener('input', () => {
             removeGhostText();
             triggerAutoSave();
+            // Mark that user is actively typing to prevent placeholder re-addition
+            content.setAttribute('data-user-typing', 'true');
         });
         content.addEventListener('keydown', (e) => {
             // Remove ghost text on any key except special keys
             if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
                 removeGhostText();
+                // Mark that user is actively typing
+                content.setAttribute('data-user-typing', 'true');
             }
         });
         content.addEventListener('keyup', () => {
             removeGhostText();
             triggerAutoSave();
+            // Clear typing flag after a short delay to allow placeholder re-addition if content becomes empty
+            setTimeout(() => {
+                if (content.getAttribute('data-user-typing') === 'true') {
+                    content.removeAttribute('data-user-typing');
+                }
+            }, 1000);
         });
         content.addEventListener('paste', () => {
             removeGhostText();
+            content.setAttribute('data-user-typing', 'true');
             setTimeout(triggerAutoSave, 100); // Small delay for paste content to be processed
         });
         content.addEventListener('keypress', () => {
             removeGhostText();
+            content.setAttribute('data-user-typing', 'true');
         });
         
         // Ensure content can be focused and selected
@@ -2804,9 +2816,12 @@ function updatePlaceholderVisibility() {
     if (hasRealContent) {
             // Remove ghost text if it exists
             removeGhostText();
+            // Clear the typing flag since there's content
+            content.removeAttribute('data-user-typing');
     } else {
-            // Always show simple placeholder when document is empty
-            if (!content.querySelector('.document-placeholder')) {
+            // Only add placeholder if user is not actively typing
+            const isUserTyping = content.getAttribute('data-user-typing') === 'true';
+            if (!isUserTyping && !content.querySelector('.document-placeholder')) {
                 // Add simple placeholder text inline at the beginning
                 const placeholderText = document.createElement('span');
                 placeholderText.className = 'document-placeholder';
