@@ -29,7 +29,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+// Note: express.static('.') removed to prevent conflicts with custom routes
 
 // Add logging for debugging
 app.use((req, res, next) => {
@@ -77,7 +77,15 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
+app.get('/dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
 app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
@@ -85,11 +93,23 @@ app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'signup.html'));
 });
 
+app.get('/signup.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'signup.html'));
+});
+
 app.get('/onboarding', (req, res) => {
     res.sendFile(path.join(__dirname, 'onboarding.html'));
 });
 
+app.get('/onboarding.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'onboarding.html'));
+});
+
 app.get('/subscription', (req, res) => {
+    res.sendFile(path.join(__dirname, 'subscription.html'));
+});
+
+app.get('/subscription.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'subscription.html'));
 });
 
@@ -149,10 +169,6 @@ app.get('/assets/:filename', (req, res) => {
     
     res.setHeader('Content-Type', contentType);
     res.sendFile(path.join(__dirname, 'assets', filename));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'indexsite.html'));
 });
 
 app.get('/dashboard', (req, res) => {
