@@ -2755,11 +2755,17 @@ function removeGhostText() {
     const content = document.getElementById('docEditorContent');
     if (!content) return;
     
-    // Always remove ghost text - be aggressive about it
+    // Remove both old ghost text and new placeholder
     const ghostText = content.querySelector('.ghost-text-hint');
     if (ghostText) {
         ghostText.remove();
         console.log('Ghost text removed');
+    }
+    
+    const placeholder = content.querySelector('.document-placeholder');
+    if (placeholder) {
+        placeholder.remove();
+        console.log('Placeholder removed');
     }
     
     // Double-check and remove any remaining ghost text
@@ -2788,25 +2794,29 @@ function updatePlaceholderVisibility() {
         .replace(/\s+/g, ' ') // Normalize whitespace
         .trim();
     
-        // Check if there's any real content (not just whitespace, ghost text, or empty elements)
-        const hasRealContent = contentWithoutPlaceholder.length > 0 && 
-                               !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius') &&
-                               contentWithoutPlaceholder !== '';
+    // Check if there's any real content (not just whitespace, ghost text, or empty elements)
+    const hasRealContent = contentWithoutPlaceholder.length > 0 && 
+                           !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius') &&
+                           !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius to write your essay for you') &&
+                           !contentWithoutPlaceholder.includes('Start typing...') &&
+                           contentWithoutPlaceholder !== '';
     
     if (hasRealContent) {
             // Remove ghost text if it exists
             removeGhostText();
     } else {
-            // Always show genius essay writing text when document is empty
-            if (!content.querySelector('.ghost-text-hint')) {
-                // Add ghost text without replacing the entire content
-                const ghostText = document.createElement('div');
-                ghostText.className = 'ghost-text-hint';
-                ghostText.style.display = 'block';
-                ghostText.style.pointerEvents = 'none';
-                ghostText.style.userSelect = 'none';
-                ghostText.textContent = 'Click the ? to switch to edit with Genius to write your essay for you';
-                content.appendChild(ghostText);
+            // Always show simple placeholder when document is empty
+            if (!content.querySelector('.document-placeholder')) {
+                // Add simple placeholder text
+                const placeholderText = document.createElement('div');
+                placeholderText.className = 'document-placeholder';
+                placeholderText.style.display = 'block';
+                placeholderText.style.pointerEvents = 'none';
+                placeholderText.style.userSelect = 'none';
+                placeholderText.style.color = '#888';
+                placeholderText.style.fontStyle = 'italic';
+                placeholderText.textContent = 'Start typing...';
+                content.appendChild(placeholderText);
             }
     }
 }
@@ -4065,7 +4075,16 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
         const allContent = document.querySelectorAll('.doc-editor-content');
         let fullText = '';
         allContent.forEach(content => {
-            fullText += content.innerText + '\n\n';
+            let text = content.innerText || '';
+            // Remove ghost text and placeholder from content
+            text = text
+                .replace(/Click the \? to switch to edit with Genius to write your essay for you/g, '')
+                .replace(/Click the \? to switch to edit with Genius/g, '')
+                .replace(/Start typing\.\.\./g, '')
+                .trim();
+            if (text) {
+                fullText += text + '\n\n';
+            }
         });
         return fullText.trim();
     }
@@ -4116,9 +4135,18 @@ function setupGeniusInputListeners(chatInput, classData, existingDoc) {
                  // Edit mode: suggestions or content generation
                  // Check if document is empty
                  const content = document.getElementById('docEditorContent');
-                 const isDocumentEmpty = !content || !content.innerText || content.innerText.trim().length === 0;
+                 let contentText = content?.innerText || '';
                  
-                 console.log('Edit mode - isDocumentEmpty:', isDocumentEmpty, 'content:', content?.innerText);
+                 // Remove ghost text and placeholder from content check
+                 contentText = contentText
+                     .replace(/Click the \? to switch to edit with Genius to write your essay for you/g, '')
+                     .replace(/Click the \? to switch to edit with Genius/g, '')
+                     .replace(/Start typing\.\.\./g, '')
+                     .trim();
+                 
+                 const isDocumentEmpty = !content || !contentText || contentText.length === 0;
+                 
+                 console.log('Edit mode - isDocumentEmpty:', isDocumentEmpty, 'content:', contentText);
                  
                  // If document is empty in edit mode, treat it as content generation
                  if (isDocumentEmpty) {

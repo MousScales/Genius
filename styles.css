@@ -10311,6 +10311,19 @@ img {
     user-select: none;
 }
 
+.document-placeholder {
+    color: #888;
+    font-style: italic;
+    font-size: 16px;
+    opacity: 0.6;
+    pointer-events: none;
+    user-select: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
 /* AI Checker Styles */
 .ai-checker-summary {
     position: fixed;
