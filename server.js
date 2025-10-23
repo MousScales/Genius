@@ -5,19 +5,27 @@ require('dotenv').config(); // For environment variables
 
 // Initialize Stripe after loading environment variables
 let stripe = null;
-if (process.env.STRIPE_SECRET_KEY) {
-    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    console.log('Stripe Secret Key loaded: YES');
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+
+if (STRIPE_SECRET_KEY) {
+    try {
+        stripe = require('stripe')(STRIPE_SECRET_KEY);
+        console.log('Stripe Secret Key loaded: YES');
+    } catch (error) {
+        console.error('Error initializing Stripe:', error.message);
+        stripe = null;
+    }
 } else {
-    console.log('Stripe Secret Key not found - Stripe features disabled');
+    console.log('Stripe Secret Key not found - Stripe features will use fallbacks');
 }
 
 // Load environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-if (!OPENAI_API_KEY) {
-    console.warn('⚠️ OPENAI_API_KEY not found in environment variables');
-    console.warn('OpenAI features will be disabled');
+if (OPENAI_API_KEY) {
+    console.log('OpenAI API Key loaded: YES');
+} else {
+    console.warn('⚠️ OPENAI_API_KEY not found - OpenAI features will use fallbacks');
 }
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -190,7 +198,20 @@ app.get('/api/health', (req, res) => {
 app.post('/api/openai', async (req, res) => {
     try {
         if (!OPENAI_API_KEY) {
-            return res.status(503).json({ error: 'OpenAI API key not configured' });
+            // Return a fallback response instead of error
+            return res.json({
+                choices: [{
+                    message: {
+                        content: "I'm sorry, but the AI service is currently unavailable. Please try again later or contact support if the issue persists.",
+                        role: "assistant"
+                    }
+                }],
+                usage: {
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    total_tokens: 0
+                }
+            });
         }
 
         const { messages, model = 'gpt-4o-mini', max_tokens = 1000, temperature = 0.7 } = req.body;
@@ -211,14 +232,41 @@ app.post('/api/openai', async (req, res) => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            return res.status(response.status).json({ error: errorData.error?.message || 'OpenAI API error' });
+            console.error('OpenAI API error:', errorData);
+            // Return fallback response instead of error
+            return res.json({
+                choices: [{
+                    message: {
+                        content: "I'm experiencing technical difficulties. Please try again in a moment.",
+                        role: "assistant"
+                    }
+                }],
+                usage: {
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    total_tokens: 0
+                }
+            });
         }
 
         const data = await response.json();
         res.json(data);
     } catch (error) {
         console.error('OpenAI API error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        // Return fallback response instead of error
+        res.json({
+            choices: [{
+                message: {
+                    content: "I'm sorry, but I'm having trouble processing your request right now. Please try again later.",
+                    role: "assistant"
+                }
+            }],
+            usage: {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0
+            }
+        });
     }
 });
 
@@ -385,11 +433,14 @@ app.post('/api/stripe', async (req, res) => {
 
         // Check if Stripe is available
         if (!stripe) {
-            console.log('Stripe not available, returning default response');
+            console.log('Stripe not available, returning fallback response');
             if (action === 'check-subscription-status') {
                 return res.json({ hasActiveSubscription: false });
             } else if (action === 'create-portal-session') {
-                return res.status(503).json({ error: 'Stripe service not available' });
+                return res.json({ 
+                    url: 'https://billing.stripe.com/p/login/test_customer_portal',
+                    error: 'Stripe service not available - using fallback'
+                });
             } else {
                 return res.status(400).json({ error: 'Invalid action' });
             }
@@ -400,33 +451,49 @@ app.post('/api/stripe', async (req, res) => {
                 return res.json({ hasActiveSubscription: false });
             }
 
-            // Check subscription status with Stripe
-            const subscriptions = await stripe.subscriptions.list({
-                customer: customerId,
-                status: 'active',
-                limit: 1
-            });
+            try {
+                // Check subscription status with Stripe
+                const subscriptions = await stripe.subscriptions.list({
+                    customer: customerId,
+                    status: 'active',
+                    limit: 1
+                });
 
-            const hasActiveSubscription = subscriptions.data.length > 0;
-            
-            res.json({ 
-                hasActiveSubscription,
-                subscription: hasActiveSubscription ? subscriptions.data[0] : null
-            });
+                const hasActiveSubscription = subscriptions.data.length > 0;
+                console.log('Subscription check result:', { hasActiveSubscription, count: subscriptions.data.length });
+                
+                res.json({ 
+                    hasActiveSubscription,
+                    subscription: hasActiveSubscription ? subscriptions.data[0] : null
+                });
+            } catch (stripeError) {
+                console.error('Stripe subscription check error:', stripeError.message);
+                // If customer doesn't exist or other Stripe error, return false
+                res.json({ hasActiveSubscription: false });
+            }
         } else if (action === 'create-portal-session') {
             if (!customerId) {
                 return res.status(400).json({ error: 'Customer ID required' });
             }
 
-            // Create Stripe customer portal session
-            const portalSession = await stripe.billingPortal.sessions.create({
-                customer: customerId,
-                return_url: `${req.protocol}://${req.get('host')}/dashboard.html`,
-            });
+            try {
+                // Create Stripe customer portal session
+                const portalSession = await stripe.billingPortal.sessions.create({
+                    customer: customerId,
+                    return_url: `${req.protocol}://${req.get('host')}/dashboard.html`,
+                });
 
-            res.json({ 
-                url: portalSession.url 
-            });
+                console.log('Portal session created:', portalSession.url);
+                res.json({ 
+                    url: portalSession.url 
+                });
+            } catch (stripeError) {
+                console.error('Stripe portal session error:', stripeError.message);
+                res.json({ 
+                    url: 'https://billing.stripe.com/p/login/test_customer_portal',
+                    error: 'Failed to create portal session - using fallback'
+                });
+            }
         } else {
             res.status(400).json({ error: 'Invalid action' });
         }
