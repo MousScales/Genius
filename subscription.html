@@ -993,8 +993,8 @@
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     if (userData.subscription && userData.subscription.status === 'active') {
-                        console.log('User has active subscription, redirecting to dashboard');
-                        window.location.href = 'dashboard.html';
+                        console.log('User has active subscription, staying on subscription page');
+                        // Don't redirect automatically - let user choose
                         return true;
                     }
                 }

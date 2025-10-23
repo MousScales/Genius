@@ -231,9 +231,8 @@
                                 const hasActiveSubscription = await window.subscriptionService.hasActiveSubscription();
                                 
                                 if (!hasActiveSubscription) {
-                                    console.log('🔒 No active subscription, redirecting to subscription page');
-                                    window.location.href = 'subscription.html';
-                                    return;
+                                    console.log('🔒 No active subscription, but allowing dashboard access');
+                                    // Don't redirect - just show subscription prompt in UI
                                 }
                             }
                             
