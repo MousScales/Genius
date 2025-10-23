@@ -4,22 +4,20 @@ const path = require('path');
 require('dotenv').config(); // For environment variables
 
 // Initialize Stripe after loading environment variables
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
-// Debug: Log Stripe key status
-console.log('Stripe Secret Key loaded:', process.env.STRIPE_SECRET_KEY ? 'YES' : 'NO');
-console.log('Stripe Secret Key length:', process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.length : 0);
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    console.log('Stripe Secret Key loaded: YES');
+} else {
+    console.log('Stripe Secret Key not found - Stripe features disabled');
+}
 
 // Load environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 if (!OPENAI_API_KEY) {
-    console.error('❌ OPENAI_API_KEY not found in environment variables');
-    console.error('Please set OPENAI_API_KEY in your environment variables');
-    // Don't exit in production - let Vercel handle it
-    if (process.env.NODE_ENV !== 'production') {
-        process.exit(1);
-    }
+    console.warn('⚠️ OPENAI_API_KEY not found in environment variables');
+    console.warn('OpenAI features will be disabled');
 }
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -191,6 +189,10 @@ app.get('/api/health', (req, res) => {
 // OpenAI API endpoint
 app.post('/api/openai', async (req, res) => {
     try {
+        if (!OPENAI_API_KEY) {
+            return res.status(503).json({ error: 'OpenAI API key not configured' });
+        }
+
         const { messages, model = 'gpt-4o-mini', max_tokens = 1000, temperature = 0.7 } = req.body;
         
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -380,6 +382,18 @@ app.post('/api/stripe', async (req, res) => {
     try {
         const { action } = req.query;
         const { userId, customerId } = req.body;
+
+        // Check if Stripe is available
+        if (!stripe) {
+            console.log('Stripe not available, returning default response');
+            if (action === 'check-subscription-status') {
+                return res.json({ hasActiveSubscription: false });
+            } else if (action === 'create-portal-session') {
+                return res.status(503).json({ error: 'Stripe service not available' });
+            } else {
+                return res.status(400).json({ error: 'Invalid action' });
+            }
+        }
 
         if (action === 'check-subscription-status') {
             if (!customerId) {
