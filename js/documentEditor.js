@@ -2810,7 +2810,6 @@ function updatePlaceholderVisibility() {
     const hasRealContent = contentWithoutPlaceholder.length > 0 && 
                            !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius') &&
                            !contentWithoutPlaceholder.includes('Click the ? to switch to edit with Genius to write your essay for you') &&
-                           !contentWithoutPlaceholder.includes('Start typing...') &&
                            contentWithoutPlaceholder !== '';
     
     if (hasRealContent) {
@@ -2825,7 +2824,7 @@ function updatePlaceholderVisibility() {
                 // Add simple placeholder text inline at the beginning
                 const placeholderText = document.createElement('span');
                 placeholderText.className = 'document-placeholder';
-                placeholderText.textContent = 'Start typing...';
+                placeholderText.textContent = 'Click the ? to switch to edit with Genius to write your essay for you';
                 content.prepend(placeholderText);
             }
     }
