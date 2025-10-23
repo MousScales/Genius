@@ -218,13 +218,13 @@ window.logout = async function logout() {
         
         console.log('✅ Logged out successfully');
         
-        // Redirect to login page
-        window.location.href = 'login.html';
+        // Redirect to main landing page
+        window.location.href = '/';
         return true;
     } catch (error) {
         console.error('❌ Error during logout:', error);
-        // Even if there's an error, still redirect to login
-        window.location.href = 'login.html';
+        // Even if there's an error, still redirect to main landing page
+        window.location.href = '/';
         return false;
     }
 }

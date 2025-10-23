@@ -102,12 +102,12 @@ export async function handleLogout() {
         }
         keysToRemove.forEach(key => localStorage.removeItem(key));
         
-        // Redirect to login page
-        window.location.href = 'login.html';
+        // Redirect to main landing page
+        window.location.href = '/';
     } catch (error) {
         console.error('Logout error:', error);
-        // Even if there's an error, still redirect to login
-        window.location.href = 'login.html';
+        // Even if there's an error, still redirect to main landing page
+        window.location.href = '/';
     }
 }
 
