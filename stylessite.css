@@ -954,15 +954,12 @@ body {
     margin-bottom: 20px;
 }
 
-.preview-sidebar.collapsed .preview-sidebar-header::before {
-    content: '';
-    display: block;
-    width: 24px;
-    height: 24px;
-    background-image: url('darkgenius.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+.preview-sidebar.collapsed .preview-sidebar-header .preview-logo-text {
+    display: none;
+}
+
+.preview-sidebar.collapsed .preview-sidebar-header .preview-sidebar-logo {
+    margin-right: 0;
 }
 
 .preview-sidebar.collapsed .preview-nav-item {
@@ -1022,31 +1019,11 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.preview-header-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.preview-header-logo:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.preview-header-logo-img {
+.preview-sidebar-logo {
     width: 24px;
     height: 24px;
     border-radius: 4px;
-}
-
-.preview-header-logo-text {
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
+    margin-right: 8px;
 }
 
 .preview-header-spacer {
