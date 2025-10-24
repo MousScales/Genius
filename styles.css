@@ -10315,6 +10315,18 @@ img {
     position: relative;
 }
 
+.typing-cursor {
+    color: #007acc;
+    font-weight: bold;
+    animation: blink 1s infinite;
+    display: inline;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
 /* AI Checker Styles */
 .ai-checker-summary {
     position: fixed;

@@ -5191,8 +5191,43 @@ window.typeOutContent = function(contentElement, text) {
     const typeWriter = () => {
         if (index < cleanText.length) {
             currentText += cleanText[index];
-            contentElement.innerHTML = currentText;
+            
+            // Add typing cursor to the end of the text
+            const textWithCursor = currentText + '<span class="typing-cursor">|</span>';
+            contentElement.innerHTML = textWithCursor;
             index++;
+            
+            // Update word and character count as we type
+            updateDocumentStats();
+            
+            // Position cursor at the end of the text
+            try {
+                const range = document.createRange();
+                const sel = window.getSelection();
+                
+                // Find the last text node in the content
+                const walker = document.createTreeWalker(
+                    contentElement,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let lastTextNode = null;
+                let node;
+                while (node = walker.nextNode()) {
+                    lastTextNode = node;
+                }
+                
+                if (lastTextNode) {
+                    range.setStart(lastTextNode, lastTextNode.textContent.length);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            } catch (e) {
+                console.log('Could not position cursor:', e);
+            }
             
             // Auto-scroll to bottom as content is being typed
             const contentWrapper = document.querySelector('.doc-editor-content-wrapper');
@@ -5214,9 +5249,13 @@ window.typeOutContent = function(contentElement, text) {
             
             setTimeout(typeWriter, delay);
         } else {
-            // Remove typing class when complete
+            // Remove typing class and cursor when complete
             contentElement.classList.remove('typing');
+            contentElement.innerHTML = currentText; // Remove the typing cursor
             console.log('Type-out animation complete');
+            
+            // Final update of stats
+            updateDocumentStats();
             
             // Final scroll to ensure we're at the bottom
             const contentWrapper = document.querySelector('.doc-editor-content-wrapper');
