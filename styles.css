@@ -145,7 +145,6 @@ body {
 .sidebar {
     width: 280px;
     background: linear-gradient(180deg, #1a1a1a, #0f0f0f);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1398,7 +1397,6 @@ body {
     justify-content: center;
     overflow: hidden;
     font-size: 60px;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 2;
 }
@@ -2703,7 +2701,6 @@ body {
 .genius-chat-sidebar {
     width: 300px;
     background: linear-gradient(180deg, #0f0f0f, #1a1a1a);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
 }
@@ -4125,7 +4122,6 @@ body {
         width: 100%;
         height: 180px;
         border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .class-card-content {
@@ -4263,7 +4259,6 @@ body {
     padding: 24px;
     overflow-y: auto;
     flex-shrink: 0;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .class-info-card {
@@ -9761,7 +9756,6 @@ select.toolbar-select option {
         width: 100%;
         height: 160px;
         border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .class-card-content {
@@ -9831,7 +9825,6 @@ select.toolbar-select option {
         width: 100%;
         height: 140px;
         border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .class-card-content {
@@ -11453,7 +11446,6 @@ img {
     width: 350px;
     height: 100vh;
     background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
     z-index: 1500;
     transition: left 0.3s ease;
