@@ -2909,6 +2909,33 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             
             // Setup live preview
             setupEditClassPreview();
+            
+            // Setup day selection functionality
+            const dayItems = document.querySelectorAll('.day-item');
+            dayItems.forEach(dayItem => {
+                // Initialize selected state based on checkbox
+                const checkbox = dayItem.querySelector('.day-checkbox');
+                if (checkbox.checked) {
+                    dayItem.classList.add('selected');
+                }
+                
+                dayItem.addEventListener('click', function(e) {
+                    // Don't toggle if clicking on time inputs
+                    if (e.target.classList.contains('day-start-time') || e.target.classList.contains('day-end-time')) {
+                        return;
+                    }
+                    
+                    const checkbox = this.querySelector('.day-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    
+                    // Update visual state
+                    if (checkbox.checked) {
+                        this.classList.add('selected');
+                    } else {
+                        this.classList.remove('selected');
+                    }
+                });
+            });
         }
 
         function setupEditClassFormListeners() {
@@ -2933,6 +2960,27 @@ Always be encouraging and educational. Use clear formatting with headers, bullet
             if (updateBtn) {
                 updateBtn.addEventListener('click', updateClass);
             }
+            
+            // Day selection functionality
+            const dayItems = document.querySelectorAll('.day-item');
+            dayItems.forEach(dayItem => {
+                dayItem.addEventListener('click', function(e) {
+                    // Don't toggle if clicking on time inputs
+                    if (e.target.classList.contains('day-start-time') || e.target.classList.contains('day-end-time')) {
+                        return;
+                    }
+                    
+                    const checkbox = this.querySelector('.day-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    
+                    // Update visual state
+                    if (checkbox.checked) {
+                        this.classList.add('selected');
+                    } else {
+                        this.classList.remove('selected');
+                    }
+                });
+            });
             
             // Image upload
             const imageInput = document.getElementById('classImage');
