@@ -10327,6 +10327,15 @@ img {
     51%, 100% { opacity: 0; }
 }
 
+/* Hide the default text cursor during typing animation */
+.doc-editor-content.typing {
+    caret-color: transparent;
+}
+
+.doc-editor-content.typing * {
+    caret-color: transparent;
+}
+
 /* AI Checker Styles */
 .ai-checker-summary {
     position: fixed;
