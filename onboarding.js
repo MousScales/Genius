@@ -10,25 +10,8 @@ async function initFirebase() {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    // Initialize Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
-        authDomain: "genius-b5656.firebaseapp.com",
-        projectId: "genius-b5656",
-        storageBucket: "genius-b5656.firebasestorage.app",
-        messagingSenderId: "567988128391",
-        appId: "1:567988128391:web:8a48294d736ec4013f8622",
-        measurementId: "G-3SEG2XJQMP"
-    };
-    
     try {
-        // Initialize Firebase
-        window.firebase.initializeApp(firebaseConfig);
-        
-        // Wait for Firebase to be fully initialized
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Initialize Firestore with proper error handling
+        // Firebase is already initialized in login.html, just get the Firestore instance
         if (window.firebase.firestore) {
             db = window.firebase.firestore();
             
@@ -120,6 +103,43 @@ if (window.firebase && window.firebase.auth) {
     }
 }
 
+// Check Stripe subscription status
+async function checkSubscriptionStatus() {
+    try {
+        if (!currentUser || !currentUser.uid) {
+            return false;
+        }
+
+        // Get user data from localStorage first
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            const user = JSON.parse(userData);
+            if (user.customerId) {
+                // Check subscription with Stripe
+                const response = await fetch('/api/stripe?action=check-subscription-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customerId: user.customerId
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.hasActiveSubscription;
+                }
+            }
+        }
+
+        return false;
+    } catch (error) {
+        console.error('Error checking subscription status:', error);
+        return false;
+    }
+}
+
 // Check if user has already completed onboarding
 async function checkOnboardingStatus() {
     try {
@@ -140,6 +160,8 @@ async function checkOnboardingStatus() {
             window.location.href = 'login.html';
             return;
         }
+
+        // Allow onboarding without subscription check - users will be redirected to subscription after completion
         
         console.log('Checking onboarding status for user:', currentUser.uid);
         
@@ -154,7 +176,7 @@ async function checkOnboardingStatus() {
             // Check if onboarding is marked as complete
             if (userData.onboardingComplete) {
                 console.log('User has already completed onboarding, redirecting to dashboard');
-                window.location.href = 'dashboard.html';
+                window.location.href = 'subscription.html';
                 return;
             }
             
@@ -166,7 +188,7 @@ async function checkOnboardingStatus() {
                     onboardingComplete: true,
                     lastLogin: new Date().toISOString()
                 });
-                window.location.href = 'dashboard.html';
+                window.location.href = 'subscription.html';
                 return;
             }
         }
@@ -189,7 +211,7 @@ async function checkOnboardingStatus() {
                         console.log('Could not save to Firebase, continuing anyway');
                     }
                 }
-                window.location.href = 'dashboard.html';
+                window.location.href = 'subscription.html';
                 return;
             }
         }
@@ -201,6 +223,8 @@ async function checkOnboardingStatus() {
         // If there's an error, continue with onboarding
     }
 }
+
+// No subscription check needed - users can onboard freely
 
 // Check onboarding status when page loads (wait for auth first)
 setTimeout(() => {
@@ -294,10 +318,7 @@ const majorInput = document.getElementById('major');
 const majorGhost = document.getElementById('majorGhost');
 setupGhostAutocomplete(majorInput, majorGhost, () => commonMajors);
 
-// Setup ghost text autocomplete for level
-const levelInput = document.getElementById('academicLevel');
-const levelGhost = document.getElementById('levelGhost');
-setupGhostAutocomplete(levelInput, levelGhost, () => academicLevels);
+// Academic level is now a dropdown, no ghost text needed
 
 // Generic ghost text setup function
 function setupGhostAutocomplete(inputElement, ghostElement, getDataFunction) {
@@ -320,8 +341,9 @@ function setupGhostAutocomplete(inputElement, ghostElement, getDataFunction) {
         
         if (match) {
             currentSuggestion = match;
-            // Show the full suggestion in ghost text
-            ghostElement.value = match;
+            // Show only the remaining letters after the typed text
+            const remainingText = match.substring(value.length);
+            ghostElement.value = value + remainingText;
         } else {
             ghostElement.value = '';
             currentSuggestion = '';
@@ -333,22 +355,15 @@ function setupGhostAutocomplete(inputElement, ghostElement, getDataFunction) {
         if ((e.key === 'Tab' || e.key === 'Enter') && currentSuggestion) {
             e.preventDefault();
             this.value = currentSuggestion;
-            ghostElement.value = currentSuggestion;
+            ghostElement.value = '';
             currentSuggestion = '';
-            
-            // Trigger input event to clear ghost
-            setTimeout(() => {
-                ghostElement.value = '';
-            }, 10);
         }
     });
     
     // Clear ghost text when input loses focus
     inputElement.addEventListener('blur', function() {
         setTimeout(() => {
-            if (this.value !== currentSuggestion) {
-                ghostElement.value = '';
-            }
+            ghostElement.value = '';
         }, 100);
     });
 }
@@ -393,19 +408,23 @@ document.getElementById('nextBtn3').addEventListener('click', async () => {
 
 function goToStep(step) {
     currentStep = step;
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
         const stepElement = document.getElementById(`step${i}`);
         if (stepElement) {
-            stepElement.style.display = i === step ? 'block' : 'none';
+            if (i === step) {
+                stepElement.classList.add('active');
+            } else {
+                stepElement.classList.remove('active');
+            }
         }
     }
     updateProgress();
 }
 
 function updateProgress() {
-    const progress = (currentStep / 3) * 100;
+    const progress = (currentStep / 4) * 100;
     document.getElementById('progressFill').style.width = progress + '%';
-    document.getElementById('progressText').textContent = `Step ${currentStep} of 3`;
+    document.getElementById('progressText').textContent = `Step ${currentStep} of 4`;
 }
 
 async function completeOnboarding() {
@@ -461,7 +480,7 @@ async function completeOnboarding() {
         localStorage.setItem(`onboarding_${currentUser.uid}`, 'true');
         console.log('Onboarding completed successfully!');
         
-        window.location.href = 'dashboard.html';
+        window.location.href = 'subscription.html';
     } catch (error) {
         console.error('Error saving profile to Firestore:', error);
         console.error('Error code:', error.code);
@@ -487,6 +506,6 @@ async function completeOnboarding() {
         console.log('Profile saved locally as backup');
         console.log('Onboarding completed successfully!');
         
-        window.location.href = 'dashboard.html';
+        window.location.href = 'subscription.html';
     }
 }

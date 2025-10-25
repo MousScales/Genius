@@ -11,10 +11,6 @@
     <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
     
     <!-- Vercel Analytics -->
-    <script type="module">
-        import { inject } from '@vercel/analytics';
-        inject();
-    </script>
     <script>
         // Only load Vercel Analytics on Vercel deployment
         if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com') || window.location.hostname.includes('genius-site.com')) {
@@ -178,6 +174,31 @@
             margin-bottom: 0;
         }
 
+        .back-to-site {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .back-to-site .btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .back-to-site .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -259,10 +280,29 @@
         .footer a:hover {
             text-decoration: underline;
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .back-to-site {
+                top: 15px;
+                left: 15px;
+            }
+            
+            .back-to-site .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="login-container screen-container">
+        <div class="back-to-site">
+            <a href="https://genius-site.com" class="btn" target="_blank">
+                ← Back to Main Site
+            </a>
+        </div>
+        
         <div class="logo"></div>
         <div class="logo-text">Genius</div>
 
@@ -463,16 +503,9 @@
                 console.log('User needs onboarding, redirecting to onboarding page');
                 window.location.href = 'onboarding.html';
             } else {
-                // Check subscription status before redirecting to dashboard
-                const hasActiveSubscription = await checkSubscriptionStatus(user);
-                
-                if (hasActiveSubscription) {
-                    console.log('User has active subscription, redirecting to dashboard');
-                    window.location.href = 'dashboard.html';
-                } else {
-                    console.log('User has no active subscription, redirecting to subscription page');
-                    window.location.href = 'subscription.html';
-                }
+                // User has completed onboarding, redirect to subscription
+                console.log('User has completed onboarding, redirecting to subscription page');
+                window.location.href = 'subscription.html';
             }
         }
 

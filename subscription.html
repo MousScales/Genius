@@ -430,10 +430,29 @@
         .header-bar {
             position: absolute;
             top: 20px;
+            left: 20px;
             right: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .back-to-site-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .back-to-site-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
 
         .header-spacer {
@@ -629,7 +648,13 @@
 
             .header-bar {
                 top: 15px;
+                left: 15px;
                 right: 15px;
+            }
+            
+            .back-to-site-btn {
+                padding: 6px 12px;
+                font-size: 12px;
             }
 
             .coupon-btn {
@@ -648,6 +673,9 @@
 
     <div class="subscription-container screen-container">
         <div class="header-bar">
+            <a href="https://genius-site.com" class="back-to-site-btn" target="_blank">
+                ← Back to Main Site
+            </a>
             <div class="header-spacer"></div>
             <button class="coupon-btn" id="couponBtn">
                 <span>🎟️</span> Coupon
@@ -755,9 +783,17 @@
         }
 
         // Initialize Stripe
-        function initStripe() {
+        async function initStripe() {
             try {
-                stripe = Stripe('pk_live_51SEIs1RyN1JZ733WSrAqTs40oWPn5n6mXVWANmWBRKawz8xNEv5mPjKYU13ouJK0J3Btux5pZk9eBEcctYqAPv0V0052EsT8ni');
+                // Fetch Stripe public key from environment
+                const response = await fetch('/api/env');
+                const env = await response.json();
+                
+                if (!env.stripePublicKey) {
+                    throw new Error('Stripe public key not found in environment');
+                }
+                
+                stripe = Stripe(env.stripePublicKey);
                 console.log('Stripe initialized successfully');
                 return true;
             } catch (error) {
@@ -951,7 +987,7 @@
 
             try {
                 // Create checkout session
-                const response = await fetch('/api/stripe?action=create-checkout-session', {
+                const response = await fetch('/api/create-checkout-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -986,21 +1022,43 @@
             }
         }
 
-        // Check if user has active subscription
+        // Check if user has active subscription using Stripe
         async function checkSubscriptionStatus(user) {
             try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    if (userData.subscription && userData.subscription.status === 'active') {
-                        console.log('User has active subscription, staying on subscription page');
-                        // Don't redirect automatically - let user choose
-                        return true;
-                    }
+                console.log('🔍 Checking subscription status for user:', user.uid);
+                
+                // Call Stripe API to check subscription status by email
+                const response = await fetch('/api/stripe?action=check-subscription-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: user.uid,
+                        userEmail: user.email
+                    })
+                });
+
+                if (!response.ok) {
+                    console.log('❌ Failed to check subscription status:', response.status);
+                    return false;
                 }
+
+                const data = await response.json();
+                console.log('🎯 Stripe subscription check result:', data);
+                
+                if (data.hasActiveSubscription) {
+                    console.log('✅ User has active subscription, redirecting to dashboard');
+                    showSuccess('You already have an active subscription! Redirecting to dashboard...');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                    return true;
+                }
+                
                 return false;
             } catch (error) {
-                console.error('Error checking subscription status:', error);
+                console.error('❌ Error checking subscription status:', error);
                 return false;
             }
         }

@@ -21,11 +21,18 @@ if (STRIPE_SECRET_KEY) {
 
 // Load environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const STRIPE_PUBLIC_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
 
 if (OPENAI_API_KEY) {
     console.log('OpenAI API Key loaded: YES');
 } else {
     console.warn('⚠️ OPENAI_API_KEY not found - OpenAI features will use fallbacks');
+}
+
+if (STRIPE_PUBLIC_KEY) {
+    console.log('Stripe Public Key loaded: YES');
+} else {
+    console.warn('⚠️ STRIPE_PUBLIC_KEY not found - Stripe features will use fallbacks');
 }
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -35,6 +42,25 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Set Content Security Policy headers
+app.use((req, res, next) => {
+    // Allow Chrome DevTools and other development tools
+    res.setHeader('Content-Security-Policy', 
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+        "connect-src 'self' https://api.openai.com https://api.zerogpt.com https://www.gstatic.com https://firebaseapp.com https://*.firebaseapp.com https://*.googleapis.com https://*.vercel.app https://*.vercel.com https://raw.githubusercontent.com https://github.com https://cdnjs.cloudflare.com localhost:* ws://localhost:* wss://localhost:*; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://*.googleapis.com https://*.vercel.app https://*.vercel.com https://cdnjs.cloudflare.com https://unpkg.com https://js.stripe.com https://va.vercel-scripts.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "font-src 'self' https://fonts.gstatic.com; " +
+        "img-src 'self' data: blob: https:; " +
+        "frame-src 'self' https://js.stripe.com https://*.firebaseapp.com https://*.googleapis.com https://accounts.google.com; " +
+        "object-src 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'self'"
+    );
+    next();
+});
+
 // Note: express.static('.') removed to prevent conflicts with custom routes
 
 // Add logging for debugging
@@ -177,17 +203,6 @@ app.get('/assets/:filename', (req, res) => {
     res.sendFile(path.join(__dirname, 'assets', filename));
 });
 
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/onboarding', (req, res) => {
-    res.sendFile(path.join(__dirname, 'onboarding.html'));
-});
 
 // API routes for backend functionality
 app.get('/api/health', (req, res) => {
@@ -300,14 +315,14 @@ app.post('/api/zerogpt', async (req, res) => {
 // Stripe API endpoints
 app.post('/api/create-checkout-session', async (req, res) => {
     try {
-        const { userId, planType, userEmail } = req.body;
+        const { userId, planType, userEmail, couponCode } = req.body;
 
         if (!userId || !planType || !userEmail) {
             return res.status(400).json({ error: 'Missing required parameters' });
         }
 
-        // Create checkout session with price data
-        const session = await stripe.checkout.sessions.create({
+        // Build checkout session parameters
+        const sessionParams = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -333,7 +348,46 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 userId: userId,
                 planType: planType,
             },
-        });
+        };
+
+        // Add discount code if provided
+        console.log('Received coupon code:', couponCode);
+        if (couponCode) {
+            try {
+                // Check if it's a known promotion code ID
+                if (couponCode === 'promo_1SKsg6RyN1JZ733Wy3jB7gPe') {
+                    sessionParams.discounts = [{
+                        promotion_code: couponCode
+                    }];
+                    console.log(`✅ Applied discount code: ${couponCode}`);
+                } else {
+                    // Try to retrieve the promotion code from Stripe by code
+                    console.log(`Looking up promotion code by code: ${couponCode}`);
+                    const promotionCodes = await stripe.promotionCodes.list({
+                        code: couponCode,
+                        active: true,
+                        limit: 1
+                    });
+
+                    if (promotionCodes.data.length > 0) {
+                        sessionParams.discounts = [{
+                            promotion_code: promotionCodes.data[0].id
+                        }];
+                        console.log(`✅ Applied discount code: ${couponCode} (ID: ${promotionCodes.data[0].id})`);
+                    } else {
+                        console.log(`❌ Discount code not found: ${couponCode}`);
+                    }
+                }
+            } catch (discountError) {
+                console.error('Error applying discount code:', discountError);
+                // Continue without discount if there's an error
+            }
+        } else {
+            console.log('No coupon code provided');
+        }
+
+        // Create checkout session
+        const session = await stripe.checkout.sessions.create(sessionParams);
 
         res.status(200).json({ sessionId: session.id });
     } catch (error) {
@@ -415,6 +469,8 @@ app.get('/api/env', (req, res) => {
         hasFirebase: true,
         hasAzure: false,
         nodeEnv: NODE_ENV,
+        stripePublicKey: STRIPE_PUBLIC_KEY,
+        hasStripe: !!STRIPE_PUBLIC_KEY,
         firebaseApiKey: process.env.FIREBASE_API_KEY || "AIzaSyB-JPtkbuIES5T_m7nkX0Ic1iO_lz0FbTk",
         firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN || "genius-b5656.firebaseapp.com",
         firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "genius-b5656",
@@ -426,6 +482,54 @@ app.get('/api/env', (req, res) => {
 });
 
 // Stripe API endpoint
+app.get('/api/stripe', async (req, res) => {
+    try {
+        const { action, session_id } = req.query;
+        
+        if (action === 'get-subscription-details') {
+            if (!session_id) {
+                return res.status(400).json({ error: 'Session ID is required' });
+            }
+            
+            try {
+                // Retrieve the checkout session
+                const session = await stripe.checkout.sessions.retrieve(session_id);
+                
+                if (session.payment_status === 'paid') {
+                    // Get subscription details
+                    const subscription = await stripe.subscriptions.retrieve(session.subscription);
+                    
+                    res.json({
+                        success: true,
+                        subscription: {
+                            id: subscription.id,
+                            status: subscription.status,
+                            current_period_start: subscription.current_period_start,
+                            current_period_end: subscription.current_period_end,
+                            cancel_at_period_end: subscription.cancel_at_period_end,
+                            plan: subscription.items.data[0].price
+                        },
+                        customer: {
+                            email: session.customer_email
+                        }
+                    });
+                } else {
+                    res.status(400).json({ error: 'Payment not completed' });
+                }
+            } catch (stripeError) {
+                console.error('Stripe error:', stripeError);
+                res.status(500).json({ error: 'Failed to retrieve subscription details' });
+            }
+            return;
+        }
+        
+        res.status(400).json({ error: 'Invalid action' });
+    } catch (error) {
+        console.error('API error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.post('/api/stripe', async (req, res) => {
     try {
         const { action } = req.query;
@@ -447,11 +551,28 @@ app.post('/api/stripe', async (req, res) => {
         }
 
         if (action === 'check-subscription-status') {
-            if (!customerId) {
+            const { userEmail } = req.body;
+            
+            if (!userEmail) {
+                console.log('No email provided for subscription check');
                 return res.json({ hasActiveSubscription: false });
             }
 
             try {
+                // First, find customer by email
+                const customers = await stripe.customers.list({
+                    email: userEmail,
+                    limit: 1
+                });
+
+                if (customers.data.length === 0) {
+                    console.log('No customer found for email:', userEmail);
+                    return res.json({ hasActiveSubscription: false });
+                }
+
+                const customerId = customers.data[0].id;
+                console.log('Found customer:', customerId);
+
                 // Check subscription status with Stripe
                 const subscriptions = await stripe.subscriptions.list({
                     customer: customerId,
@@ -462,9 +583,27 @@ app.post('/api/stripe', async (req, res) => {
                 const hasActiveSubscription = subscriptions.data.length > 0;
                 console.log('Subscription check result:', { hasActiveSubscription, count: subscriptions.data.length });
                 
+                if (hasActiveSubscription) {
+                    const subscription = subscriptions.data[0];
+                    console.log('Raw subscription data:', {
+                        id: subscription.id,
+                        current_period_start: subscription.current_period_start,
+                        current_period_end: subscription.current_period_end,
+                        status: subscription.status
+                    });
+                }
+                
                 res.json({ 
                     hasActiveSubscription,
-                    subscription: hasActiveSubscription ? subscriptions.data[0] : null
+                    subscription: hasActiveSubscription ? {
+                        id: subscriptions.data[0].id,
+                        status: subscriptions.data[0].status,
+                        current_period_start: subscriptions.data[0].current_period_start,
+                        current_period_end: subscriptions.data[0].current_period_end,
+                        cancel_at_period_end: subscriptions.data[0].cancel_at_period_end,
+                        customer: subscriptions.data[0].customer,
+                        items: subscriptions.data[0].items
+                    } : null
                 });
             } catch (stripeError) {
                 console.error('Stripe subscription check error:', stripeError.message);
@@ -472,6 +611,7 @@ app.post('/api/stripe', async (req, res) => {
                 res.json({ hasActiveSubscription: false });
             }
         } else if (action === 'create-portal-session') {
+            const { customerId } = req.body;
             if (!customerId) {
                 return res.status(400).json({ error: 'Customer ID required' });
             }

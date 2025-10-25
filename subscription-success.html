@@ -124,7 +124,7 @@
         .plan-name {
             font-size: 20px;
             font-weight: 600;
-            color: #4a9eff;
+            color: #8b5cf6;
             margin-bottom: 5px;
         }
 
@@ -318,36 +318,9 @@
             }
         }
 
-        // Update user subscription in Firebase
-        async function updateUserSubscription(subscriptionData) {
-            try {
-                const userData = {
-                    subscription: {
-                        status: 'active',
-                        planType: subscriptionData.planType,
-                        subscriptionId: subscriptionData.subscriptionId,
-                        customerId: subscriptionData.customerId,
-                        currentPeriodStart: subscriptionData.currentPeriodStart,
-                        currentPeriodEnd: subscriptionData.currentPeriodEnd,
-                        createdAt: new Date()
-                    },
-                    updatedAt: new Date()
-                };
-
-                await db.collection('users').doc(currentUser.uid).update(userData);
-                
-                // Also update localStorage
-                const existingUserData = JSON.parse(localStorage.getItem('userData') || '{}');
-                const updatedUserData = { ...existingUserData, ...userData };
-                localStorage.setItem('userData', JSON.stringify(updatedUserData));
-                
-                console.log('User subscription updated successfully');
-                return true;
-            } catch (error) {
-                console.error('Error updating user subscription:', error);
-                throw error;
-            }
-        }
+        // Note: We don't update Firebase with subscription data
+        // Stripe is the source of truth for subscriptions
+        // The subscription service will check Stripe directly when needed
 
         // Go to dashboard
         function goToDashboard() {
@@ -380,22 +353,31 @@
                     setLoading(true);
 
                     try {
-                        // Get subscription details
-                        const subscriptionData = await getSubscriptionDetails(sessionId);
-                        if (!subscriptionData) {
-                            throw new Error('Failed to get subscription details');
-                        }
-
-                        // Update user subscription in Firebase
-                        await updateUserSubscription(subscriptionData);
-
-                        // Show plan info
+                        // Just show success message - Stripe is the source of truth for subscriptions
+                        console.log('Subscription successful! Stripe will handle subscription management.');
+                        
+                        // Show plan info (we can try to get details but don't require it)
                         const planInfo = document.getElementById('planInfo');
                         const planName = document.getElementById('planName');
                         const planPrice = document.getElementById('planPrice');
                         
-                        planName.textContent = subscriptionData.planType === 'monthly' ? 'Monthly Plan' : 'Yearly Plan';
-                        planPrice.textContent = subscriptionData.planType === 'monthly' ? '$15/month' : '$120/year';
+                        // Try to get subscription details, but don't fail if it doesn't work
+                        try {
+                            const subscriptionData = await getSubscriptionDetails(sessionId);
+                            if (subscriptionData && subscriptionData.success) {
+                                planName.textContent = subscriptionData.planType === 'monthly' ? 'Monthly Plan' : 'Yearly Plan';
+                                planPrice.textContent = subscriptionData.planType === 'monthly' ? '$15/month' : '$120/year';
+                            } else {
+                                // Fallback to generic success message
+                                planName.textContent = 'Subscription Active';
+                                planPrice.textContent = 'Thank you for subscribing!';
+                            }
+                        } catch (apiError) {
+                            console.log('Could not fetch subscription details, showing generic success');
+                            planName.textContent = 'Subscription Active';
+                            planPrice.textContent = 'Thank you for subscribing!';
+                        }
+                        
                         planInfo.classList.remove('hidden');
 
                         setLoading(false);

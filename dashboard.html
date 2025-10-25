@@ -240,8 +240,9 @@
                                 const hasActiveSubscription = await window.subscriptionService.hasActiveSubscription();
                                 
                                 if (!hasActiveSubscription) {
-                                    console.log('🔒 No active subscription, but allowing dashboard access');
-                                    // Don't redirect - just show subscription prompt in UI
+                                    console.log('🔒 No active subscription, redirecting to subscription page');
+                                    window.location.href = 'subscription.html';
+                                    return;
                                 }
                             }
                             
@@ -479,6 +480,12 @@
             // Load academic info from profile if available
             loadAcademicInfo();
             
+            // Load subscription status
+            if (currentUserData) {
+                const currentUser = JSON.parse(currentUserData);
+                loadSubscriptionStatus(currentUser);
+            }
+            
             // Trigger smooth transition
             setTimeout(() => {
                 modal.classList.add('show');
@@ -510,31 +517,95 @@
                     // Use collegeName instead of school to match the profile structure
                     document.getElementById('schoolName').value = userData.collegeName || userData.school || '';
                     document.getElementById('majorField').value = userData.major || '';
-                    
-                    // Load subscription status
-                    loadSubscriptionStatus(userData);
                 }
             } catch (error) {
                 console.error('Error loading academic info:', error);
             }
         }
 
-        // Load subscription status
-        function loadSubscriptionStatus(userData) {
+        // Load subscription status from Stripe
+        async function loadSubscriptionStatus(userData) {
             const currentPlanElement = document.getElementById('currentPlan');
             const manageBtn = document.getElementById('manageSubscriptionBtn');
             
-            if (userData.subscription && userData.subscription.status === 'active') {
-                const planType = userData.subscription.planType || 'monthly';
-                const planName = planType === 'monthly' ? 'Monthly Plan ($15/month)' : 'Yearly Plan ($120/year)';
-                currentPlanElement.textContent = planName;
-                currentPlanElement.style.color = '#4CAF50'; // Green for active
-                manageBtn.disabled = false;
-            } else {
-                currentPlanElement.textContent = 'No Active Subscription';
-                currentPlanElement.style.color = '#f44336'; // Red for inactive
+            try {
+                // Check subscription status with Stripe
+                const response = await fetch('/api/stripe?action=check-subscription-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: userData.uid, 
+                        userEmail: userData.email 
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.hasActiveSubscription && data.subscription) {
+                        const subscription = data.subscription;
+                        console.log('Subscription data from Stripe:', subscription);
+                        console.log('Current period end value:', subscription.current_period_end);
+                        console.log('Current period end type:', typeof subscription.current_period_end);
+                        const plan = subscription.items.data[0].price;
+                        const planName = plan.nickname || (plan.unit_amount === 1500 ? 'Monthly Plan' : 'Yearly Plan');
+                        const planPrice = plan.unit_amount === 1500 ? '$15/month' : '$120/year';
+                        
+                        // Format dates (Stripe timestamps are in seconds, convert to milliseconds)
+                        let statusText = `${planName} (${planPrice})`;
+                        
+                        try {
+                            // Extract dates from the correct location in the Stripe response
+                            let currentPeriodEnd = null;
+                            
+                            // Check if current_period_end exists at the top level
+                            if (subscription.current_period_end) {
+                                currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+                            } else if (subscription.items && subscription.items.data && subscription.items.data[0] && subscription.items.data[0].current_period_end) {
+                                // Fallback to items.data[0].current_period_end
+                                currentPeriodEnd = new Date(subscription.items.data[0].current_period_end * 1000);
+                            }
+                            
+                            if (!currentPeriodEnd) {
+                                console.error('No current_period_end found in subscription:', subscription);
+                                statusText += `<br><span style="color: #ff9800; font-size: 12px;">Subscription details unavailable</span>`;
+                            } else {
+                                // Check if dates are valid
+                                if (isNaN(currentPeriodEnd.getTime())) {
+                                    console.error('Invalid date from Stripe:', currentPeriodEnd);
+                                    statusText += `<br><span style="color: #ff9800; font-size: 12px;">Date formatting error</span>`;
+                                } else {
+                                    if (subscription.cancel_at_period_end) {
+                                        statusText += `<br><span style="color: #ff9800; font-size: 12px;">Cancels on ${currentPeriodEnd.toLocaleDateString()}</span>`;
+                                    } else {
+                                        statusText += `<br><span style="color: #4CAF50; font-size: 12px;">Next billing: ${currentPeriodEnd.toLocaleDateString()}</span>`;
+                                    }
+                                }
+                            }
+                        } catch (dateError) {
+                            console.error('Date formatting error:', dateError);
+                            statusText += `<br><span style="color: #ff9800; font-size: 12px;">Date formatting error</span>`;
+                        }
+                        
+                        currentPlanElement.innerHTML = statusText;
+                        currentPlanElement.style.color = '#4CAF50'; // Green for active
+                        manageBtn.disabled = false;
+                        manageBtn.innerHTML = '<span>💳</span> Manage Subscription';
+                    } else {
+                        currentPlanElement.textContent = 'No Active Subscription';
+                        currentPlanElement.style.color = '#f44336'; // Red for inactive
+                        manageBtn.disabled = true;
+                        manageBtn.innerHTML = '<span>💳</span> Manage Subscription <span class="coming-soon-badge">No Active Plan</span>';
+                    }
+                } else {
+                    throw new Error('Failed to check subscription status');
+                }
+            } catch (error) {
+                console.error('Error loading subscription status:', error);
+                currentPlanElement.textContent = 'Error loading subscription';
+                currentPlanElement.style.color = '#ff9800'; // Orange for error
                 manageBtn.disabled = true;
-                manageBtn.innerHTML = '<span>💳</span> Manage Subscription <span class="coming-soon-badge">No Active Plan</span>';
+                manageBtn.innerHTML = '<span>💳</span> Manage Subscription <span class="coming-soon-badge">Error</span>';
             }
         }
 
@@ -574,28 +645,41 @@
 
                 const currentUser = JSON.parse(currentUserData);
                 
-                // Get user's subscription data from Firebase
-                const db = window.firebase.firestore();
-                const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                
-                if (!userDoc.exists) {
-                    alert('User profile not found. Please contact support.');
-                    return;
-                }
-
-                const userData = userDoc.data();
-                const subscription = userData.subscription;
-
-                if (!subscription || !subscription.customerId) {
-                    alert('No active subscription found. Please subscribe first.');
-                    return;
-                }
-
                 // Show loading state
                 const manageBtn = document.getElementById('manageSubscriptionBtn');
                 const originalText = manageBtn.innerHTML;
                 manageBtn.innerHTML = '<span>⏳</span> Loading...';
                 manageBtn.disabled = true;
+
+                // First, check if user has an active subscription via Stripe
+                const subscriptionCheckResponse = await fetch('/api/stripe?action=check-subscription-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: currentUser.uid, 
+                        userEmail: currentUser.email 
+                    })
+                });
+
+                if (!subscriptionCheckResponse.ok) {
+                    throw new Error('Failed to check subscription status');
+                }
+
+                const subscriptionData = await subscriptionCheckResponse.json();
+                
+                if (!subscriptionData.hasActiveSubscription) {
+                    alert('No active subscription found. Please subscribe first.');
+                    manageBtn.innerHTML = originalText;
+                    manageBtn.disabled = false;
+                    return;
+                }
+
+                // Get customer ID from Stripe subscription data
+                const customerId = subscriptionData.subscription.customer;
+                
+                if (!customerId) {
+                    throw new Error('Customer ID not found in subscription data');
+                }
 
                 // Create Stripe customer portal session
                 const response = await fetch('/api/stripe?action=create-portal-session', {
@@ -604,8 +688,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        userId: currentUser.uid,
-                        customerId: subscription.customerId
+                        customerId: customerId
                     })
                 });
 

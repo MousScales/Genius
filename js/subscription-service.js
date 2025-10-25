@@ -40,38 +40,15 @@ class SubscriptionService {
 
     // Check if user has active subscription
     async hasActiveSubscription() {
-        if (!this.currentUser || !this.db) {
-            console.log('⚠️ No user or database available for subscription check');
-            console.log('Current user:', this.currentUser);
-            console.log('Database:', this.db);
+        if (!this.currentUser) {
+            console.log('⚠️ No user available for subscription check');
             return false;
         }
 
         try {
             console.log('🔍 Checking subscription for user:', this.currentUser.uid);
             
-            // First, get user data from Firebase to get customerId
-            const userDoc = await this.db.collection('users').doc(this.currentUser.uid).get();
-            
-            if (!userDoc.exists) {
-                console.log('⚠️ User document not found');
-                return false;
-            }
-
-            const userData = userDoc.data();
-            console.log('📄 User data:', userData);
-            
-            // Check if user has customerId from Stripe
-            const customerId = userData.subscription?.customerId;
-            
-            if (!customerId) {
-                console.log('⚠️ No Stripe customer ID found');
-                return false;
-            }
-
-            console.log('💳 Checking Stripe subscription for customer:', customerId);
-            
-            // Call Stripe API to check subscription status
+            // Call Stripe API to check subscription status by email
             const response = await fetch('/api/stripe?action=check-subscription-status', {
                 method: 'POST',
                 headers: {
@@ -79,7 +56,7 @@ class SubscriptionService {
                 },
                 body: JSON.stringify({
                     userId: this.currentUser.uid,
-                    customerId: customerId
+                    userEmail: this.currentUser.email
                 })
             });
 

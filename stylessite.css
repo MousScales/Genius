@@ -789,13 +789,6 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    padding: 0;
-}
-
-.floating-genius-button svg {
-    width: 20px;
-    height: 20px;
-    color: #ffffff;
 }
 
 .floating-genius-button:hover {
@@ -954,12 +947,15 @@ body {
     margin-bottom: 20px;
 }
 
-.preview-sidebar.collapsed .preview-sidebar-header .preview-logo-text {
-    display: none;
-}
-
-.preview-sidebar.collapsed .preview-sidebar-header .preview-sidebar-logo {
-    margin-right: 0;
+.preview-sidebar.collapsed .preview-sidebar-header::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 24px;
+    background-image: url('darkgenius.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .preview-sidebar.collapsed .preview-nav-item {
@@ -1017,13 +1013,6 @@ body {
 
 .preview-menu-toggle:hover {
     background: rgba(255, 255, 255, 0.1);
-}
-
-.preview-sidebar-logo {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    margin-right: 8px;
 }
 
 .preview-header-spacer {
@@ -1123,14 +1112,6 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    overflow: hidden;
-}
-
-.preview-class-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
 }
 
 .preview-class-initial {
@@ -1746,11 +1727,6 @@ body {
         height: 32px;
         font-size: 14px;
     }
-    
-    .floating-genius-button svg {
-        width: 18px;
-        height: 18px;
-    }
 }
 
 @media (max-width: 600px) {
@@ -1873,11 +1849,6 @@ body {
         width: 28px;
         height: 28px;
         font-size: 12px;
-    }
-    
-    .floating-genius-button svg {
-        width: 16px;
-        height: 16px;
     }
     
     .doc-preview-content {
@@ -2031,11 +2002,6 @@ body {
         width: 24px;
         height: 24px;
         font-size: 10px;
-    }
-    
-    .floating-genius-button svg {
-        width: 14px;
-        height: 14px;
     }
     
     .doc-preview-content {
