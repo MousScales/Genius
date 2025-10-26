@@ -231,7 +231,7 @@ async function handleCheckSubscriptionStatus(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { userId, customerId } = req.body;
+    const { userId, customerId, userEmail } = req.body;
 
     if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
@@ -240,11 +240,36 @@ async function handleCheckSubscriptionStatus(req, res) {
     try {
         let customerIdToCheck = customerId;
         
-        // If no customerId provided, try to find it from Firebase
+        // If no customerId provided, try to find customer by email
+        if (!customerIdToCheck && userEmail) {
+            console.log('Searching for customer by email:', userEmail);
+            const customers = await stripe.customers.list({
+                email: userEmail,
+                limit: 1
+            });
+            
+            if (customers.data.length > 0) {
+                customerIdToCheck = customers.data[0].id;
+                console.log('Found customer ID:', customerIdToCheck);
+            } else {
+                console.log('No customer found for email:', userEmail);
+                // Return that user has no subscription (which is fine)
+                return res.status(200).json({
+                    hasActiveSubscription: false,
+                    subscription: null,
+                    customerId: null
+                });
+            }
+        }
+        
+        // If still no customerId, return no subscription
         if (!customerIdToCheck) {
-            // We'll need to get it from Firebase user data
-            // For now, return error if no customerId provided
-            return res.status(400).json({ error: 'Customer ID is required' });
+            console.log('No customer ID found');
+            return res.status(200).json({
+                hasActiveSubscription: false,
+                subscription: null,
+                customerId: null
+            });
         }
 
         // Get customer from Stripe

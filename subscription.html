@@ -1040,7 +1040,9 @@
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
                     console.log('❌ Failed to check subscription status:', response.status);
+                    console.log('Error details:', errorData);
                     return false;
                 }
 
