@@ -291,13 +291,15 @@ async function handleCheckSubscriptionStatus(req, res) {
 
         if (hasActiveSubscription) {
             const subscription = subscriptions.data[0];
+            // Return the full subscription object so dashboard can access items.data
             subscriptionDetails = {
                 id: subscription.id,
                 status: subscription.status,
-                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-                planType: subscription.items.data[0].price.recurring.interval === 'year' ? 'yearly' : 'monthly',
-                customerId: customerIdToCheck
+                current_period_start: subscription.current_period_start,
+                current_period_end: subscription.current_period_end,
+                cancel_at_period_end: subscription.cancel_at_period_end,
+                customer: subscription.customer,
+                items: subscription.items // Include items for plan details
             };
         }
 

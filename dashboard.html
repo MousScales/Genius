@@ -547,7 +547,29 @@
                         console.log('Subscription data from Stripe:', subscription);
                         console.log('Current period end value:', subscription.current_period_end);
                         console.log('Current period end type:', typeof subscription.current_period_end);
-                        const plan = subscription.items.data[0].price;
+                        
+                        // Check if items exists and has data
+                        if (!subscription.items || !subscription.items.data || subscription.items.data.length === 0) {
+                            console.warn('Subscription items not found in expected structure');
+                            currentPlanElement.textContent = 'Active Subscription';
+                            currentPlanElement.style.color = '#4CAF50';
+                            manageBtn.disabled = false;
+                            manageBtn.innerHTML = '<span>💳</span> Manage Subscription';
+                            return;
+                        }
+                        
+                        const plan = subscription.items.data[0]?.price;
+                        
+                        // Fallback if plan details are missing
+                        if (!plan) {
+                            console.warn('Plan details not available');
+                            currentPlanElement.textContent = 'Active Subscription';
+                            currentPlanElement.style.color = '#4CAF50';
+                            manageBtn.disabled = false;
+                            manageBtn.innerHTML = '<span>💳</span> Manage Subscription';
+                            return;
+                        }
+                        
                         const planName = plan.nickname || (plan.unit_amount === 1500 ? 'Monthly Plan' : 'Yearly Plan');
                         const planPrice = plan.unit_amount === 1500 ? '$15/month' : '$120/year';
                         
