@@ -868,6 +868,13 @@ body {
     height: 24px;
     object-fit: contain;
     flex-shrink: 0;
+    display: none;
+}
+
+/* Show logo when sidebar is collapsed */
+.preview-sidebar.collapsed .preview-sidebar-logo {
+    display: block;
+    margin: 0 auto;
 }
 
 .preview-logo-text {
@@ -952,17 +959,6 @@ body {
     align-items: center;
     padding: 0 0 20px 0;
     margin-bottom: 20px;
-}
-
-.preview-sidebar.collapsed .preview-sidebar-header::before {
-    content: '';
-    display: block;
-    width: 24px;
-    height: 24px;
-    background-image: url('darkgenius.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
 .preview-sidebar.collapsed .preview-nav-item {
