@@ -863,6 +863,13 @@ body {
     object-fit: contain;
 }
 
+.preview-sidebar-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .preview-logo-text {
     font-size: 16px;
     font-weight: 700;
