@@ -211,7 +211,7 @@ function createClassView(classData) {
                                 </svg>
                             </button>
                         </div>
-                        <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.jpg,.png" style="display: none;" multiple>
+                        <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.jpg,.png,.pptx" style="display: none;" multiple>
                     </div>
                     
                     <div class="documents-list" id="documentsList">
